@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="qrcreate_title">Create QR</string>
+    <string name="qrcreate_title_edit">Edit QR</string>
+    <string name="qrcreate_prefill_failed">That payload could not be read, so the form starts empty.</string>
+    <string name="qrcreate_navigate_back">Back</string>
+    <string name="qrcreate_generate">Generate</string>
+
+    <!-- Web link -->
+    <string name="urlcreate_title">Create Link QR</string>
+    <string name="urlcreate_title_edit">Edit Link QR</string>
+    <string name="urlcreate_section_link">Link</string>
+    <string name="urlcreate_link">Web address</string>
+    <string name="urlcreate_scheme_hint">https:// is added if you leave it out.</string>
+    <string name="urlcreate_empty_hint">Enter a web address, then generate a code.</string>
+    <string name="urlcreate_prefill_failed">That code could not be read as a link, so the field starts empty.</string>
+    <string name="urlcreate_violation_required">This is required.</string>
+    <string name="urlcreate_violation_malformed">That does not look like a web address.</string>
+    <string name="urlcreate_violation_scheme">Only http and https links can be written here.</string>
+
+    <!-- Contact card -->
+    <string name="vcardcreate_title">Create Contact QR</string>
+    <string name="vcardcreate_title_edit">Edit Contact QR</string>
+    <string name="vcardcreate_section_contact">Contact</string>
+    <string name="vcardcreate_given_name">First name</string>
+    <string name="vcardcreate_family_name">Last name</string>
+    <string name="vcardcreate_display_name">Display name</string>
+    <string name="vcardcreate_organization">Organisation</string>
+    <string name="vcardcreate_title_field">Job title</string>
+    <string name="vcardcreate_phone">Phone</string>
+    <string name="vcardcreate_email">Email</string>
+    <string name="vcardcreate_empty_hint">Enter the contact details, then generate a code.</string>
+    <string name="vcardcreate_prefill_failed">That code could not be read as a contact card, so the form starts empty.</string>
+    <string name="vcardcreate_violation_required">This is required.</string>
+    <string name="vcardcreate_violation_email">That does not look like an email address.</string>
+    <string name="vcardcreate_violation_phone">A phone number needs at least one digit.</string>
+
+    <!-- Wi-Fi -->
+    <string name="wificreate_title">Create Wi-Fi QR</string>
+    <string name="wificreate_title_edit">Edit Wi-Fi QR</string>
+    <string name="wificreate_section_network">Network</string>
+    <string name="wificreate_ssid">Network name (SSID)</string>
+    <string name="wificreate_security">Security</string>
+    <string name="wificreate_security_wpa">WPA / WPA2 / WPA3</string>
+    <string name="wificreate_security_wep">WEP</string>
+    <string name="wificreate_security_open">Open — no password</string>
+    <string name="wificreate_password">Password</string>
+    <string name="wificreate_hidden">Hidden network</string>
+    <string name="wificreate_empty_hint">Enter the network details, then generate a code.</string>
+    <string name="wificreate_prefill_failed">That code could not be read as Wi-Fi credentials, so the form starts empty.</string>
+    <string name="wificreate_violation_required">This is required.</string>
+    <string name="wificreate_violation_too_long">Too long for this field.</string>
+    <string name="wificreate_violation_too_short">A WPA password needs at least 8 characters.</string>
+    <string name="wificreate_violation_invalid_wep_key">A WEP key is 5 or 13 characters, or 10 or 26 hexadecimal digits.</string>
+
+    <!-- Sections -->
+    <string name="qrcreate_section_merchant">Merchant</string>
+    <string name="qrcreate_section_transaction">Transaction</string>
+    <string name="qrcreate_section_acquirer">Acquirer</string>
+    <string name="qrcreate_section_result">Result</string>
+
+    <!-- Merchant -->
+    <string name="qrcreate_merchant_name">Merchant name</string>
+    <string name="qrcreate_merchant_city">City</string>
+    <string name="qrcreate_country_code">Country code</string>
+    <string name="qrcreate_postal_code">Postal code (optional)</string>
+
+    <!-- Transaction -->
+    <string name="qrcreate_initiation_method">Payment code type</string>
+    <string name="qrcreate_initiation_static">Static — reusable, no amount</string>
+    <string name="qrcreate_initiation_dynamic">Dynamic — one transaction, fixed amount</string>
+    <string name="qrcreate_amount">Amount</string>
+    <string name="qrcreate_tip">Tip or convenience fee</string>
+    <string name="qrcreate_tip_none">None</string>
+    <string name="qrcreate_tip_prompt">Prompt the payer for a tip</string>
+    <string name="qrcreate_tip_fixed">Fixed convenience fee</string>
+    <string name="qrcreate_tip_percentage">Percentage convenience fee</string>
+    <string name="qrcreate_tip_fixed_value">Fee amount</string>
+    <string name="qrcreate_tip_percentage_value">Fee percentage</string>
+
+    <string name="qrcreate_currency">Currency</string>
+    <string name="qrcreate_currency_option">%1$s — %2$s</string>
+    <string name="qrcreate_category">Merchant category</string>
+    <string name="qrcreate_category_option">%1$s — %2$s</string>
+
+    <!-- Acquirer -->
+    <string name="qrcreate_account_heading">Template %1$s</string>
+    <string name="qrcreate_account_identifier">Globally unique identifier</string>
+    <string name="qrcreate_account_merchant_pan">Merchant PAN (optional)</string>
+    <string name="qrcreate_account_merchant_id">Merchant ID (optional)</string>
+    <string name="qrcreate_account_criteria">Merchant criteria (optional)</string>
+    <string name="qrcreate_account_add">Add national switch template</string>
+    <string name="qrcreate_account_remove">Remove this template</string>
+
+    <!-- Result -->
+    <string name="qrcreate_qr_image">The payload, drawn as a QR code</string>
+    <string name="qrcreate_copy_payload">Copy payload</string>
+    <string name="qrcreate_share_image">Share image</string>
+    <string name="qrcreate_save_image">Save to gallery</string>
+    <string name="qrcreate_clipboard_label">EMV QR payload</string>
+    <string name="qrcreate_saved">Saved to your gallery.</string>
+    <string name="qrcreate_export_failed">That image could not be created.</string>
+    <string name="qrcreate_empty_hint">Fill in the merchant details, then generate a code.</string>
+
+    <!-- Validation. Shown under the field that caused them. -->
+    <string name="qrcreate_violation_required">This is required.</string>
+    <string name="qrcreate_violation_too_long">Too long for this field.</string>
+    <string name="qrcreate_violation_wrong_length">Wrong length for this field.</string>
+    <string name="qrcreate_violation_not_numeric">Digits only.</string>
+    <string name="qrcreate_violation_not_an_amount">Enter an amount like 15000 or 15000.00.</string>
+    <string name="qrcreate_violation_not_allowed">A static code cannot carry an amount.</string>
+    <string name="qrcreate_violation_unsupported">This value cannot be written to a payload.</string>
+    <string name="qrcreate_violation_out_of_range">A percentage cannot be above 100.</string>
+    <string name="qrcreate_violation_no_accounts">Add at least one acquirer template.</string>
+
+    <plurals name="qrcreate_violation_summary">
+        <item quantity="one">%1$d field needs attention.</item>
+        <item quantity="other">%1$d fields need attention.</item>
+    </plurals>
+</resources>

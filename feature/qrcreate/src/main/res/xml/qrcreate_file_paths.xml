@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Only the one subdirectory the exporter writes to. A bare <cache-path path="."> would hand any
+  app the share sheet reaches a readable handle on the whole cache.
+-->
+<paths>
+    <cache-path
+        name="qr"
+        path="qr/" />
+</paths>

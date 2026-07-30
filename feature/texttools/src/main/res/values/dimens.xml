@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="texttools_spacing">16dp</dimen>
+    <dimen name="texttools_spacing_tight">8dp</dimen>
+    <dimen name="texttools_field_min_height">120dp</dimen>
+</resources>

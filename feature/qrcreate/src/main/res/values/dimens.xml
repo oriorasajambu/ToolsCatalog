@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="qrcreate_spacing">16dp</dimen>
+    <dimen name="qrcreate_spacing_tight">8dp</dimen>
+    <dimen name="qrcreate_qr_size">220dp</dimen>
+</resources>

@@ -1,0 +1,181 @@
+package com.minion.scaffold.feature.qrscan.presentation
+
+import android.net.Uri
+import com.minion.scaffold.core.common.mvi.UiEffect
+import com.minion.scaffold.core.common.mvi.UiIntent
+import com.minion.scaffold.core.common.mvi.UiState
+import com.minion.scaffold.core.navigation.AppRoute
+import com.minion.scaffold.core.vcard.model.ContactCard
+import com.minion.scaffold.feature.qrscan.domain.ScannedContent
+
+/**
+ * What the scan screen renders.
+ *
+ * The mutually exclusive phases live in [ContentState] rather than as sibling booleans, so
+ * "showing a report *and* an error" is unrepresentable instead of merely unintended.
+ */
+internal data class QrScanState(
+    val mode: InputMode = InputMode.Camera,
+    val cameraPermission: CameraPermissionState = CameraPermissionState.Unknown,
+    val torchEnabled: Boolean = false,
+    val content: ContentState = ContentState.Idle,
+    val manualPayload: String = "",
+) : UiState {
+
+    /** True once there is something worth copying or sharing. */
+    val hasReport: Boolean get() = content is ContentState.Success
+
+    /**
+     * Whether the camera should be looking for a code.
+     *
+     * False once a report is on screen: the analyzer is unbound rather than left running against
+     * a result the user is already reading.
+     */
+    val isScanning: Boolean
+        get() = mode == InputMode.Camera &&
+            cameraPermission == CameraPermissionState.Granted &&
+            content is ContentState.Idle
+
+    sealed interface ContentState {
+
+        /** Nothing decoded yet. */
+        data object Idle : ContentState
+
+        /**
+         * A picked image is being searched for a QR code.
+         *
+         * Only the gallery path reaches this. Parsing a payload already in hand is a single pass
+         * over a few hundred characters and completes within the same frame; opening a photo and
+         * running detection over it does not.
+         */
+        data object Decoding : ContentState
+
+        data class Success(val content: ScannedContent) : ContentState
+
+        data class Failure(val error: QrScanError) : ContentState
+    }
+}
+
+/** Where a payload comes from. Both funnel into [QrScanIntent.PayloadSubmitted]. */
+internal enum class InputMode { Camera, Manual }
+
+/**
+ * What the system has said about camera access.
+ *
+ * [Denied] and [PermanentlyDenied] are separate because the recovery differs: one is another
+ * request away, the other can only be undone in system settings, and offering the wrong button
+ * either wastes a tap or asks the user to hunt through Settings when a dialog would have done.
+ */
+internal enum class CameraPermissionState {
+
+    /** Not yet asked in this session. */
+    Unknown,
+    Granted,
+
+    /** Refused, but the system will still show the dialog. */
+    Denied,
+
+    /** Refused to the point where only Settings can grant it. */
+    PermanentlyDenied,
+}
+
+internal sealed interface QrScanIntent : UiIntent {
+
+    /** Keystrokes in the manual payload field. */
+    data class ManualPayloadChanged(val payload: String) : QrScanIntent
+
+    /**
+     * A payload to decode, from wherever it came from.
+     *
+     * One intent for every source. The camera analyzer and the gallery decoder produce the same
+     * string the paste field does, so there is one decode path to reason about and to test.
+     */
+    data class PayloadSubmitted(val payload: String) : QrScanIntent
+
+    /** An image chosen from the photo picker, to be searched for a QR code. */
+    data class ImagePicked(val uri: Uri) : QrScanIntent
+
+    /** Discard the current result and go back to accepting input. */
+    data object Cleared : QrScanIntent
+
+    /**
+     * The outcome of a camera permission request.
+     *
+     * [shouldShowRationale] is the system's answer to "will the dialog appear again?", which is
+     * the only way to tell a refusal that can be retried from one that cannot. It is read at the
+     * call site because it needs the `Activity`, which has no business being in a ViewModel.
+     */
+    data class PermissionResult(
+        val granted: Boolean,
+        val shouldShowRationale: Boolean,
+    ) : QrScanIntent
+
+    data class ModeChanged(val mode: InputMode) : QrScanIntent
+
+    data object TorchToggled : QrScanIntent
+
+    data object AppSettingsRequested : QrScanIntent
+
+    /** Take the decoded payload to the editor. */
+    data object EditRequested : QrScanIntent
+
+    /** Open the scanned link. Only meaningful for [ScannedContent.Web]. */
+    data object OpenLinkRequested : QrScanIntent
+
+    /** Hand the scanned card to the contacts app. Only meaningful for [ScannedContent.Contact]. */
+    data object AddContactRequested : QrScanIntent
+
+    data object CopyReportRequested : QrScanIntent
+
+    /**
+     * Copy one already-resolved piece of the report — a tag's value, a subtag, the checksum pair.
+     *
+     * Carries finished text rather than a tag reference because the caller has already rendered
+     * it. Routing it through the ViewModel anyway keeps every clipboard write going through the
+     * one effect handler instead of scattering `Clipboard` access across the report's composables.
+     */
+    data class CopyValueRequested(val text: String) : QrScanIntent
+
+    data object ShareReportRequested : QrScanIntent
+}
+
+/**
+ * One-shot events.
+ *
+ * Copy and share carry the [ScannedContent] rather than a finished string. Rendering a report as
+ * text needs string resources, and resolving those in the ViewModel would mean an `Application`
+ * context in the ViewModel and text that does not follow a locale change. The screen formats it,
+ * for the same reason it is the screen that turns an error into words.
+ */
+internal sealed interface QrScanEffect : UiEffect {
+
+    data class CopyReport(val content: ScannedContent) : QrScanEffect
+
+    /** Copy text the screen already rendered. */
+    data class CopyText(val text: String) : QrScanEffect
+
+    data class ShareReport(val content: ScannedContent) : QrScanEffect
+
+    /**
+     * Hand this payload onward to be edited.
+     *
+     * Emitted both when the scanner was opened for editing — where it fires the moment a code
+     * decodes — and when the report's edit action is pressed. Where it goes is the host's
+     * business; this module does not know an editor exists.
+     */
+    data class EditPayload(val route: AppRoute) : QrScanEffect
+
+    /**
+     * Open a scanned link.
+     *
+     * Emitted only from an explicit press, never on decoding: a scanned code is untrusted input and
+     * one-tap auto-opening is the standard QR phishing vector.
+     */
+    data class OpenLink(val url: String) : QrScanEffect
+
+    /** Offer a scanned card to the contacts app, pre-filled. */
+    data class AddContact(val card: ContactCard) : QrScanEffect
+
+    /** Send the user to the app's system settings, the only place a hard denial can be undone. */
+    data object OpenAppSettings : QrScanEffect
+}

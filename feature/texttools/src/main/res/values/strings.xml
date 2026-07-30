@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="texttools_title">Text tools</string>
+    <string name="texttools_navigate_back">Back</string>
+    <string name="texttools_clipboard_label">Text tool output</string>
+    <string name="texttools_copy">Copy</string>
+
+    <string name="texttools_section_input">Input</string>
+    <string name="texttools_section_output">Output</string>
+    <string name="texttools_operation">Operation</string>
+    <string name="texttools_input">Text</string>
+    <string name="texttools_output_empty">The result appears here as you type.</string>
+
+    <!-- Operations -->
+    <string name="texttools_op_base64_encode">Base64 encode</string>
+    <string name="texttools_op_base64_decode">Base64 decode</string>
+    <string name="texttools_op_hex_encode">Hex encode</string>
+    <string name="texttools_op_hex_decode">Hex decode</string>
+    <string name="texttools_op_url_encode">URL encode</string>
+    <string name="texttools_op_url_decode">URL decode</string>
+    <string name="texttools_op_html_encode">HTML encode</string>
+    <string name="texttools_op_html_decode">HTML decode</string>
+    <string name="texttools_op_json_prettify">JSON prettify</string>
+    <string name="texttools_op_json_minify">JSON minify</string>
+    <string name="texttools_op_md5">MD5</string>
+    <string name="texttools_op_sha1">SHA-1</string>
+    <string name="texttools_op_sha256">SHA-256</string>
+    <string name="texttools_op_uppercase">UPPERCASE</string>
+    <string name="texttools_op_lowercase">lowercase</string>
+    <string name="texttools_op_camel">camelCase</string>
+    <string name="texttools_op_snake">snake_case</string>
+    <string name="texttools_op_kebab">kebab-case</string>
+
+    <!-- Transform failures -->
+    <string name="texttools_error_base64">That is not valid Base64.</string>
+    <string name="texttools_error_hex">That is not valid hexadecimal.</string>
+    <string name="texttools_error_json">That is not valid JSON.</string>
+    <string name="texttools_error_url">That has a malformed percent escape.</string>
+
+    <!-- Generate -->
+    <string name="generate_title">Generate</string>
+    <string name="generate_kind">What to generate</string>
+    <string name="generate_kind_uuid">UUID</string>
+    <string name="generate_kind_password">Password</string>
+    <string name="generate_kind_hex">Random hex</string>
+    <string name="generate_button">Generate</string>
+    <string name="generate_result">Result</string>
+    <string name="generate_empty">Press Generate to make one.</string>
+
+    <string name="generate_password_options">Password options</string>
+    <string name="generate_length">Length: %1$d</string>
+    <string name="generate_class_lower">a-z</string>
+    <string name="generate_class_upper">A-Z</string>
+    <string name="generate_class_digits">0-9</string>
+    <string name="generate_class_symbols">Symbols</string>
+
+    <string name="generate_hex_options">Random hex options</string>
+    <string name="generate_bytes">Bytes: %1$d</string>
+
+    <string name="generate_problem_no_class">Choose at least one character type.</string>
+    <string name="generate_problem_too_short">The length must fit one of each chosen type.</string>
+</resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+          Shares the generated PNG without exposing the cache directory. The authority is
+          feature-prefixed because two library modules each claiming
+          "${applicationId}.fileprovider" collide at manifest merge, and that failure surfaces as
+          a build error with no obvious cause.
+
+          Saving to the gallery does not go through here — that writes via MediaStore, which needs
+          no provider and no permission.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.qrcreate.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/qrcreate_file_paths" />
+        </provider>
+    </application>
+
+</manifest>

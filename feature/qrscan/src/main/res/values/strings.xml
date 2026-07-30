@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="qrscan_title">Scan QR</string>
+    <string name="qrscan_navigate_back">Back</string>
+
+    <!-- Manual input -->
+    <string name="qrscan_manual_label">EMV payload</string>
+    <string name="qrscan_manual_placeholder">Paste a payload starting with 0002…</string>
+    <string name="qrscan_manual_parse">Decode</string>
+    <string name="qrscan_manual_clear">Clear</string>
+    <string name="qrscan_idle_hint">Paste an EMV QR payload above to decode it.</string>
+
+    <!-- Camera -->
+    <string name="qrscan_camera_hint">Point the camera at a QR code.</string>
+    <string name="qrscan_aim_searching">Point the camera at a QR code</string>
+    <string name="qrscan_aim_off_target">Move the code into the frame</string>
+    <string name="qrscan_zoom_step">×%1$s</string>
+    <string name="qrscan_zoom_select">Zoom %1$s times</string>
+    <string name="qrscan_torch_on">Turn on the torch</string>
+    <string name="qrscan_torch_off">Turn off the torch</string>
+    <string name="qrscan_mode_camera">Scan with the camera</string>
+    <string name="qrscan_mode_manual">Enter a payload manually</string>
+    <string name="qrscan_pick_image">Decode a QR from a picture</string>
+    <string name="qrscan_decoding">Looking for a QR code…</string>
+
+    <!-- Camera permission -->
+    <string name="qrscan_permission_rationale">Scanning needs access to the camera. Nothing is recorded or sent anywhere — frames are decoded on the device and discarded.</string>
+    <string name="qrscan_permission_grant">Allow camera access</string>
+    <string name="qrscan_permission_blocked">Camera access is turned off for this app. You can switch it back on in Settings, or paste a payload instead.</string>
+    <string name="qrscan_permission_open_settings">Open settings</string>
+    <string name="qrscan_permission_use_manual">Paste a payload instead</string>
+
+    <!-- Actions -->
+    <string name="qrscan_edit_payload">Edit this code</string>
+    <string name="qrscan_copy_report">Copy report</string>
+    <string name="qrscan_share_report">Share report</string>
+    <string name="qrscan_clipboard_label">QR inquiry report</string>
+    <string name="qrscan_copy_value">Copy</string>
+    <string name="qrscan_try_again">Try again</string>
+    <string name="qrscan_report_qr_image">The scanned payload, redrawn as a QR code</string>
+
+    <string name="qrscan_no_app">No app on this device can handle that.</string>
+
+    <!-- Web link -->
+    <string name="qrscan_web_heading">Web link</string>
+    <string name="qrscan_web_url">Address</string>
+    <string name="qrscan_web_open">Open link</string>
+
+    <!-- Contact card -->
+    <string name="qrscan_contact_heading">Contact card</string>
+    <string name="qrscan_contact_name">Name</string>
+    <string name="qrscan_contact_organization">Organisation</string>
+    <string name="qrscan_contact_title">Job title</string>
+    <string name="qrscan_contact_phone">Phone</string>
+    <string name="qrscan_contact_email">Email</string>
+    <string name="qrscan_contact_add">Add to contacts</string>
+    <!--
+      Names for the properties this app carries through but has no field for. Anything not listed
+      keeps its raw vCard name, which is jargon but honest — a friendly label invented for a
+      property the app does not understand would claim to know what the value means.
+    -->
+    <string name="qrscan_contact_address">Address</string>
+    <string name="qrscan_contact_birthday">Birthday</string>
+    <string name="qrscan_contact_note">Note</string>
+    <string name="qrscan_contact_website">Website</string>
+    <string name="qrscan_contact_nickname">Nickname</string>
+    <string name="qrscan_contact_role">Role</string>
+    <string name="qrscan_contact_image">Image</string>
+
+    <!-- Wi-Fi credentials -->
+    <string name="qrscan_wifi_heading">Wi-Fi network</string>
+    <string name="qrscan_wifi_network">Network name</string>
+    <string name="qrscan_wifi_security">Security</string>
+    <string name="qrscan_wifi_security_wpa">WPA / WPA2 / WPA3</string>
+    <string name="qrscan_wifi_security_wep">WEP</string>
+    <string name="qrscan_wifi_security_open">Open — no password</string>
+    <string name="qrscan_wifi_password">Password</string>
+    <string name="qrscan_wifi_hidden">Hidden network</string>
+    <string name="qrscan_wifi_yes">Yes</string>
+    <string name="qrscan_wifi_no">No</string>
+
+    <!-- Report structure -->
+    <string name="qrscan_report_title">QR Inquiry Report</string>
+    <string name="qrscan_report_payload">Payload</string>
+    <string name="qrscan_report_segments">Segments</string>
+    <string name="qrscan_report_integrity">Integrity report</string>
+    <string name="qrscan_tag_prefix">Tag %1$s</string>
+    <string name="qrscan_segment_heading">Tag %1$s — %2$s</string>
+    <string name="qrscan_report_meaning">→ %1$s</string>
+    <string name="qrscan_subtag">Subtag %1$s (Length %2$02d)</string>
+
+    <!-- Checksum -->
+    <string name="qrscan_crc_passed">CRC checksum: passed</string>
+    <string name="qrscan_crc_failed">CRC checksum: FAILED</string>
+    <string name="qrscan_crc_expected">Expected: %1$s</string>
+    <string name="qrscan_crc_actual">Actual: %1$s</string>
+
+    <!-- Tag labels, from the EMVCo Merchant Presented Mode specification -->
+    <string name="qrscan_tag_payload_format">Payload Format Indicator</string>
+    <string name="qrscan_tag_initiation_method">Point of Initiation Method</string>
+    <string name="qrscan_tag_merchant_account">Merchant Account Information (%1$s)</string>
+    <string name="qrscan_tag_merchant_category">Merchant Category Code (MCC)</string>
+    <string name="qrscan_tag_currency">Transaction Currency</string>
+    <string name="qrscan_tag_amount">Transaction Amount</string>
+    <string name="qrscan_tag_tip_indicator">Tip or Convenience Indicator</string>
+    <string name="qrscan_tag_fee_fixed">Value of Convenience Fee Fixed</string>
+    <string name="qrscan_tag_fee_percentage">Value of Convenience Fee Percentage</string>
+    <string name="qrscan_tag_country">Country Code</string>
+    <string name="qrscan_tag_merchant_name">Merchant Name</string>
+    <string name="qrscan_tag_merchant_city">Merchant City</string>
+    <string name="qrscan_tag_postal_code">Postal Code</string>
+    <string name="qrscan_tag_additional_data">Additional Data Field Template</string>
+    <string name="qrscan_tag_crc">CRC16 Checksum</string>
+    <string name="qrscan_tag_alternate_language">Merchant Name — Alternate Language</string>
+    <string name="qrscan_tag_rfu">Reserved for EMVCo (%1$s)</string>
+    <string name="qrscan_tag_unreserved">Unreserved Template (%1$s)</string>
+    <string name="qrscan_tag_unknown">Unknown Tag (%1$s)</string>
+
+    <!-- Decoded values -->
+    <string name="qrscan_value_payload_version">V%1$s</string>
+    <string name="qrscan_value_initiation_static">Static</string>
+    <string name="qrscan_value_initiation_dynamic">Dynamic</string>
+    <string name="qrscan_value_initiation_unknown">Unrecognised initiation method</string>
+    <string name="qrscan_value_tip_prompt">Prompt for a tip</string>
+    <string name="qrscan_value_tip_fixed_fee">Fixed convenience fee</string>
+    <string name="qrscan_value_tip_percentage_fee">Percentage convenience fee</string>
+    <string name="qrscan_value_tip_unknown">Unrecognised tip indicator</string>
+    <string name="qrscan_value_category_unknown">Unknown merchant category</string>
+    <string name="qrscan_value_currency">%1$s (%2$s)</string>
+    <string name="qrscan_value_currency_unknown">Unknown currency</string>
+
+    <!-- Failures -->
+    <string name="qrscan_error_no_barcode">No QR code was found in that image. Try another picture, or one cropped closer to the code.</string>
+    <string name="qrscan_error_image_unreadable">That image could not be opened.</string>
+    <string name="qrscan_error_empty">There is nothing to decode.</string>
+    <string name="qrscan_error_not_emv">This is not an EMV payment QR. Try a different code.</string>
+    <string name="qrscan_error_unrecognised">This is a QR code, but not one this app reads. It is neither a payment code nor Wi-Fi credentials.</string>
+    <string name="qrscan_error_missing_format_indicator">This payload does not start with a Payload Format Indicator, so it is not a valid EMV QR.</string>
+    <string name="qrscan_error_missing_crc">This payload has no CRC checksum as its last segment, so it cannot be verified.</string>
+    <string name="qrscan_error_malformed">The payload is damaged at position %1$d — a tag or length could not be read there.</string>
+    <string name="qrscan_error_overrun">Tag %1$s declares %2$d characters but only %3$d remain, so the payload is truncated.</string>
+</resources>

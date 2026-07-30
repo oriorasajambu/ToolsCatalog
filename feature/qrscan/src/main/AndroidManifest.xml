@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!--
+      Not required. The tool decodes a pasted payload just as well as a scanned one, so a device
+      with no camera — or a user who declines the permission — still gets the whole feature minus
+      one input method. Marking it required would remove the app from those devices on Play for
+      no reason.
+    -->
+    <uses-feature
+        android:name="android.hardware.camera.any"
+        android:required="false" />
+
+</manifest>

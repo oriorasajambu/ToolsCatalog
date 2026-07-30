@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copy for the shared form atoms. Feature-specific labels stay in their own feature. -->
+<resources>
+    <string name="ds_picker_unselected">Choose…</string>
+    <string name="ds_picker_search">Type to filter</string>
+    <string name="ds_password_show">Show the password</string>
+    <string name="ds_password_hide">Hide the password</string>
+</resources>

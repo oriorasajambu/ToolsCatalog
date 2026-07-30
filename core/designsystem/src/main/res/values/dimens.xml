@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Spacing tokens for the shared form atoms in `component/FormFields.kt`. They live here because the
+  design system is the one module where a raw dimension may appear.
+-->
+<resources>
+    <dimen name="ds_form_spacing">16dp</dimen>
+    <dimen name="ds_form_spacing_tight">8dp</dimen>
+    <dimen name="ds_picker_max_height">320dp</dimen>
+</resources>
