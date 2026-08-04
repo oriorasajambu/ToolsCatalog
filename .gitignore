@@ -14,3 +14,11 @@ local.properties
 # copy them to these (gitignored) files to override BASE_URL per checkout.
 /dev.properties
 /prod.properties
+
+# Release signing — the keystore and its credentials never go in VCS.
+# keystore.properties.template is committed; copy it to keystore.properties and fill it in.
+/toolbox
+/keystore.properties
+
+# Stray release build output (real outputs live under app/build/).
+/app/production/

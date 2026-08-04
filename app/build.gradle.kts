@@ -40,6 +40,19 @@ fun baseUrl(envFile: String, allowLocalOverride: Boolean): String {
     error("BASE_URL is not set. Copy $envFile.template to $envFile, or set BASE_URL in local.properties.")
 }
 
+/**
+ * Release signing, wired to the `toolbox` keystore at the repository root.
+ *
+ * Neither the keystore nor its passwords go in VCS: the store/key passwords and the alias are read
+ * from `keystore.properties` (gitignored — copy `keystore.properties.template`). When the keystore
+ * or its credentials are absent (a fresh clone, or CI without the secrets) the release build is left
+ * unsigned so it still assembles, rather than failing at configuration time.
+ */
+val releaseKeystoreFile = rootProject.file("toolbox")
+val keystoreProperties = rootProperties("keystore.properties")
+val hasReleaseSigning =
+    releaseKeystoreFile.exists() && keystoreProperties.getProperty("storePassword") != null
+
 android {
     namespace = "com.minion.scaffold"
 
@@ -72,8 +85,23 @@ android {
         }
     }
 
+    if (hasReleaseSigning) {
+        signingConfigs {
+            create("release") {
+                storeFile = releaseKeystoreFile
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // Signed with the `toolbox` release key when keystore.properties supplies the
+            // credentials; otherwise left unsigned (see the signing note above).
+            signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else null
+
             // R8 shrinks and obfuscates. The reflection-driven parts (kotlinx.serialization routes,
             // Gson) are covered by app/proguard-rules.pro; everything else relies on the libraries'
             // own consumer rules. Resource shrinking is left off for now — enable isShrinkResources
