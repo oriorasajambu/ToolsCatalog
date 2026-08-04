@@ -1,5 +1,6 @@
 package com.minion.scaffold.feature.weather.presentation.detail
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -254,7 +255,11 @@ private fun NotableCondition.Kind.toLabelRes(): Int = when (this) {
 }
 
 /** One contiguous stretch of rain/drizzle within the hourly window, e.g. "Rain, 13:00–15:00". */
-private data class RainWindow(@androidx.annotation.StringRes val conditionLabelRes: Int, val startLabel: String, val endLabel: String)
+private data class RainWindow(
+    @param:StringRes val conditionLabelRes: Int,
+    val startLabel: String,
+    val endLabel: String,
+)
 
 /**
  * Groups [this] into contiguous rain/drizzle runs — not every rainy hour individually, which would

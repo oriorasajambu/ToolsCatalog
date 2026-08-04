@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="qrscan_title">Scan QR</string>
     <string name="qrscan_navigate_back">Back</string>
 
@@ -138,5 +138,10 @@
     <string name="qrscan_error_missing_format_indicator">This payload does not start with a Payload Format Indicator, so it is not a valid EMV QR.</string>
     <string name="qrscan_error_missing_crc">This payload has no CRC checksum as its last segment, so it cannot be verified.</string>
     <string name="qrscan_error_malformed">The payload is damaged at position %1$d — a tag or length could not be read there.</string>
-    <string name="qrscan_error_overrun">Tag %1$s declares %2$d characters but only %3$d remain, so the payload is truncated.</string>
+    <!--
+      Not converted to <plurals>: it has two independent quantities (declared vs. remaining
+      characters), and Android plurals resolve against exactly one. A single grammatical form
+      reads fine for an error message.
+    -->
+    <string name="qrscan_error_overrun" tools:ignore="PluralsCandidate">Tag %1$s declares %2$d characters but only %3$d remain, so the payload is truncated.</string>
 </resources>

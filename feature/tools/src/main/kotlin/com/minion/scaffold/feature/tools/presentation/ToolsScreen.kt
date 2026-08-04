@@ -44,6 +44,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minion.scaffold.core.designsystem.component.AppButton
@@ -240,7 +241,7 @@ private fun ScanlineQr(payload: String, modifier: Modifier = Modifier) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .offset(y = tile * SCANLINE_TRAVEL * progress)
+                .offset { IntOffset(x = 0, y = (tile * SCANLINE_TRAVEL * progress).roundToPx()) }
                 .height(2.dp)
                 .background(
                     Brush.horizontalGradient(

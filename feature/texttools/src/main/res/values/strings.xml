@@ -51,7 +51,7 @@
     <string name="generate_length">Length: %1$d</string>
     <string name="generate_class_lower">a-z</string>
     <string name="generate_class_upper">A-Z</string>
-    <string name="generate_class_digits">0-9</string>
+    <string name="generate_class_digits">0–9</string>
     <string name="generate_class_symbols">Symbols</string>
 
     <string name="generate_hex_options">Random hex options</string>
