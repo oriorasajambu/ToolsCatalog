@@ -19,18 +19,33 @@ android {
         versionName = "1.0"
     }
 
-    buildTypes {
-        debug {
-            // :app is the only module that knows which environment it is talking to. :core:network
-            // receives this through the @BaseUrl qualifier and never reads BuildConfig itself —
-            // a library module reading the app's BuildConfig is how a "core" module quietly
-            // becomes app-specific.
+    // The environment the app talks to is a product flavor, kept separate from the build type: each
+    // of `development` and `production` is built both `debug` and `release`, so there are four
+    // variants — developmentDebug/Release and productionDebug/Release. The build type stays about
+    // how the code is built (debuggable, minified); the flavor is about which backend it points at.
+    //
+    // :app is the only module that knows the environment. :core:network receives it through the
+    // @BaseUrl qualifier and never reads BuildConfig itself — a library module reading the app's
+    // BuildConfig is how a "core" module quietly becomes app-specific.
+    flavorDimensions += "environment"
+    productFlavors {
+        create("development") {
+            dimension = "environment"
+            // A distinct id and label, so a development build installs alongside a production one.
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
             buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/\"")
         }
+        create("production") {
+            dimension = "environment"
+            buildConfigField("String", "BASE_URL", "\"https://example.com/\"")
+        }
+    }
+
+    buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            buildConfigField("String", "BASE_URL", "\"https://example.com/\"")
         }
     }
 }
