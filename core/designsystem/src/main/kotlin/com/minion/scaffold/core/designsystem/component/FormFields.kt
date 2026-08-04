@@ -160,10 +160,18 @@ fun <T> PickerField(
     var expanded by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
 
-    val visible = remember(options, query) {
-        options
-            .filter { query.isBlank() || optionLabel(it).contains(query, ignoreCase = true) }
-            .take(MAX_VISIBLE_OPTIONS)
+    // Only filtered once the menu is open. Building this eagerly would run a full pass over the
+    // option list — up to a couple hundred merchant categories — on the screen's very first frame,
+    // for a menu the user has not opened, which is exactly the kind of first-frame work that makes
+    // a heavy authoring screen miss its navigation enter animation.
+    val visible = remember(expanded, options, query) {
+        if (!expanded) {
+            emptyList()
+        } else {
+            options
+                .filter { query.isBlank() || optionLabel(it).contains(query, ignoreCase = true) }
+                .take(MAX_VISIBLE_OPTIONS)
+        }
     }
 
     ExposedDropdownMenuBox(

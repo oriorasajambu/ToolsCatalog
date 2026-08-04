@@ -3,13 +3,13 @@ package com.minion.scaffold.feature.qrcreate.presentation
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -115,62 +115,75 @@ private fun QrCreateContent(
             )
         },
     ) { contentPadding ->
-        Column(
+        // A LazyColumn, not a scrolling Column: the form is long and every field is a heavy
+        // Material text field or dropdown. A `Column.verticalScroll` composes *all* of them on the
+        // first frame, and on a slow device that first layout blocks the main thread past the
+        // navigation enter transition — which is wall-clock timed, so it elapses during the block
+        // and the screen snaps in with no slide. Lazily composing only the visible sections keeps
+        // that first frame cheap enough for the push animation to actually play.
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(contentPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = spacing, vertical = spacing),
+                .padding(contentPadding),
+            contentPadding = PaddingValues(horizontal = spacing, vertical = spacing),
             verticalArrangement = Arrangement.spacedBy(spacing),
         ) {
             if (state.prefillFailed) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                    ),
-                ) {
-                    Text(
-                        text = stringResource(R.string.qrcreate_prefill_failed),
-                        modifier = Modifier.padding(spacing),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                        ),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.qrcreate_prefill_failed),
+                            modifier = Modifier.padding(spacing),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
             }
 
-            MerchantSection(state, onIntent)
-            TransactionSection(state, onIntent)
-            AcquirerSection(state, onIntent)
+            item { MerchantSection(state, onIntent) }
+            item { TransactionSection(state, onIntent) }
+            item { AcquirerSection(state, onIntent) }
 
             // Errors are attached to their own fields, which may be scrolled off-screen by the
             // time the button is reached. The count is what tells the user the press did
             // something and where to look.
             if (state.violations.isNotEmpty()) {
-                Text(
-                    text = pluralStringResource(
-                        R.plurals.qrcreate_violation_summary,
-                        state.violations.size,
-                        state.violations.size,
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
+                item {
+                    Text(
+                        text = pluralStringResource(
+                            R.plurals.qrcreate_violation_summary,
+                            state.violations.size,
+                            state.violations.size,
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+
+            item {
+                AppButton(
+                    text = stringResource(R.string.qrcreate_generate),
+                    onClick = { onIntent(QrCreateIntent.GenerateRequested) },
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
 
-            AppButton(
-                text = stringResource(R.string.qrcreate_generate),
-                onClick = { onIntent(QrCreateIntent.GenerateRequested) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            QrResultSection(
-                payload = state.payload,
-                exporting = state.exporting,
-                emptyHint = stringResource(R.string.qrcreate_empty_hint),
-                onCopy = { onIntent(QrCreateIntent.CopyPayloadRequested) },
-                onShare = { onIntent(QrCreateIntent.ShareImageRequested) },
-                onSave = { onIntent(QrCreateIntent.SaveImageRequested) },
-            )
+            item {
+                QrResultSection(
+                    payload = state.payload,
+                    exporting = state.exporting,
+                    emptyHint = stringResource(R.string.qrcreate_empty_hint),
+                    onCopy = { onIntent(QrCreateIntent.CopyPayloadRequested) },
+                    onShare = { onIntent(QrCreateIntent.ShareImageRequested) },
+                    onSave = { onIntent(QrCreateIntent.SaveImageRequested) },
+                )
+            }
         }
     }
 }

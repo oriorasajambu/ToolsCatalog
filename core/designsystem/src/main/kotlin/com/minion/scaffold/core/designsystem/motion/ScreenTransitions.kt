@@ -47,4 +47,4 @@ fun slideOutToRight(): ExitTransition =
  * One full-screen transition, near the Material long-transition duration. Long enough to read the
  * direction, short enough not to sit between taps.
  */
-private const val DURATION_MILLIS = 320
+private const val DURATION_MILLIS = 800
