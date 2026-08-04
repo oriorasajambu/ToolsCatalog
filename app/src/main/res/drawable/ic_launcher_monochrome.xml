@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Toolbox launcher — foreground layer.
-  A scan viewfinder (four rounded corner brackets) wrapped around the fast-action lightning bolt —
-  the two things the app is for — in near-white #F4FBF8 on a transparent layer. Geometry is the
-  design direction's own, drawn between 32..76 on the 108 canvas so it sits inside the 66dp safe
-  zone and survives every launcher mask.
+  Toolbox launcher — monochrome layer for Android 13+ themed icons.
+  The same viewfinder-and-bolt glyph as the foreground, as a single flat shape. The system discards
+  this colour and re-tints the silhouette to match the wallpaper, so only the shape and its alpha
+  matter here.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -13,14 +12,14 @@
     android:viewportHeight="108">
     <path
         android:pathData="M32,42 L32,36 A4,4 0 0 1 36,32 L42,32 M76,42 L76,36 A4,4 0 0 0 72,32 L66,32 M32,66 L32,72 A4,4 0 0 0 36,76 L42,76 M76,66 L76,72 A4,4 0 0 0 72,76 L66,76"
-        android:strokeColor="#F4FBF8"
+        android:strokeColor="#000000"
         android:strokeWidth="7"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
     <path
         android:pathData="M57.5,38 L44,57 L52,57 L50.5,71 L64,51 L56,51 Z"
-        android:fillColor="#F4FBF8"
-        android:strokeColor="#F4FBF8"
+        android:fillColor="#000000"
+        android:strokeColor="#000000"
         android:strokeWidth="2.2"
         android:strokeLineJoin="round" />
 </vector>
