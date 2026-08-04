@@ -9,3 +9,8 @@
 .cxx
 /.claude
 local.properties
+
+# Per-machine environment config. The committed *.properties.template files hold the defaults;
+# copy them to these (gitignored) files to override BASE_URL per checkout.
+/dev.properties
+/prod.properties

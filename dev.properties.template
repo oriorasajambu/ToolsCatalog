@@ -1,0 +1,7 @@
+# Development environment configuration.
+#
+# Copy this file to `dev.properties` (which is gitignored) and adjust the values for your machine.
+# The build reads `dev.properties` first and falls back to this template, so a fresh checkout still
+# builds with the defaults below. `local.properties` (also gitignored) overrides BASE_URL for the
+# development flavor if you need to point at your own backend without editing a committed file.
+BASE_URL=http://10.0.2.2:8080/

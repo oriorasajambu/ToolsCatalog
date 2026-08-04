@@ -1,0 +1,5 @@
+# Production environment configuration.
+#
+# Copy this file to `prod.properties` (which is gitignored) and set the real production values.
+# The build reads `prod.properties` first and falls back to this template.
+BASE_URL=https://example.com/

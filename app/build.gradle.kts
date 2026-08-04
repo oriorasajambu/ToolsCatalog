@@ -6,8 +6,38 @@
  * `minion.android.library` cannot drift apart. What stays here is what is genuinely unique to
  * the application: identity, versioning, environment constants, and the module graph.
  */
+import java.util.Properties
+
 plugins {
     id("minion.android.application")
+}
+
+/** Loads a properties file from the repository root, or an empty set if it is absent. */
+fun rootProperties(fileName: String): Properties = Properties().apply {
+    val file = rootProject.file(fileName)
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+/**
+ * The `BASE_URL` for a flavor, resolved from properties files rather than hard-coded here.
+ *
+ * Order: an optional per-machine override in `local.properties` (development only), then the
+ * flavor's own `<env>.properties` (gitignored, per checkout), then the committed
+ * `<env>.properties.template` default so a fresh clone still builds. Missing from all three is a
+ * configuration error rather than a silent fallback.
+ */
+fun baseUrl(envFile: String, allowLocalOverride: Boolean): String {
+    if (allowLocalOverride) {
+        rootProperties("local.properties").getProperty("BASE_URL")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { return it }
+    }
+    for (candidate in listOf(envFile, "$envFile.template")) {
+        rootProperties(candidate).getProperty("BASE_URL")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { return it }
+    }
+    error("BASE_URL is not set. Copy $envFile.template to $envFile, or set BASE_URL in local.properties.")
 }
 
 android {
@@ -34,11 +64,11 @@ android {
             // A distinct id and label, so a development build installs alongside a production one.
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/\"")
+            buildConfigField("String", "BASE_URL", "\"${baseUrl("dev.properties", allowLocalOverride = true)}\"")
         }
         create("production") {
             dimension = "environment"
-            buildConfigField("String", "BASE_URL", "\"https://example.com/\"")
+            buildConfigField("String", "BASE_URL", "\"${baseUrl("prod.properties", allowLocalOverride = false)}\"")
         }
     }
 
