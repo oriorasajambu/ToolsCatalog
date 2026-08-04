@@ -74,7 +74,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 shrinks and obfuscates. The reflection-driven parts (kotlinx.serialization routes,
+            // Gson) are covered by app/proguard-rules.pro; everything else relies on the libraries'
+            // own consumer rules. Resource shrinking is left off for now — enable isShrinkResources
+            // once the release build has been smoke-tested, since it is the more likely of the two
+            // to strip something referenced only by name.
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
