@@ -53,19 +53,50 @@ internal val MidnightErrorContainer = Color(0xFF33161C)
 internal val MidnightOnErrorContainer = Color(0xFFFFB3BB)
 
 /**
- * A coherent violet-on-white light scheme, kept valid but unused by default — the app ships
- * Midnight. It exists so a future light toggle has somewhere to land.
+ * **Signal** — the app's light scheme: a bright mint ground, white cards on soft green lines, and a
+ * single emerald accent for tiles, fills and the featured scan card. Imported from the
+ * "ToolsCatalog · Direction 1b — Signal" design direction; the values are that direction's own CSS
+ * variables (`--bg`, `--card`, `--accent`, …) lifted verbatim. Kept valid but not the default — the
+ * app ships Midnight — so a light toggle has somewhere real to land.
  */
-internal val DayAccent = Color(0xFF5B4CD6)
-internal val DayAccentContainer = Color(0xFFE7E3FF)
-internal val DayOnAccentContainer = Color(0xFF1A1440)
-internal val DayBackground = Color(0xFFFBFBFE)
-internal val DaySurface = Color(0xFFF3F3F9)
-internal val DayText = Color(0xFF14161F)
-internal val DayMuted = Color(0xFF5A5F73)
-internal val DayLine = Color(0xFFC9CCDA)
-internal val DaySuccessContainer = Color(0xFFC9F2DE)
-internal val DayOnSuccessContainer = Color(0xFF0B3A26)
-internal val DayError = Color(0xFFB3261E)
-internal val DayErrorContainer = Color(0xFFF9DEDC)
-internal val DayOnErrorContainer = Color(0xFF410E0B)
+
+/** `--accent`: the one emerald, used as tile, fill and the featured card's ground. */
+internal val SignalAccent = Color(0xFF0E9E7E)
+
+/** The gradient's far stop and the link-hover — a deeper teal for the on-light tertiary role. */
+internal val SignalAccentDeep = Color(0xFF0B8F86)
+
+/** A light emerald for the inverse (on-dark) primary role. */
+internal val SignalAccentBright = Color(0xFF5FD3B4)
+
+/** `--bg`: the mint ground everything sits on. */
+internal val SignalBackground = Color(0xFFF1F7F4)
+
+/** The tonal steps of raised surface — `--card` white, cooling by a whisper toward the ground. */
+internal val SignalSurfaceLowest = Color(0xFFFFFFFF)
+internal val SignalSurfaceLow = Color(0xFFFFFFFF)
+internal val SignalSurface = Color(0xFFFFFFFF)
+internal val SignalSurfaceHigh = Color(0xFFFBFDFC)
+internal val SignalSurfaceHighest = Color(0xFFF7FBF9)
+
+/** `--text`: near-black with a green cast. */
+internal val SignalText = Color(0xFF0C1F1A)
+
+/** `--muted`: supporting text and, as `onSurfaceVariant`, the hairline card borders. */
+internal val SignalMuted = Color(0xFF5F776F)
+
+/** `--line`: the `#E3EEE9` card border. */
+internal val SignalLine = Color(0xFFE3EEE9)
+
+/** `--soft`: the mint an icon tile sits on. */
+internal val SignalAccentContainer = Color(0xFFDDF4EC)
+
+/** Success — the integrity-passed green from the report card (bg, border and title). */
+internal val SignalSuccess = Color(0xFF137A5B)
+internal val SignalSuccessContainer = Color(0xFFE4F6EE)
+internal val SignalOnSuccessContainer = Color(0xFF0B7C57)
+
+/** Failure — a red that reads on the mint-white ground. */
+internal val SignalError = Color(0xFFB3261E)
+internal val SignalErrorContainer = Color(0xFFF9DEDC)
+internal val SignalOnErrorContainer = Color(0xFF410E0B)

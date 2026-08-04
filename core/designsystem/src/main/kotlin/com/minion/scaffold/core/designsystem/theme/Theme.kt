@@ -1,5 +1,6 @@
 package com.minion.scaffold.core.designsystem.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -59,51 +60,87 @@ private val MidnightColorScheme = darkColorScheme(
 
     inverseSurface = MidnightText,
     inverseOnSurface = MidnightBackground,
-    inversePrimary = DayAccent,
+    inversePrimary = SignalAccent,
 
     scrim = Color.Black,
 )
 
-/** The day scheme, kept coherent but unused while the app defaults to Midnight. */
-private val DayColorScheme = lightColorScheme(
-    primary = DayAccent,
+/**
+ * **Signal** — the app's light scheme, mapped from the "Direction 1b — Signal" variables the same
+ * way Midnight is: the emerald `--accent` → [primary] (drawing white as `onPrimary`, so a fill
+ * reads as a solid emerald button); `--soft` → the accent-container the icon tiles sit on, with the
+ * accent itself as `onPrimaryContainer` for the glyph; `--card` white → the `surfaceContainer`
+ * family and `--bg` mint → [background]/[surface]; `--muted` → [onSurfaceVariant], which also tints
+ * the hairline borders, and `--line` → [outline]. The report card's integrity-passed green is
+ * [secondaryContainer], a failed check [errorContainer] — the same two roles Midnight uses, so
+ * those cards come out green/red here without touching a screen.
+ */
+private val SignalColorScheme = lightColorScheme(
+    primary = SignalAccent,
     onPrimary = Color.White,
-    primaryContainer = DayAccentContainer,
-    onPrimaryContainer = DayOnAccentContainer,
-    secondaryContainer = DaySuccessContainer,
-    onSecondaryContainer = DayOnSuccessContainer,
-    background = DayBackground,
-    onBackground = DayText,
-    surface = DayBackground,
-    onSurface = DayText,
-    surfaceVariant = DaySurface,
-    onSurfaceVariant = DayMuted,
-    outline = DayLine,
-    outlineVariant = DayLine,
-    error = DayError,
-    errorContainer = DayErrorContainer,
-    onErrorContainer = DayOnErrorContainer,
+    primaryContainer = SignalAccentContainer,
+    onPrimaryContainer = SignalAccent,
+
+    secondary = SignalSuccess,
+    onSecondary = Color.White,
+    secondaryContainer = SignalSuccessContainer,
+    onSecondaryContainer = SignalOnSuccessContainer,
+
+    tertiary = SignalAccentDeep,
+    onTertiary = Color.White,
+    tertiaryContainer = SignalAccentContainer,
+    onTertiaryContainer = SignalAccentDeep,
+
+    background = SignalBackground,
+    onBackground = SignalText,
+    surface = SignalBackground,
+    onSurface = SignalText,
+
+    surfaceContainerLowest = SignalSurfaceLowest,
+    surfaceContainerLow = SignalSurfaceLow,
+    surfaceContainer = SignalSurface,
+    surfaceContainerHigh = SignalSurfaceHigh,
+    surfaceContainerHighest = SignalSurfaceHighest,
+    surfaceVariant = SignalSurface,
+    onSurfaceVariant = SignalMuted,
+
+    outline = SignalLine,
+    outlineVariant = SignalLine,
+
+    error = SignalError,
+    onError = Color.White,
+    errorContainer = SignalErrorContainer,
+    onErrorContainer = SignalOnErrorContainer,
+
+    inverseSurface = SignalText,
+    inverseOnSurface = SignalBackground,
+    inversePrimary = SignalAccentBright,
+
+    scrim = Color.Black,
 )
 
 /**
  * The single theme wrapper. Everything the app draws sits inside exactly one of these, applied once
  * in `MainActivity`.
  *
- * Defaults to **Midnight, no dynamic colour** — the design is a deliberate brand direction, and
- * dynamic colour (wallpaper-derived) would discard it, which is exactly the case the Material
- * guidance flags for a product with a strong accent. A caller may still pass `darkTheme = false`
- * to preview the day scheme.
+ * Follows the **system** light/dark setting — Midnight in dark, Signal in light — and never uses
+ * dynamic colour: the design is a deliberate brand direction, and dynamic colour (wallpaper-derived)
+ * would discard it, which is exactly the case the Material guidance flags for a product with a
+ * strong accent. Both schemes are hand-mapped from their design directions, so following the system
+ * switches between two intentional brands rather than one brand and a tinted fallback. A caller may
+ * still pin `darkTheme` explicitly to force a fixed scheme; a `@Preview` that leaves it unset picks
+ * up the preview's own light/dark configuration.
  *
- * @param darkTheme whether to use Midnight; on by default, so the whole app is Midnight.
+ * @param darkTheme whether to use Midnight; defaults to the system setting via [isSystemInDarkTheme].
  * @param content the app.
  */
 @Composable
 fun AppTheme(
-    darkTheme: Boolean = true,
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
     MaterialTheme(
-        colorScheme = if (darkTheme) MidnightColorScheme else DayColorScheme,
+        colorScheme = if (darkTheme) MidnightColorScheme else SignalColorScheme,
         typography = AppTypography,
         shapes = AppShapes,
         content = content,
