@@ -1,27 +1,26 @@
 # Android Scaffold
 
-An empty, buildable starting point for Android apps: **Kotlin**, **Jetpack Compose**, **MVI**,
+An opinionated, buildable starting point for Android apps: **Kotlin**, **Jetpack Compose**, **MVI**,
 **Clean Architecture**, **Hilt**, and a Gradle multi-module graph whose boundaries are enforced by
 the build rather than by code review.
 
-There are no features. That is the point — clone it, rename the package, and run
-`scripts/scaffold_feature.py` to generate the first vertical slice.
+The scaffold now carries a worked example — **ToolBox**, a small offline utility app: scan and build
+EMV / Wi-Fi / link / vCard QR codes, plus text and generator tools, assembled entirely with the
+conventions below. Clone it, rename the package, drop the `feature/*` you do not want, and run
+`scripts/scaffold_feature.py` to generate the next vertical slice.
 
 ```bash
 ./gradlew build
 ```
 
-- **UI** — Jetpack Compose, Material 3
+- **UI** — Jetpack Compose, Material 3; Midnight (dark) and Signal (light) themes that follow the system setting
 - **Architecture** — MVI (State / Intent / Effect) over Clean Architecture layers
 - **Async** — Coroutines + `StateFlow`; one-shot events over a buffered `Channel`
 - **DI** — Hilt, with bindings living beside the implementations they bind
 - **Network** — Retrofit + OkHttp + Gson; Chucker on debug builds only
+- **Build** — `development`/`production` flavors × `debug`/`release`; environment and signing read from gitignored properties files; R8 on release
 - **Testing** — JUnit + MockK + Turbine, with a shared `MainDispatcherRule`
 - **Previews** — Showkase, aggregating every `@Preview` into a browsable catalog
-
-> `docs/` holds product specifications for a different application (Cash Flow Manager) that were
-> in this repository before it became a scaffold. They are **not** scaffold documentation and
-> nothing here implements them.
 
 ---
 
@@ -40,7 +39,15 @@ There are no features. That is the point — clone it, rename the package, and r
 ├── :core:data           Data shared between features (not a feature's own data layer).
 ├── :core:testing        MainDispatcherRule, fakes. Consumed via testImplementation.
 │
-└── :feature:*           One module per screen area. Empty — generate the first one.
+├── :core:emv            Pure Kotlin. EMV Merchant-Presented-Mode QR domain — parse and build.
+├── :core:wifi           Pure Kotlin. Wi-Fi credential QR format (WIFI:T:…;S:…;P:…;;).
+├── :core:url            Pure Kotlin. Web-link QR codes.
+├── :core:vcard          Pure Kotlin. vCard 3.0 contact cards (RFC 2426).
+├── :core:text           Pure Kotlin. Text / developer transforms — encoding, hashing, generators.
+│
+└── :feature:*           tools, qrscan, qrcreate, texttools — one module per screen area.
+                         (The domain lives in the pure-Kotlin :core:* modules above; add more with
+                         scripts/scaffold_feature.py.)
 ```
 
 ### Dependency rules
@@ -91,7 +98,48 @@ Dependency versions live in `gradle/libs.versions.toml`, shared by both builds.
 
 ---
 
-## 3. The MVI contract
+## 3. Build variants & configuration
+
+Two product flavors (the `environment` dimension) × two build types give four variants:
+
+| | `debug` | `release` |
+|---|---|---|
+| **development** | `developmentDebug` | `developmentRelease` |
+| **production** | `productionDebug` | `productionRelease` |
+
+- **Flavor is which backend.** `development` carries a `.dev` `applicationId` suffix and a `-dev`
+  version suffix, so it installs next to a production build; its launcher icon wears a **DEV** ribbon.
+- **Build type is how the code is built.** `release` runs R8 and is signed with the release key;
+  `debug` is debuggable and unminified.
+
+### Environment (`BASE_URL`)
+
+Not hard-coded — resolved per flavor from properties files at the repo root, first hit wins:
+
+1. `local.properties` → `BASE_URL` — optional per-machine override (development only)
+2. `dev.properties` / `prod.properties` — the gitignored per-checkout file
+3. `dev.properties.template` / `prod.properties.template` — committed defaults, so a fresh clone still builds
+
+`:app` is the only module that reads it; `:core:network` receives it through the `@BaseUrl`
+qualifier and never touches `BuildConfig`.
+
+### Release signing
+
+`release` is signed with the `toolbox` keystore at the repo root. Neither the keystore nor its
+passwords go in VCS: copy `keystore.properties.template` to `keystore.properties` (gitignored) and
+fill in `storePassword` / `keyAlias` / `keyPassword`. Without them the release build is left unsigned
+but still assembles. Confirm the wiring with `./gradlew :app:signingReport`.
+
+### Minification
+
+`release` runs R8 (`isMinifyEnabled = true`). `app/proguard-rules.pro` keeps only what reflection
+needs — kotlinx.serialization (type-safe routes), Gson, and ML Kit's manifest-named component
+registrars — everything else rides on the libraries' own consumer rules. Resource shrinking is left
+off until a release build has been smoke-tested.
+
+---
+
+## 4. The MVI contract
 
 Every feature declares exactly three types.
 
@@ -200,7 +248,7 @@ while stopped are held and delivered on resume.
 
 ---
 
-## 4. Adding a feature
+## 5. Adding a feature
 
 ### With the script
 
@@ -248,7 +296,7 @@ screen, navigation, tests.
 
 ---
 
-## 5. Testing
+## 6. Testing
 
 ```bash
 ./gradlew build              # compiles everything, runs unit tests, compiles androidTest, lints
@@ -268,7 +316,7 @@ wrong reason the moment the copy is reworded.
 
 ---
 
-## 6. Renaming for a new project
+## 7. Renaming for a new project
 
 Everything is under `com.minion.scaffold`. To rebrand:
 
@@ -276,14 +324,17 @@ Everything is under `com.minion.scaffold`. To rebrand:
    `scripts/scaffold_feature.py` (`BASE_PACKAGE`).
 2. Move the source directories to match.
 3. `settings.gradle.kts` — `rootProject.name`.
-4. `app/build.gradle.kts` — `applicationId`.
-5. `app/src/main/res/values/strings.xml` — `app_name`; and `themes.xml` if you rename
-   `Theme.Scaffold`.
-6. Replace the Material 3 baseline palette in `:core:designsystem` with your own tokens.
+4. `app/build.gradle.kts` — `applicationId` (and the `.dev` suffix on the development flavor).
+5. `app/src/main/res/values/strings.xml` — `app_name` (currently `ToolBox`); `themes.xml` if you
+   rename `Theme.Scaffold`.
+6. Replace the Midnight/Signal palettes in `:core:designsystem` with your own tokens, and swap the
+   `ic_launcher_*` drawables (the development override lives in `app/src/development`).
+7. Point `dev.properties` / `prod.properties` at your backends, and supply your own release keystore
+   through `keystore.properties`.
 
 ---
 
-## 7. Things that will bite you
+## 8. Things that will bite you
 
 - **`@ShowkaseRoot` must live in `src/main`, not `src/debug`.** KSP does not scan the debug source
   set for annotations, so a root placed there compiles and silently generates nothing. Only the
