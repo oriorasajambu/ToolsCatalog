@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.minion.scaffold.core.navigation.AppRoute
 import com.minion.scaffold.core.navigation.GenerateRoute
@@ -19,6 +20,7 @@ import com.minion.scaffold.core.navigation.ScanPurpose
 import com.minion.scaffold.core.navigation.TextToolsRoute
 import com.minion.scaffold.core.navigation.UrlCreateRoute
 import com.minion.scaffold.core.navigation.VCardCreateRoute
+import com.minion.scaffold.core.navigation.WeatherRoute
 import com.minion.scaffold.core.navigation.WifiCreateRoute
 import com.minion.scaffold.feature.tools.R
 
@@ -117,6 +119,14 @@ internal object ToolCatalog {
             descriptionRes = R.string.tools_generate_description,
             icon = Icons.Filled.Casino,
             route = GenerateRoute,
+            category = ToolCategory.Utility,
+        ),
+        Tool(
+            id = "weather",
+            titleRes = R.string.tools_weather_title,
+            descriptionRes = R.string.tools_weather_description,
+            icon = Icons.Filled.WbSunny,
+            route = WeatherRoute,
             category = ToolCategory.Utility,
         ),
     )

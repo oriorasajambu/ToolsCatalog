@@ -150,3 +150,29 @@ data object TextToolsRoute : AppRoute
 /** The generator tool — UUID, password, random hex. */
 @Serializable
 data object GenerateRoute : AppRoute
+
+/**
+ * The weather home screen: location permission gate plus the pinned current-location card.
+ *
+ * A `data object` like [ToolsRoute] rather than a route carrying arguments — there is nothing to
+ * pass in; the screen resolves the device's own GPS fix.
+ */
+@Serializable
+data object WeatherRoute : AppRoute
+
+/**
+ * One location's forecast — current conditions, notable-conditions banner, hourly strip, daily
+ * list.
+ *
+ * [locationId] is `"current"` for the pinned GPS card or a saved location's id — the same key the
+ * forecast cache is keyed by (`:feature:weather`'s `forecast_cache` table), so the detail screen
+ * can look up coordinates from what was already fetched rather than needing them passed in too.
+ */
+@Serializable
+data class WeatherDetailRoute(val locationId: String) : AppRoute {
+
+    companion object {
+        /** See [QrScanRoute.ARG_PURPOSE] for why this is read by name. */
+        const val ARG_LOCATION_ID = "locationId"
+    }
+}

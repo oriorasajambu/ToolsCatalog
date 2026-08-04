@@ -26,7 +26,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AndroidScaffold"
+rootProject.name = "ToolBox"
 
 // The only module that may see both a feature and a repository implementation: it assembles the
 // navigation graph and the DI graph, and does nothing else.
@@ -54,6 +54,11 @@ include(":core:vcard")
 // Text and developer transforms. Pure Kotlin.
 include(":core:text")
 
+// Weather domain shaping — DTO mapping, WMO condition codes, notable-condition thresholds, unit
+// conversion. Pure Kotlin, shared by nothing else yet; lives here rather than in the feature only
+// because it mirrors every other format module's shape.
+include(":core:weather")
+
 // Route contracts — pure Kotlin. The only channel through which one feature reaches another.
 include(":core:navigation")
 
@@ -75,4 +80,5 @@ include(":feature:tools")
 include(":feature:qrscan")
 include(":feature:qrcreate")
 include(":feature:texttools")
+include(":feature:weather")
 

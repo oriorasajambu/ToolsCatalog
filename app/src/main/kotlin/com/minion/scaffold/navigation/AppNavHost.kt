@@ -18,6 +18,7 @@ import com.minion.scaffold.feature.qrscan.presentation.qrScanScreen
 import com.minion.scaffold.feature.texttools.presentation.generateScreen
 import com.minion.scaffold.feature.texttools.presentation.textToolsScreen
 import com.minion.scaffold.feature.tools.presentation.toolsScreen
+import com.minion.scaffold.feature.weather.presentation.weatherScreen
 
 /**
  * The app's single navigation graph, assembled from every feature's entry point.
@@ -77,6 +78,10 @@ fun AppNavHost(
         )
         generateScreen(
             onNavigateBack = { navController.popBackStack() },
+        )
+        weatherScreen(
+            onNavigateBack = { navController.popBackStack() },
+            onNavigateToDetail = { route -> navController.navigate(route) },
         )
     }
 }

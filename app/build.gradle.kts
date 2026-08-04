@@ -127,6 +127,7 @@ dependencies {
     implementation(project(":feature:qrscan"))
     implementation(project(":feature:qrcreate"))
     implementation(project(":feature:texttools"))
+    implementation(project(":feature:weather"))
 
     implementation(libs.androidx.splashscreen)
 

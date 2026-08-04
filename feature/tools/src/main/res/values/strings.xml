@@ -35,4 +35,6 @@
     <string name="tools_generate_description">Make a UUID, a password, or random hex</string>
     <string name="tools_qr_edit_title">Edit QR</string>
     <string name="tools_qr_edit_description">Scan a code, change what you need, generate a new one</string>
+    <string name="tools_weather_title">Weather</string>
+    <string name="tools_weather_description">Current conditions and a forecast for your location</string>
 </resources>

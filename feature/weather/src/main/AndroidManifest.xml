@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Coarse is the mandatory gate (SPEC.md §5); fine is requested in the same system dialog for
+      better reverse-geocoding accuracy but is not separately required — a device that only grants
+      coarse still gets the whole feature, just a less precise pinned-card location.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+</manifest>
