@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Development flavor — launcher foreground override.
+  The shared glyph with a "DEV" ribbon stacked on top, so a development build is unmistakable next
+  to a production one on the same device. The band's text sits inside the safe zone; its ends bleed
+  off and are cropped by round masks, reading as a ribbon. Production uses src/main's foreground
+  (glyph only).
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/ic_launcher_glyph" />
+    <item android:drawable="@drawable/ic_launcher_dev_badge" />
+</layer-list>
