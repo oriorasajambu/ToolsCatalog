@@ -6,6 +6,18 @@
 -->
 <resources>
     <string name="tools_title">Tools</string>
+    <string name="tools_home_title">Toolbox</string>
+
+    <!-- Home — hero scan card -->
+    <string name="tools_hero_eyebrow">READER</string>
+    <string name="tools_hero_title">Scan &amp; inspect</string>
+    <string name="tools_hero_description">Decode EMV, Wi-Fi, contacts and links into a clean report.</string>
+    <string name="tools_hero_action">Start scanning</string>
+    <string name="tools_hero_qr_description">A decorative QR code</string>
+
+    <!-- Home — section headers -->
+    <string name="tools_section_create">CREATE</string>
+    <string name="tools_section_utilities">UTILITIES</string>
     <string name="tools_qr_scan_title">Scan QR</string>
     <string name="tools_qr_scan_description">Decode an EMV QR payload into a readable report</string>
     <!-- Named by kind: with two "create" tools, "Create QR" no longer says which. -->

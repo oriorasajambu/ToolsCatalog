@@ -2,6 +2,8 @@ package com.minion.scaffold.feature.qrscan.presentation
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.minion.scaffold.core.designsystem.motion.slideDownExit
+import com.minion.scaffold.core.designsystem.motion.slideUpEnter
 import com.minion.scaffold.core.navigation.AppRoute
 import com.minion.scaffold.core.navigation.QrScanRoute
 
@@ -18,7 +20,14 @@ fun NavGraphBuilder.qrScanScreen(
     onNavigateBack: () -> Unit,
     onEditPayload: (AppRoute) -> Unit,
 ) {
-    composable<QrScanRoute> {
+    // The camera is the one modal in the app: it rises from the bottom to open and drops back down
+    // to close, overriding the host's default right-to-left push. Only the two directions that move
+    // the camera itself are set — enter on open, pop-exit on close; being covered by or revealed
+    // beneath another screen inherits the host default of holding still.
+    composable<QrScanRoute>(
+        enterTransition = { slideUpEnter() },
+        popExitTransition = { slideDownExit() },
+    ) {
         QrScanScreen(
             onNavigateBack = onNavigateBack,
             onEditPayload = onEditPayload,

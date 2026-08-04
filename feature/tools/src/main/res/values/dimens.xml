@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spacing and shape tokens for the Midnight Pro home. -->
+<resources>
+    <dimen name="tools_gutter">20dp</dimen>
+    <dimen name="tools_section_gap">22dp</dimen>
+    <dimen name="tools_row_gap">12dp</dimen>
+    <dimen name="tools_card_padding">20dp</dimen>
+    <dimen name="tools_row_padding">14dp</dimen>
+
+    <dimen name="tools_hero_radius">24dp</dimen>
+    <dimen name="tools_card_radius">16dp</dimen>
+    <dimen name="tools_tile_radius">12dp</dimen>
+
+    <dimen name="tools_brand_tile">36dp</dimen>
+    <dimen name="tools_avatar">38dp</dimen>
+    <dimen name="tools_row_tile">44dp</dimen>
+    <dimen name="tools_util_tile">38dp</dimen>
+
+    <dimen name="tools_hero_qr">92dp</dimen>
+    <dimen name="tools_hero_qr_radius">16dp</dimen>
+    <dimen name="tools_hero_qr_inset">8dp</dimen>
+</resources>

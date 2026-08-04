@@ -1,10 +1,14 @@
 package com.minion.scaffold.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import com.minion.scaffold.core.designsystem.motion.slideInFromRight
+import com.minion.scaffold.core.designsystem.motion.slideOutToRight
 import com.minion.scaffold.core.navigation.ToolsRoute
 import com.minion.scaffold.feature.qrcreate.presentation.qrCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.url.urlCreateScreen
@@ -35,6 +39,15 @@ fun AppNavHost(
         navController = navController,
         startDestination = ToolsRoute,
         modifier = modifier,
+        // The push motion, applied once as the default so every destination inherits it — a screen
+        // slides in from the right when opened and back off to the right when closed. The camera is
+        // the one exception; it overrides these with the modal (vertical) motion at its own
+        // `composable`. The counterpart — what the covered screen does — is left to hold still, so
+        // the moving screen reads clearly against a static background.
+        enterTransition = { slideInFromRight() },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { slideOutToRight() },
     ) {
         // The tools screen hands back the route of whatever the user tapped. It never learns which
         // feature owns that route, so adding a tool does not touch this file.
