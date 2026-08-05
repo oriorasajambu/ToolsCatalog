@@ -3,6 +3,7 @@ package com.minion.scaffold.feature.weather.presentation.home
 import app.cash.turbine.test
 import com.minion.scaffold.core.common.error.DomainError
 import com.minion.scaffold.core.common.result.AppResult
+import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.core.testing.MainDispatcherRule
 import com.minion.scaffold.core.weather.model.CurrentConditions
 import com.minion.scaffold.core.weather.model.Forecast

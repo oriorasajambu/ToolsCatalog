@@ -4,6 +4,7 @@ import android.net.Uri
 import com.minion.scaffold.core.common.mvi.UiEffect
 import com.minion.scaffold.core.common.mvi.UiIntent
 import com.minion.scaffold.core.common.mvi.UiState
+import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.core.navigation.AppRoute
 import com.minion.scaffold.core.vcard.model.ContactCard
 import com.minion.scaffold.feature.qrscan.domain.ScannedContent
@@ -16,7 +17,7 @@ import com.minion.scaffold.feature.qrscan.domain.ScannedContent
  */
 internal data class QrScanState(
     val mode: InputMode = InputMode.Camera,
-    val cameraPermission: CameraPermissionState = CameraPermissionState.Unknown,
+    val cameraPermission: PermissionState = PermissionState.Unknown,
     val torchEnabled: Boolean = false,
     val content: ContentState = ContentState.Idle,
     val manualPayload: String = "",
@@ -33,7 +34,7 @@ internal data class QrScanState(
      */
     val isScanning: Boolean
         get() = mode == InputMode.Camera &&
-            cameraPermission == CameraPermissionState.Granted &&
+            cameraPermission == PermissionState.Granted &&
             content is ContentState.Idle
 
     sealed interface ContentState {
@@ -58,26 +59,6 @@ internal data class QrScanState(
 
 /** Where a payload comes from. Both funnel into [QrScanIntent.PayloadSubmitted]. */
 internal enum class InputMode { Camera, Manual }
-
-/**
- * What the system has said about camera access.
- *
- * [Denied] and [PermanentlyDenied] are separate because the recovery differs: one is another
- * request away, the other can only be undone in system settings, and offering the wrong button
- * either wastes a tap or asks the user to hunt through Settings when a dialog would have done.
- */
-internal enum class CameraPermissionState {
-
-    /** Not yet asked in this session. */
-    Unknown,
-    Granted,
-
-    /** Refused, but the system will still show the dialog. */
-    Denied,
-
-    /** Refused to the point where only Settings can grant it. */
-    PermanentlyDenied,
-}
 
 internal sealed interface QrScanIntent : UiIntent {
 

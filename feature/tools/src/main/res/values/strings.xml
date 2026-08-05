@@ -37,4 +37,6 @@
     <string name="tools_qr_edit_description">Scan a code, change what you need, generate a new one</string>
     <string name="tools_weather_title">Weather</string>
     <string name="tools_weather_description">Current conditions and a forecast for your location</string>
+    <string name="tools_ocr_title">Image to text</string>
+    <string name="tools_ocr_description">Pull the text out of a photo, on the device</string>
 </resources>

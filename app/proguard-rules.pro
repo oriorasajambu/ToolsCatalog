@@ -50,10 +50,18 @@
 # whole so their generated $$serializer and their fields survive obfuscation.
 -keep class com.minion.scaffold.core.navigation.** { *; }
 
-# --- Gson (Retrofit converter-gson) ---------------------------------------------------------
-# Gson reads model fields reflectively, so any class it (de)serialises must keep its field names.
-# There are no network DTOs yet; when you add them, keep the model package explicitly, e.g.:
-#     -keep class com.minion.scaffold.**.dto.** { <fields>; <init>(...); }
+# --- Gson (Retrofit converter-gson, and any other Gson round-trip such as a Room cache blob) ----
+# Gson reads model fields reflectively, so any class it (de)serialises must keep its field names —
+# this rule protects exactly the fields annotated @SerializedName, wherever they are.
+#
+# THE ANNOTATION IS THE KEEP RULE. A Gson-(de)serialised class with no @SerializedName fields is
+# invisible to this rule and gets no protection at all. This bit a real release build once: the
+# weather feature's on-disk forecast cache (`CachedForecast` and friends, `feature/weather/.../
+# data/local/CachedForecast.kt`) round-trips through plain Gson with no @SerializedName, R8 struck
+# a nested generic field's Signature attribute since nothing told it to keep it, and every cached
+# forecast came back `ClassCastException: LinkedTreeMap cannot be cast to CachedHourlyEntry` — only
+# in a signed release build; debug builds don't minify, so nothing caught it until one was run on a
+# device. Every Gson-facing class, DTO or otherwise, needs @SerializedName on every field.
 -keep class com.google.gson.reflect.TypeToken { *; }
 -keep class * extends com.google.gson.reflect.TypeToken
 -keepclassmembers,allowobfuscation class * {
@@ -71,6 +79,11 @@
 -keep class com.google.mlkit.common.internal.CommonComponentRegistrar { *; }
 -keep class com.google.mlkit.vision.barcode.internal.BarcodeRegistrar { *; }
 -keep class com.google.mlkit.vision.common.internal.VisionCommonRegistrar { *; }
+# Text recognition, same mechanism. The wildcard above already covers these; they are named for the
+# same reason the barcode ones are — so the intent survives a consumer-rule regression, and so a
+# reader can see which detectors this app actually depends on.
+-keep class com.google.mlkit.vision.text.internal.TextRegistrar { *; }
+-keep class com.google.mlkit.vision.text.bundled.common.internal.BundledTextRegistrar { *; }
 
 # --- OkHttp: optional runtime providers it references but does not require -------------------
 -dontwarn org.bouncycastle.**

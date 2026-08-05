@@ -1,6 +1,8 @@
 package com.minion.scaffold.feature.texttools.presentation.transform
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.minion.scaffold.core.navigation.TextToolsRoute
 import com.minion.scaffold.core.text.model.TextOperation
 import com.minion.scaffold.core.text.model.TextResult
 import com.minion.scaffold.core.text.usecase.TransformTextUseCase
@@ -11,8 +13,19 @@ import javax.inject.Inject
 
 @HiltViewModel
 internal class TextToolsViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val transformText: TransformTextUseCase,
 ) : MviViewModel<TextToolsState, TextToolsIntent, TextToolsEffect>(TextToolsState()) {
+
+    init {
+        // Pre-filled when another tool sent text here — the OCR tool hands its extraction straight
+        // across rather than making the user copy and paste. Read by name rather than through
+        // `toRoute()`, which needs an Android `Bundle` that does not exist in a JVM unit test; see
+        // `QrScanRoute.ARG_PURPOSE` for the same reasoning.
+        savedStateHandle.get<String>(TextToolsRoute.ARG_TEXT)
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { seeded -> reduce { copy(input = seeded).transformed() } }
+    }
 
     override fun onIntent(intent: TextToolsIntent) {
         when (intent) {

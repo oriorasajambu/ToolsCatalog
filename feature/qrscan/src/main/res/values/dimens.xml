@@ -14,5 +14,4 @@
     <!-- Viewfinder overlay -->
     <dimen name="qrscan_reticle_stroke">3dp</dimen>
     <dimen name="qrscan_reticle_corner">24dp</dimen>
-    <dimen name="qrscan_focus_ring_radius">32dp</dimen>
 </resources>

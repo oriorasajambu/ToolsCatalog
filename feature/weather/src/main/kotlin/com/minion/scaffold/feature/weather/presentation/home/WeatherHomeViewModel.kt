@@ -2,6 +2,7 @@ package com.minion.scaffold.feature.weather.presentation.home
 
 import androidx.lifecycle.viewModelScope
 import com.minion.scaffold.core.common.result.AppResult
+import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.core.ui.mvi.MviViewModel
 import com.minion.scaffold.core.weather.model.Forecast
 import com.minion.scaffold.core.weather.model.Location
@@ -234,12 +235,8 @@ internal class WeatherHomeViewModel @Inject constructor(
         null
     }
 
-    /** See `QrScanViewModel`'s identically-named function — same reasoning, same permission gate. */
-    private fun WeatherHomeIntent.PermissionResult.toPermissionState(): PermissionState = when {
-        granted -> PermissionState.Granted
-        shouldShowRationale -> PermissionState.Denied
-        else -> PermissionState.PermanentlyDenied
-    }
+    private fun WeatherHomeIntent.PermissionResult.toPermissionState(): PermissionState =
+        PermissionState.resolve(granted = granted, shouldShowRationale = shouldShowRationale)
 
     private fun emit(effect: WeatherHomeEffect) {
         viewModelScope.launch { emitEffect(effect) }

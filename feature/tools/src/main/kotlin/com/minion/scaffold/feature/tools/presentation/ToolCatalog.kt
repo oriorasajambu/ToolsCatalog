@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.ContactPage
+import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.QrCode2
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.minion.scaffold.core.navigation.AppRoute
 import com.minion.scaffold.core.navigation.GenerateRoute
+import com.minion.scaffold.core.navigation.OcrRoute
 import com.minion.scaffold.core.navigation.QrCreateRoute
 import com.minion.scaffold.core.navigation.QrScanRoute
 import com.minion.scaffold.core.navigation.ScanPurpose
@@ -110,7 +112,7 @@ internal object ToolCatalog {
             titleRes = R.string.tools_text_title,
             descriptionRes = R.string.tools_text_description,
             icon = Icons.Filled.TextFields,
-            route = TextToolsRoute,
+            route = TextToolsRoute(),
             category = ToolCategory.Utility,
         ),
         Tool(
@@ -127,6 +129,14 @@ internal object ToolCatalog {
             descriptionRes = R.string.tools_weather_description,
             icon = Icons.Filled.WbSunny,
             route = WeatherRoute,
+            category = ToolCategory.Utility,
+        ),
+        Tool(
+            id = "ocr",
+            titleRes = R.string.tools_ocr_title,
+            descriptionRes = R.string.tools_ocr_description,
+            icon = Icons.Filled.DocumentScanner,
+            route = OcrRoute,
             category = ToolCategory.Utility,
         ),
     )

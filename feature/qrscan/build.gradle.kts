@@ -22,6 +22,10 @@ dependencies {
     implementation(project(":core:url"))
     implementation(project(":core:vcard"))
 
+    // The viewfinder itself lives in :core:camera, shared with the OCR tool. CameraX stays declared
+    // here too because this module's analyzer works with ImageProxy and the transform types
+    // directly.
+    implementation(project(":core:camera"))
     implementation(libs.bundles.camera)
     implementation(libs.mlkit.barcode)
     // zxing is not here: encoding a QR for display moved to :core:designsystem, which both tools

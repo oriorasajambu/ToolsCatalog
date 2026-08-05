@@ -41,6 +41,7 @@ work = "2.11.2"
 hilt-work = "1.4.0"
 camerax = "1.5.0"
 mlkit-barcode = "17.3.0"
+mlkit-text = "16.0.1"
 zxing = "3.5.3"
 
 [libraries]
@@ -53,6 +54,9 @@ javax-inject = { group = "javax.inject", name = "javax.inject", version = "1" }
 androidx-core = { group = "androidx.core", name = "core-ktx", version.ref = "android-core" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "android-compat" }
 androidx-splashscreen = { group = "androidx.core", name = "core-splashscreen", version = "1.0.1" }
+# Reads the orientation tag a camera writes into a JPEG, so a photo taken sideways is uprighted
+# before recognition rather than being fed to the model rotated.
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version = "1.4.1" }
 # Annotations only, no code — a plain JVM jar, so the pure-Kotlin modules can use it too.
 androidx-annotation = { group = "androidx.annotation", name = "annotation", version.ref = "android-annotation" }
 
@@ -120,10 +124,18 @@ camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.r
 camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
 camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
 mlkit-barcode = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkit-barcode" }
+# Latin script only. The other scripts (Chinese, Devanagari, Japanese, Korean) are separate
+# artifacts of about the same size — and ML Kit cannot auto-detect which script an image holds, so
+# adding one means adding a script picker to the UI, not just a dependency.
+mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkit-text" }
 # Encoding only. ML Kit reads QR codes and cannot write one, which is what redrawing a scanned
 # payload needs. Pure Java `core`, not `zxing-android-embedded` — none of that library's Activity
 # and camera machinery is wanted here.
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
+# Just the `Task` async primitive that ML Kit's API returns — not the Play Services runtime, which
+# this app deliberately does not require. Declared explicitly so `:core:camera` can own the one
+# `Task.await()` both ML Kit consumers share, rather than each keeping its own copy.
+play-services-tasks = { group = "com.google.android.gms", name = "play-services-tasks", version = "18.3.0" }
 
 # Lifecycle
 androidx-lifecycle-viewmodel ={ group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }

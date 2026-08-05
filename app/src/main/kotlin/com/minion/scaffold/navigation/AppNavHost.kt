@@ -16,6 +16,7 @@ import com.minion.scaffold.feature.qrcreate.presentation.qrCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.url.urlCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.vcard.vCardCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.wifi.wifiCreateScreen
+import com.minion.scaffold.feature.ocr.presentation.ocrScreen
 import com.minion.scaffold.feature.qrscan.presentation.qrScanScreen
 import com.minion.scaffold.feature.texttools.presentation.generateScreen
 import com.minion.scaffold.feature.texttools.presentation.textToolsScreen
@@ -77,6 +78,12 @@ fun AppNavHost(
         )
         textToolsScreen(
             onNavigateBack = { navController.popBackStack() },
+        )
+        // The OCR tool hands its extraction to the text tools; :app is the only place that knows
+        // that screen exists, so neither feature learns about the other.
+        ocrScreen(
+            onNavigateBack = { navController.popBackStack() },
+            onNavigateToTextTools = { route -> navController.navigate(route) },
         )
         generateScreen(
             onNavigateBack = { navController.popBackStack() },

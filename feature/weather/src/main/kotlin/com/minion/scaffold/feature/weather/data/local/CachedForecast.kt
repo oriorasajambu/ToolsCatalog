@@ -1,5 +1,6 @@
 package com.minion.scaffold.feature.weather.data.local
 
+import com.google.gson.annotations.SerializedName
 import com.minion.scaffold.core.weather.model.CurrentConditions
 import com.minion.scaffold.core.weather.model.DailyEntry
 import com.minion.scaffold.core.weather.model.Forecast
@@ -14,42 +15,57 @@ import java.time.LocalDate
  * strings instead of [LocalDate]) so [ForecastCacheEntity.forecastJson] round-trips without a
  * custom `TypeAdapter`. Never leaves `data/local/` — everything above this package works with the
  * domain [Forecast].
+ *
+ * Every field carries an explicit [SerializedName], even though nothing outside this process ever
+ * reads this JSON. Two reasons, both found the hard way:
+ *
+ * - `:core:network`'s Gson ProGuard rule (`app/proguard-rules.pro`) only keeps fields annotated
+ *   `@SerializedName` — anything else is free to be renamed and, worse, to have its field
+ *   `Signature` stripped. A nested generic field like `hourly: List<CachedHourlyEntry>` then loses
+ *   the type Gson needs to deserialize its elements, and every cached forecast comes back as a
+ *   `ClassCastException: LinkedTreeMap cannot be cast to CachedHourlyEntry` in a signed release
+ *   build — R8's tree-shaking is invisible to Gson's reflection, so nothing catches this short of
+ *   actually running a signed release.
+ * - Independently of R8: without a pinned name, the on-disk cache's JSON keys are whatever the
+ *   Kotlin property happens to be called *this build*. Renaming a property during a later refactor
+ *   would silently corrupt every previously cached row on the next app update, since Gson would
+ *   no longer find the old key and every field the entry has would deserialize as its default.
  */
 internal data class CachedForecast(
-    val current: CachedCurrentConditions,
-    val hourly: List<CachedHourlyEntry>,
-    val daily: List<CachedDailyEntry>,
-    val notableConditions: List<CachedNotableCondition>,
-    val fetchedAtEpochMillis: Long,
+    @SerializedName("current") val current: CachedCurrentConditions,
+    @SerializedName("hourly") val hourly: List<CachedHourlyEntry>,
+    @SerializedName("daily") val daily: List<CachedDailyEntry>,
+    @SerializedName("notable_conditions") val notableConditions: List<CachedNotableCondition>,
+    @SerializedName("fetched_at_epoch_millis") val fetchedAtEpochMillis: Long,
 )
 
 internal data class CachedCurrentConditions(
-    val temperature: Double,
-    val apparentTemperature: Double,
-    val humidity: Int,
-    val windSpeed: Double,
-    val condition: WeatherCondition,
+    @SerializedName("temperature") val temperature: Double,
+    @SerializedName("apparent_temperature") val apparentTemperature: Double,
+    @SerializedName("humidity") val humidity: Int,
+    @SerializedName("wind_speed") val windSpeed: Double,
+    @SerializedName("condition") val condition: WeatherCondition,
 )
 
 internal data class CachedHourlyEntry(
-    val epochMillis: Long,
-    val temperature: Double,
-    val condition: WeatherCondition,
-    val precipitationProbability: Int,
-    val windSpeed: Double,
+    @SerializedName("epoch_millis") val epochMillis: Long,
+    @SerializedName("temperature") val temperature: Double,
+    @SerializedName("condition") val condition: WeatherCondition,
+    @SerializedName("precipitation_probability") val precipitationProbability: Int,
+    @SerializedName("wind_speed") val windSpeed: Double,
 )
 
 internal data class CachedDailyEntry(
-    val isoDate: String,
-    val minTemperature: Double,
-    val maxTemperature: Double,
-    val condition: WeatherCondition,
-    val precipitationProbability: Int,
+    @SerializedName("iso_date") val isoDate: String,
+    @SerializedName("min_temperature") val minTemperature: Double,
+    @SerializedName("max_temperature") val maxTemperature: Double,
+    @SerializedName("condition") val condition: WeatherCondition,
+    @SerializedName("precipitation_probability") val precipitationProbability: Int,
 )
 
 internal data class CachedNotableCondition(
-    val kind: NotableCondition.Kind,
-    val severity: NotableCondition.Severity,
+    @SerializedName("kind") val kind: NotableCondition.Kind,
+    @SerializedName("severity") val severity: NotableCondition.Severity,
 )
 
 internal fun Forecast.toCache(): CachedForecast = CachedForecast(

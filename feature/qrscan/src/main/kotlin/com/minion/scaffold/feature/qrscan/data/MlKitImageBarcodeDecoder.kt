@@ -2,21 +2,17 @@ package com.minion.scaffold.feature.qrscan.data
 
 import android.content.Context
 import android.net.Uri
-import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import com.minion.scaffold.core.camera.await
 import com.minion.scaffold.core.common.dispatcher.IoDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import javax.inject.Inject
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 /**
  * Decodes a picked image with the same ML Kit detector the camera uses.
@@ -60,19 +56,3 @@ internal class MlKitImageBarcodeDecoder @Inject constructor(
     }
 }
 
-/**
- * Awaits a Play Services [Task] without pulling in `kotlinx-coroutines-play-services`.
- *
- * One suspension point is not worth another dependency, and the wrapper is the whole of what that
- * library would provide here. Cancellable, so a canceled screen does not leave the continuation
- * hanging.
- */
-private suspend fun <T> Task<T>.await(): T = suspendCancellableCoroutine { continuation ->
-    addOnSuccessListener { result -> continuation.resume(result) }
-    addOnFailureListener { error -> continuation.resumeWithException(error) }
-    addOnCanceledListener { continuation.cancelQuietly() }
-}
-
-private fun CancellableContinuation<*>.cancelQuietly() {
-    if (isActive) cancel()
-}

@@ -10,6 +10,7 @@ import com.minion.scaffold.core.navigation.UrlCreateRoute
 import com.minion.scaffold.core.navigation.VCardCreateRoute
 import com.minion.scaffold.core.navigation.WifiCreateRoute
 import com.minion.scaffold.core.navigation.ScanPurpose
+import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.core.ui.mvi.MviViewModel
 import com.minion.scaffold.feature.qrscan.data.ImageBarcodeDecoder
 import com.minion.scaffold.feature.qrscan.data.ImageDecodeResult
@@ -179,18 +180,8 @@ internal class QrScanViewModel @Inject constructor(
         is ScannedContent.Contact -> VCardCreateRoute(payload)
     }
 
-    /**
-     * A refusal the system will still prompt for is [CameraPermissionState.Denied]; one it will
-     * not is [CameraPermissionState.PermanentlyDenied].
-     *
-     * `shouldShowRationale` is only meaningful *after* a request — it is also false before the
-     * first one — which is why this is reached from a result and never from a bare check.
-     */
-    private fun QrScanIntent.PermissionResult.toPermissionState(): CameraPermissionState = when {
-        granted -> CameraPermissionState.Granted
-        shouldShowRationale -> CameraPermissionState.Denied
-        else -> CameraPermissionState.PermanentlyDenied
-    }
+    private fun QrScanIntent.PermissionResult.toPermissionState(): PermissionState =
+        PermissionState.resolve(granted = granted, shouldShowRationale = shouldShowRationale)
 
     /** Whatever was scanned, or null when nothing has been. */
     private val scannedContent: ScannedContent?

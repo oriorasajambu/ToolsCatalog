@@ -1,4 +1,4 @@
-package com.minion.scaffold.feature.qrscan.presentation.camera
+package com.minion.scaffold.core.camera
 
 import android.graphics.PointF
 import androidx.compose.animation.core.animateFloatAsState
@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
-import com.minion.scaffold.feature.qrscan.R
 import kotlinx.coroutines.delay
 
 /**
@@ -46,10 +45,10 @@ internal fun FocusRing(
     )
 
     val radius = with(LocalDensity.current) {
-        dimensionResource(R.dimen.qrscan_focus_ring_radius).toPx()
+        dimensionResource(R.dimen.camera_focus_ring_radius).toPx()
     }
     val strokeWidth = with(LocalDensity.current) {
-        dimensionResource(R.dimen.qrscan_reticle_stroke).toPx()
+        dimensionResource(R.dimen.camera_focus_ring_stroke).toPx()
     }
 
     Canvas(modifier = modifier.fillMaxSize()) {
@@ -64,7 +63,7 @@ internal fun FocusRing(
     }
 }
 
-/** Long enough to connect the ring to the tap, short enough not to sit over the code. */
+/** Long enough to connect the ring to the tap, short enough not to sit over the subject. */
 private const val VISIBLE_MILLIS = 800L
 
 /** Over a live camera feed, so a fixed colour rather than a theme one. */

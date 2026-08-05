@@ -104,10 +104,14 @@ android {
 
             // R8 shrinks and obfuscates. The reflection-driven parts (kotlinx.serialization routes,
             // Gson) are covered by app/proguard-rules.pro; everything else relies on the libraries'
-            // own consumer rules. Resource shrinking is left off for now — enable isShrinkResources
-            // once the release build has been smoke-tested, since it is the more likely of the two
-            // to strip something referenced only by name.
+            // own consumer rules.
+            //
+            // Both flags have been smoke-tested on a signed productionRelease build on a real
+            // device — resources (launcher/adaptive icons, splash icon, manifest-referenced XML)
+            // all traced as reachable and rendered correctly. Code shrinking found one real bug on
+            // that pass, now fixed: see the Gson section below for what broke and why.
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -128,6 +132,7 @@ dependencies {
     implementation(project(":feature:qrcreate"))
     implementation(project(":feature:texttools"))
     implementation(project(":feature:weather"))
+    implementation(project(":feature:ocr"))
 
     implementation(libs.androidx.splashscreen)
 

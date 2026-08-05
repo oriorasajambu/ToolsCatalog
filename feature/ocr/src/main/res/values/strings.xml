@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Resource names are prefixed with the feature. Every module's resources are merged into one
+  namespace in :app, so an unprefixed `title` in two features silently resolves to whichever
+  module the merger happened to visit last.
+-->
+<resources>
+    <string name="ocr_title">Image to text</string>
+    <string name="ocr_navigate_back">Back</string>
+
+    <!-- Capture -->
+    <string name="ocr_shutter">Extract text from this view</string>
+    <string name="ocr_pick_image">Pick an image instead</string>
+
+    <!-- Camera permission -->
+    <string name="ocr_permission_rationale">Reading text from a photo needs access to the camera. Nothing is recorded or sent anywhere — the image is read on the device and never leaves it.</string>
+    <string name="ocr_permission_grant">Allow camera access</string>
+    <string name="ocr_permission_blocked">Camera access is turned off for this app. You can switch it back on in Settings, or pick an image from your gallery instead.</string>
+    <string name="ocr_permission_open_settings">Open settings</string>
+    <string name="ocr_permission_use_gallery">Pick an image instead</string>
+
+    <!-- Selection -->
+    <string name="ocr_selection_title">Choose what to keep</string>
+    <string name="ocr_selection_hint">Tap a block to include or exclude it. Dashed outlines were read with lower confidence — worth checking.</string>
+    <string name="ocr_select_all">Select all</string>
+    <string name="ocr_select_none">Select none</string>
+    <string name="ocr_rotate_retry">Rotate and try again</string>
+    <string name="ocr_add_page">Add another page</string>
+    <string name="ocr_selection_confirm">Use this text</string>
+    <string name="ocr_page_count">Page %1$d</string>
+
+    <!-- Result -->
+    <string name="ocr_result_title">Extracted text</string>
+    <string name="ocr_result_label">Text</string>
+    <string name="ocr_result_hint">Correct anything the reader got wrong before you use it.</string>
+    <string name="ocr_copy">Copy</string>
+    <string name="ocr_share">Share</string>
+    <string name="ocr_send_to_text_tools">Open in Text tools</string>
+    <string name="ocr_restart">Start over</string>
+    <string name="ocr_clipboard_label">Extracted text</string>
+    <string name="ocr_remove_page">Remove page %1$d</string>
+    <string name="ocr_truncated">That was too long to hand over in full, so it was shortened.</string>
+
+    <!-- Notices -->
+    <string name="ocr_no_text">No text found. Try moving closer, or steadying the shot.</string>
+    <string name="ocr_image_unreadable">That image could not be opened.</string>
+    <string name="ocr_capture_failed">The camera could not take that shot. Try again.</string>
+</resources>

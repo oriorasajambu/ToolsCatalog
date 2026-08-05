@@ -59,12 +59,20 @@ include(":core:text")
 // because it mirrors every other format module's shape.
 include(":core:weather")
 
+// Text-recognition shaping — reading-order reconstruction and block assembly. Pure Kotlin; the
+// ML Kit types it maps from stay in :feature:ocr, so the ordering algorithm is unit-testable
+// without an emulator.
+include(":core:ocr")
+
 // Route contracts — pure Kotlin. The only channel through which one feature reaches another.
 include(":core:navigation")
 
 // UI
 include(":core:designsystem")
 include(":core:ui")
+
+// The camera viewfinder, shared by the scan and OCR tools so there is exactly one CameraX setup.
+include(":core:camera")
 
 // Data
 include(":core:network")
@@ -81,4 +89,5 @@ include(":feature:qrscan")
 include(":feature:qrcreate")
 include(":feature:texttools")
 include(":feature:weather")
+include(":feature:ocr")
 
