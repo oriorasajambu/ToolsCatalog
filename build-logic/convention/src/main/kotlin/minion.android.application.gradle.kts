@@ -90,7 +90,13 @@ dependencies {
  * Same guard as [minion.android.library], repeated because `:app` does not apply that convention.
  * Neither `testDebugUnitTest` nor `assembleDebug` builds `androidTest` sources, so they can stop
  * compiling and nothing says so.
+ *
+ * Matched by name pattern, not named outright: `:app` has an `environment` flavor dimension, so
+ * its androidTest compile tasks are per-variant (`compileDevelopmentDebugAndroidTestKotlin`,
+ * `compileProductionDebugAndroidTestKotlin`) and the unflavored name is never registered.
  */
+val androidTestCompileTasks = tasks.matching { it.name.matches(Regex("^compile.*DebugAndroidTestKotlin$")) }
+
 tasks.matching { it.name == "check" }.configureEach {
-    dependsOn("compileDebugAndroidTestKotlin")
+    dependsOn(androidTestCompileTasks)
 }
