@@ -5,22 +5,28 @@ An opinionated, buildable starting point for Android apps: **Kotlin**, **Jetpack
 the build rather than by code review.
 
 The scaffold now carries a worked example — **ToolBox**, a small offline utility app: scan and build
-EMV / Wi-Fi / link / vCard QR codes, text and generator tools, and a weather tool, assembled
-entirely with the conventions below. Weather is the one deliberate exception to the offline
-positioning — see [§1.1](#11-the-one-online-feature-weather) — everything else works with no
-network at all. Clone it, rename the package, drop the `feature/*` you do not want, and run
-`scripts/scaffold_feature.py` to generate the next vertical slice.
+EMV / Wi-Fi / link / vCard QR codes, text and generator tools, an on-device image-to-text reader,
+and a weather tool, assembled entirely with the conventions below. Weather is the one deliberate
+exception to the offline positioning — see [§1.1](#11-the-one-online-feature-weather) — everything
+else works with no network at all, including the OCR, which runs its models locally
+([§1.2](#12-on-device-machine-learning-ocr)). Clone it, rename the package, drop the `feature/*` you
+do not want, and run `scripts/scaffold_feature.py` to generate the next vertical slice.
 
 ```bash
 ./gradlew build
 ```
+
+> **Clone with [git-lfs](https://git-lfs.com) installed.** The OCR tool's PaddleOCR weights (~22MB
+> under `feature/ocr/src/main/assets/`) are LFS objects. Without it you get pointer files and the
+> app quietly falls back to its other recognition engine.
 
 - **UI** — Jetpack Compose, Material 3; Midnight (dark) and Signal (light) themes that follow the system setting
 - **Architecture** — MVI (State / Intent / Effect) over Clean Architecture layers
 - **Async** — Coroutines + `StateFlow`; one-shot events over a buffered `Channel`
 - **DI** — Hilt, with bindings living beside the implementations they bind
 - **Network** — Retrofit + OkHttp + Gson; Chucker on debug builds only
-- **Persistence** — Room, where a feature needs an offline cache (first used by `:feature:weather`)
+- **Persistence** — Room, where a feature needs an offline cache (first used by `:feature:weather`); DataStore for per-feature preferences
+- **On-device ML** — ML Kit (bundled models) and ONNX Runtime, behind one swappable interface
 - **Build** — `development`/`production` flavors × `debug`/`release`; environment and signing read from gitignored properties files; R8 on release
 - **Testing** — JUnit + MockK + Turbine, with a shared `MainDispatcherRule`
 - **Previews** — Showkase, aggregating every `@Preview` into a browsable catalog
@@ -37,7 +43,11 @@ network at all. Clone it, rename the package, drop the `feature/*` you do not wa
 ├── :core:domain         Pure Kotlin. Shared models, repository interfaces, use cases.
 ├── :core:navigation     Pure Kotlin. @Serializable route contracts only.
 ├── :core:designsystem   AppTheme, colour/type/shape tokens, dumb widgets.
-├── :core:ui             MviViewModel, ObserveAsEvents, DomainError → @StringRes.
+├── :core:ui             MviViewModel, ObserveAsEvents, DomainError → @StringRes,
+│                        PermissionState (the four-state gate shared by every permission).
+├── :core:camera         The CameraX viewfinder — controller, torch, zoom, tap-to-focus,
+│                        coordinate transform, optional still capture. Extracted from
+│                        :feature:qrscan once :feature:ocr became a second consumer.
 ├── :core:network        Shared OkHttp/Retrofit, safeCall, error mapping.
 ├── :core:data           Data shared between features (not a feature's own data layer).
 ├── :core:testing        MainDispatcherRule, fakes. Consumed via testImplementation.
@@ -50,10 +60,12 @@ network at all. Clone it, rename the package, drop the `feature/*` you do not wa
 ├── :core:weather        Pure Kotlin. WMO weather-code mapping, notable-condition thresholds,
 │                        metric/imperial conversion — the one domain module a feature also owns a
 │                        Retrofit API and a Room cache for (see §1.1).
+├── :core:ocr            Pure Kotlin. Reading-order reconstruction, line→block grouping, the
+│                        OcrEngine choice — the geometry, with none of the ML (see §1.2).
 │
-└── :feature:*           tools, qrscan, qrcreate, texttools, weather — one module per screen area.
-                         (The domain lives in the pure-Kotlin :core:* modules above; add more with
-                         scripts/scaffold_feature.py.)
+└── :feature:*           tools, qrscan, qrcreate, texttools, weather, ocr — one module per screen
+                         area. (The domain lives in the pure-Kotlin :core:* modules above; add more
+                         with scripts/scaffold_feature.py.)
 ```
 
 ### 1.1 The one online feature: weather
@@ -87,17 +99,69 @@ feature:
 - **Location comes from the platform `LocationManager`, not Play Services.** The repo carries no
   Play Services dependency, and `:feature:weather/data/location/LocationFixProvider.kt` uses
   `LocationManagerCompat.getCurrentLocation` so it keeps working on a device without Play Services.
-- **The permission gate is modeled as state, not a separate screen or route.** See
-  `WeatherHomeContract.PermissionState`, which mirrors `:feature:qrscan`'s
-  `CameraPermissionState` — `Unknown` / `Granted` / `Denied` / `PermanentlyDenied`, with the last
-  one deep-linking to the app's system settings page rather than re-showing a dialog the system
-  will not display again.
+- **The permission gate is modeled as state, not a separate screen or route.** `PermissionState` in
+  `:core:ui` — `Unknown` / `Granted` / `Denied` / `PermanentlyDenied`, with the last one
+  deep-linking to the app's system settings page rather than re-showing a dialog the system will
+  not display again. It started as a copy in weather and another in qrscan; the third consumer
+  (OCR) is what promoted it. Only the *state machine* is shared — each feature still writes its own
+  rationale panel, because what to offer someone who declined genuinely differs: qrscan and OCR
+  offer to pick an image instead, weather has no such fallback and gates hard.
 - **Units are converted at the presentation edge, never on the way in.** Forecasts are fetched and
   cached in metric whatever the user picked; each ViewModel keeps the raw metric copy beside its
   state and re-derives the displayed numbers when the preference changes. Converting in place and
   writing back would lose the original after the first flip and turn the second one into
   °F-treated-as-°C. The DataStore preference itself lives in the feature, not `:core:data` — the
   repo promotes to a core module on the *second* consumer, not the first.
+
+### 1.2 On-device machine learning: OCR
+
+`:feature:ocr` photographs or picks an image and extracts the text, entirely on the device. It is
+the counterpoint to weather: no network, no Play Services, nothing leaves the phone. The image is
+never written to disk either — people OCR passports, receipts and bank letters — so only the
+recognised *text* survives a process death, which is where the user's work actually is.
+
+It ships **two engines behind one interface**, chosen at runtime in the tool's own settings screen:
+
+| | |
+|---|---|
+| **ML Kit** (default) | Bundled Latin model. Fast enough to run on viewfinder frames. |
+| **PaddleOCR PP-OCRv5** | Three ONNX models (~22MB) on ONNX Runtime. Slower, better on dense text. |
+
+Worth knowing if you are adding a second implementation of anything:
+
+- **The engine and the dispatcher are different interfaces.** `TextRecognitionEngine` is what ML Kit
+  and PaddleOCR implement, and it does *not* report which engine it is. `TextRecognizer` — the seam
+  the ViewModel injects — returns `Recognition(result, engine)`, naming the engine that actually
+  ran. Only the thing that made the choice can say whether the choice was honoured, and PaddleOCR
+  can fail to start (an unexpected ABI, a clone without git-lfs, a full disk, an OOM building the
+  sessions). It falls back to ML Kit and the UI *says so*. A settings screen reading "PaddleOCR"
+  while the other engine does the work is the hardest class of bug to diagnose: everything appears
+  to function and only the results differ.
+- **Reading order is reconstructed, not taken from the recognizer.** Both engines return regions in
+  detection order, which scrambles receipts. `:core:ocr` groups them into rows by vertical overlap
+  and orders rows top-to-bottom, blocks left-to-right — deliberately geometric rather than
+  layout-aware, with the known two-column limitation documented in the KDoc.
+- **Order first, merge second.** PaddleOCR detects *lines* where ML Kit reports *blocks*, so lines
+  are merged into paragraphs to make the two comparable. Merging first and ordering afterwards
+  looks equivalent and is not: a receipt's item list merges into one tall block that vertically
+  overlaps every price beside it, collapsing them into one row where equal left edges leave the
+  order arbitrary. The prices come out detached from their items and shuffled. `GroupLinesIntoBlocks`
+  therefore orders the lines — uniform heights, so a printed row overlaps nothing else — and merges
+  only consecutive ones. This was found by running a signed release against a real receipt, not by
+  a test.
+- **The models are assets, but ONNX Runtime wants a file path.** `PaddleModelAssets` extracts them
+  to `filesDir` once, guarded by a version marker written *last* so an interrupted copy is redone
+  rather than trusted. It does no checksum: the upstream project downloads over HTTP and must
+  verify, whereas these ship inside a signed APK where the platform has already done it.
+- **Sessions live for the screen, not the app.** ~22MB of weights plus the runtime's arena, released
+  in `onCleared` rather than pinned for the process on a device that is also running a camera.
+- **`:app` filters to `arm64-v8a` only.** ONNX Runtime ships a ~27MB native library per ABI.
+  Dropping the x86 pair also shed ML Kit's, which nearly paid for the addition outright — the
+  release APK grew 67.6MB → 71.9MB rather than the ~100MB of keeping every ABI.
+- **The vendored pipeline is deliberately not refactored.** `data/paddle/vendor/` is
+  [ente-io/mobile_ocr](https://github.com/ente-io/mobile_ocr) (MIT) with the package renamed and
+  nothing else, so a re-sync is a diff rather than an archaeology exercise. It does not follow this
+  repo's conventions and is not meant to; its README records the upstream commit.
 
 ### Dependency rules
 
@@ -188,10 +252,20 @@ but still assembles. Confirm the wiring with `./gradlew :app:signingReport`.
 
 ### Minification
 
-`release` runs R8 (`isMinifyEnabled = true`). `app/proguard-rules.pro` keeps only what reflection
-needs — kotlinx.serialization (type-safe routes), Gson, and ML Kit's manifest-named component
-registrars — everything else rides on the libraries' own consumer rules. Resource shrinking is left
-off until a release build has been smoke-tested.
+`release` runs R8 with resource shrinking (`isMinifyEnabled` and `isShrinkResources`).
+`app/proguard-rules.pro` keeps only what reflection needs — kotlinx.serialization (type-safe
+routes), Gson, ML Kit's manifest-named component registrars, and `ai.onnxruntime.**`, which the
+native library resolves through JNI where R8 can see no reference to it. Everything else rides on
+the libraries' own consumer rules.
+
+Resource shrinking earns its keep as a review signal, not just bytes: it reports resources nothing
+references, and twice that has meant a *string was written and the feature wired up wrong* rather
+than a genuinely dead resource. Read the shrinker's report before deleting what it flags.
+
+**Assemble and run a signed release on a device before shipping.** This repo has been burned three
+times by failures invisible in debug: a Gson model stripped of its generic signature, ML Kit's
+registrars renamed, and the OCR ordering bug in §1.2. A green `./gradlew build` is not evidence that
+the release build works.
 
 ---
 
@@ -421,5 +495,20 @@ Everything is under `com.minion.scaffold`. To rebrand:
   the device, or a fix over open water. `:feature:weather`'s `ReverseGeocoder` treats that as
   expected, not an error, and falls back to a formatted lat/lon string rather than blocking the
   pinned card on a service the app cannot guarantee.
+- **Anything drawn over the camera preview needs fixed colours, not theme ones.** A theme colour
+  answers to the palette rather than to the image behind it. The scan hint used `inverseOnSurface`,
+  which is a *dark* colour in the dark theme, and was invisible against the reticle's own dark
+  scrim — text that looked fine in a preview and vanished on a phone. `ScanReticle` and the OCR
+  `BlockOverlay` both carry the rule where someone would reach for it.
+- **`Modifier.basicMarquee()` and `TextOverflow.Ellipsis` are not complementary.** Marquee measures
+  its content with an infinite width constraint, so the text never ellipsizes and the setting is
+  dead config. Use `maxLines = 1` plus the marquee, and give the text a bounded width (a `weight`,
+  or a parent that constrains it) or it sizes to its content and never registers as overflowing.
+- **A clone without `git-lfs` looks like a working checkout.** The OCR models resolve to pointer
+  files, PaddleOCR fails to start, and the app falls back to ML Kit with a notice rather than
+  announcing that the repository is incomplete.
+- **`abiFilters` in `:app` is app-wide.** It is set to `arm64-v8a` for ONNX Runtime's sake, which
+  means an x86 emulator cannot install the app at all — including for features that have nothing to
+  do with OCR.
 - Default Gradle dependencies to `implementation`; reach for `api` only when a type appears in the
   module's own public signatures.

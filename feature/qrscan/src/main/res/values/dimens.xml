@@ -14,4 +14,8 @@
     <!-- Viewfinder overlay -->
     <dimen name="qrscan_reticle_stroke">3dp</dimen>
     <dimen name="qrscan_reticle_corner">24dp</dimen>
+
+    <!-- The aim hint's pill, sized so the scrim reads as a label rather than as a stray box. -->
+    <dimen name="qrscan_hint_inset_horizontal">12dp</dimen>
+    <dimen name="qrscan_hint_inset_vertical">6dp</dimen>
 </resources>

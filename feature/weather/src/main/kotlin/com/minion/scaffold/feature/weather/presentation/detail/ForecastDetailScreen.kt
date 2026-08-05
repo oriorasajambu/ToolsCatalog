@@ -2,6 +2,7 @@ package com.minion.scaffold.feature.weather.presentation.detail
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,7 +41,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -429,15 +429,17 @@ private fun HourlyCell(hour: HourlyEntry, emphasis: HourEmphasis) {
                 contentDescription = stringResource(hour.condition.toLabelRes()),
             )
             // Named, not just iconified — an icon alone is ambiguous (e.g. the drizzle and rain
-            // glyphs read as near-identical at this size). Single line + ellipsis so a long name
-            // ("Partly cloudy") doesn't widen its cell relative to the others in the row.
+            // glyphs read as near-identical at this size). Single line so a long name doesn't
+            // widen its cell relative to the others in the row; marquee rather than an ellipsis
+            // because "Partly clou…" and "Partly clou…" would be indistinguishable if two similar
+            // conditions ever truncated to the same prefix.
             Text(
                 text = stringResource(hour.condition.toLabelRes()),
                 style = MaterialTheme.typography.labelSmall,
                 color = if (emphasis == HourEmphasis.NONE) MaterialTheme.colorScheme.onSurfaceVariant else contentColor,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
+                modifier = Modifier.basicMarquee(),
             )
             Text(text = "${hour.temperature.roundToInt()}°", style = MaterialTheme.typography.bodyMedium)
         }

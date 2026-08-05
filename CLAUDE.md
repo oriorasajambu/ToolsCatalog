@@ -28,9 +28,12 @@ python scripts/scaffold_feature.py --name Home   # generate a new feature slice 
 ```
 
 There is no separate lint-only or ktlint task beyond what `./gradlew build` runs; Android Lint
-runs as part of `build`. `check` is wired to also compile `androidTest` sources on every module
-(`compileDebugAndroidTestKotlin`) so androidTest can't silently rot even though nothing normally
-builds it.
+runs as part of `build`. `check` is wired to also compile `androidTest` sources on every module so
+androidTest can't silently rot even though nothing normally builds it. The dependency is matched by
+name pattern (`compile*DebugAndroidTestKotlin`) rather than named outright — a module with product
+flavors gets one task per variant, so `:app` has `compileDevelopmentDebugAndroidTestKotlin` and
+`compileProductionDebugAndroidTestKotlin` and never the unflavored name. Naming it directly made
+`./gradlew build` fail outright while resolving `:app:check`.
 
 First-time setup: copy `keystore.properties.template` → `keystore.properties` and
 `dev.properties.template`/`prod.properties.template` → `dev.properties`/`prod.properties` if you
@@ -44,12 +47,15 @@ need real values; the repo builds without them (unsigned release, template `BASE
 ├── :core:domain         Pure Kotlin. Shared models, repository interfaces, use cases.
 ├── :core:navigation     Pure Kotlin. @Serializable route contracts — the only channel between features.
 ├── :core:designsystem   AppTheme, colour/type/shape tokens, dumb widgets.
-├── :core:ui             MviViewModel, ObserveAsEvents, DomainError → @StringRes.
+├── :core:ui             MviViewModel, ObserveAsEvents, DomainError → @StringRes, PermissionState.
+├── :core:camera         CameraX viewfinder — torch, zoom, tap-to-focus, still capture. Shared by qrscan and ocr.
 ├── :core:network        Shared OkHttp/Retrofit, safeCall, error mapping.
 ├── :core:data           Data shared BETWEEN features (not a feature's own data layer).
 ├── :core:testing        MainDispatcherRule, fakes — testImplementation only.
 ├── :core:emv/:wifi/:url/:vcard/:text   Pure-Kotlin domain logic for each QR/text format.
-└── :feature:*           tools, qrscan, qrcreate, texttools — one module per screen area.
+├── :core:weather        Pure Kotlin. WMO codes, unit conversion, notable-condition thresholds.
+├── :core:ocr            Pure Kotlin. Reading-order reconstruction, line→block grouping, OcrEngine.
+└── :feature:*           tools, qrscan, qrcreate, texttools, weather, ocr — one per screen area.
 ```
 
 Dependency rules (enforced by convention plugins, not review):
@@ -193,3 +199,20 @@ designsystem palette + launcher icons, `dev.properties`/`prod.properties`, keyst
   repositions every row.
 - Default Gradle dependencies to `implementation`; use `api` only when a type appears in the
   module's own public signatures.
+- Anything drawn over the camera preview needs **fixed** colours, not theme ones. A theme colour
+  answers to the palette rather than to the image behind it: the scan hint used `inverseOnSurface`,
+  which is dark in the dark theme, and was invisible against the reticle's dark scrim. `ScanReticle`
+  and the OCR `BlockOverlay` both record this.
+- `git clone` needs **git-lfs**. The PP-OCRv5 weights under `feature/ocr/src/main/assets/` are LFS
+  objects; without it you get pointer files, PaddleOCR fails to start, and the app silently falls
+  back to ML Kit with a notice rather than telling you your checkout is incomplete.
+- `:app` sets `abiFilters` to **arm64-v8a only** — ONNX Runtime ships a ~27MB native library per
+  ABI. This is app-wide, so it affects every module, and an x86 emulator will not install the
+  result.
+- A model file in `assets/` is not a file on disk. ONNX Runtime opens a session from a path, which
+  is why `PaddleModelAssets` extracts to `filesDir` first. Its digests are documented, so
+  `ppocrv5_dict.txt` is pinned `-text` in `.gitattributes` — a Windows checkout converting it to
+  CRLF breaks the digest and gives every dictionary entry a trailing carriage return.
+- Text that can overflow uses `Modifier.basicMarquee()` with `maxLines = 1` and **no**
+  `TextOverflow.Ellipsis`. Marquee measures its content with an infinite width constraint, so the
+  ellipsis can never trigger and the two are not complementary — leaving it in is dead config.

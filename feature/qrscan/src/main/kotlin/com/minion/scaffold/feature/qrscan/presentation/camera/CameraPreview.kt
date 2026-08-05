@@ -1,7 +1,9 @@
 package com.minion.scaffold.feature.qrscan.presentation.camera
 
 import androidx.camera.view.TransformExperimental
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,6 +18,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -138,10 +141,15 @@ internal fun CameraPreview(
             Text(
                 text = stringResource(hint),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.inverseOnSurface,
+                color = HINT_COLOR,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(spacing),
+                    .padding(spacing)
+                    .background(HINT_SCRIM, CircleShape)
+                    .padding(
+                        horizontal = dimensionResource(R.dimen.qrscan_hint_inset_horizontal),
+                        vertical = dimensionResource(R.dimen.qrscan_hint_inset_vertical),
+                    ),
             )
         }
     }
@@ -153,6 +161,17 @@ private fun AimState.hintRes(): Int? = when (this) {
     // Nothing to say once it is locked — the green box and the haptic have said it.
     AimState.Locked -> null
 }
+
+/**
+ * Fixed colours, for the reason [ScanReticle] already records: this sits over a live camera feed,
+ * so it answers to the image behind it rather than to the palette.
+ *
+ * It previously used `inverseOnSurface`, which is a *dark* colour in the dark theme — dark text on
+ * the reticle's dark scrim, and effectively invisible. Its own scrim on top of the reticle's keeps
+ * the text legible over a bright scene too, where 55% black alone leaves the backdrop pale.
+ */
+private val HINT_COLOR = Color.White
+private val HINT_SCRIM = Color.Black.copy(alpha = 0.55f)
 
 /** How long the reticle stays green before the report replaces the viewfinder. */
 private const val LOCK_HOLD_MILLIS = 250L

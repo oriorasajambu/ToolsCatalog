@@ -6,6 +6,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,7 +43,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -306,14 +306,17 @@ private fun ToolRow(
                 style = MaterialTheme.typography.titleSmall,
                 color = scheme.onSurface,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.basicMarquee(),
             )
+            // Every description is longer than the row is wide, so an ellipsis hid the end of all
+            // of them. Marquee rather than a second line: the rows are a fixed-height rhythm, and
+            // letting one grow to two lines breaks the alignment with the tile beside it.
             Text(
                 text = stringResource(tool.descriptionRes),
                 style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.basicMarquee(),
             )
         }
         Icon(
@@ -373,12 +376,14 @@ private fun UtilityCard(
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tools_row_gap)),
     ) {
         IconTile(icon = tool.icon, size = dimensionResource(R.dimen.tools_util_tile))
+        // `weight`, so the marquee gets a bounded width to scroll within — without it the text
+        // would size to its content and never register as overflowing.
         Text(
             text = stringResource(tool.titleRes),
             style = MaterialTheme.typography.titleSmall,
             color = scheme.onSurface,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f).basicMarquee(),
         )
     }
 }
