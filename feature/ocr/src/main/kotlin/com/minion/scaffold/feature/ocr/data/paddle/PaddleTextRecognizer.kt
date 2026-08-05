@@ -10,7 +10,7 @@ import com.minion.scaffold.core.ocr.model.RecognizedText
 import com.minion.scaffold.core.ocr.usecase.GroupLinesIntoBlocksUseCase
 import com.minion.scaffold.core.ocr.usecase.OrderBlocksUseCase
 import com.minion.scaffold.feature.ocr.data.OcrResult
-import com.minion.scaffold.feature.ocr.data.TextRecognizer
+import com.minion.scaffold.feature.ocr.data.TextRecognitionEngine
 import com.minion.scaffold.feature.ocr.data.paddle.vendor.OcrProcessor
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -43,7 +43,7 @@ internal class PaddleTextRecognizer @Inject constructor(
     private val groupLines: GroupLinesIntoBlocksUseCase,
     private val orderBlocks: OrderBlocksUseCase,
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-) : TextRecognizer {
+) : TextRecognitionEngine {
 
     /** Guards lazy creation: two captures in flight must not build two sets of sessions. */
     private val mutex = Mutex()

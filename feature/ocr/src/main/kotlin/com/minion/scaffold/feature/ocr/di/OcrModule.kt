@@ -1,6 +1,6 @@
 package com.minion.scaffold.feature.ocr.di
 
-import com.minion.scaffold.feature.ocr.data.MlKitTextRecognizer
+import com.minion.scaffold.feature.ocr.data.SelectingTextRecognizer
 import com.minion.scaffold.feature.ocr.data.TextRecognizer
 import com.minion.scaffold.feature.ocr.data.local.OcrPreferencesDataStore
 import com.minion.scaffold.feature.ocr.domain.OcrPreferencesRepository
@@ -15,9 +15,13 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 internal abstract class OcrModule {
 
+    /**
+     * The dispatcher, not a concrete engine: which one runs is a runtime preference now, so the
+     * choice cannot be made here at graph-construction time.
+     */
     @Binds
     @Singleton
-    abstract fun bindTextRecognizer(recognizer: MlKitTextRecognizer): TextRecognizer
+    abstract fun bindTextRecognizer(recognizer: SelectingTextRecognizer): TextRecognizer
 
     /**
      * `@Singleton` matters here beyond the usual reasons: DataStore throws if a second instance is

@@ -25,7 +25,7 @@ import javax.inject.Inject
 internal class MlKitTextRecognizer @Inject constructor(
     private val orderBlocks: OrderBlocksUseCase,
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-) : TextRecognizer {
+) : TextRecognitionEngine {
 
     override suspend fun recognize(bitmap: Bitmap): OcrResult = withContext(ioDispatcher) {
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)

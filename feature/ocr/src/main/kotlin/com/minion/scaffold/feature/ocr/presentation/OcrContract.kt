@@ -6,6 +6,7 @@ import androidx.compose.ui.geometry.Rect
 import com.minion.scaffold.core.common.mvi.UiEffect
 import com.minion.scaffold.core.common.mvi.UiIntent
 import com.minion.scaffold.core.common.mvi.UiState
+import com.minion.scaffold.core.ocr.model.OcrEngine
 import com.minion.scaffold.core.ocr.model.RecognizedText
 import com.minion.scaffold.core.ui.permission.PermissionState
 
@@ -41,6 +42,14 @@ internal data class OcrState(
 
     /** The edited text, once the user reaches [Stage.Result]. */
     val editedText: String = "",
+
+    /**
+     * The engine the user has selected, mirrored from preferences.
+     *
+     * Held in state so a recognition can be compared against it — that mismatch is what raises
+     * [OcrNotice.EngineUnavailable] when the selected engine could not run.
+     */
+    val engine: OcrEngine = OcrEngine.DEFAULT,
 ) : UiState {
 
     enum class Stage {
@@ -84,6 +93,9 @@ internal enum class OcrNotice {
 
     /** The handover to Text tools was shortened to fit the navigation argument. */
     TextTruncated,
+
+    /** The selected engine could not run here, so the other one read the image instead. */
+    EngineUnavailable,
 }
 
 internal sealed interface OcrIntent : UiIntent {

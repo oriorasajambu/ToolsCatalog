@@ -4,7 +4,9 @@ import android.graphics.Bitmap
 import com.minion.scaffold.core.ocr.model.BoundingBox
 import com.minion.scaffold.core.ocr.model.RecognizedBlock
 import com.minion.scaffold.core.ocr.model.RecognizedText
+import com.minion.scaffold.core.ocr.model.OcrEngine
 import com.minion.scaffold.feature.ocr.data.OcrResult
+import com.minion.scaffold.feature.ocr.data.Recognition
 import com.minion.scaffold.feature.ocr.data.TextRecognizer
 
 /**
@@ -20,13 +22,31 @@ internal class FakeTextRecognizer : TextRecognizer {
     var callCount = 0
         private set
 
+    var released = false
+        private set
+
+    /**
+     * Which engine the next recognition reports having used.
+     *
+     * Separate from the queued results because the two vary independently: a fallback still
+     * produces perfectly good text, it just did not come from the engine that was asked for.
+     */
+    var reportedEngine = OcrEngine.MlKit
+
     fun enqueue(vararg outcomes: OcrResult) {
         results.addAll(outcomes)
     }
 
-    override suspend fun recognize(bitmap: Bitmap): OcrResult {
+    override suspend fun recognize(bitmap: Bitmap): Recognition {
         callCount++
-        return results.removeFirstOrNull() ?: OcrResult.NoText
+        return Recognition(
+            result = results.removeFirstOrNull() ?: OcrResult.NoText,
+            engine = reportedEngine,
+        )
+    }
+
+    override fun release() {
+        released = true
     }
 
     companion object {

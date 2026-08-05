@@ -5,15 +5,18 @@ import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.minion.scaffold.core.camera.CapturedFrame
 import com.minion.scaffold.core.navigation.TextToolsRoute
+import com.minion.scaffold.core.ocr.model.OcrEngine
 import com.minion.scaffold.core.ocr.usecase.AssembleTextUseCase
 import com.minion.scaffold.core.testing.MainDispatcherRule
 import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.feature.ocr.data.ImageLoader
 import com.minion.scaffold.feature.ocr.data.OcrResult
+import com.minion.scaffold.feature.ocr.domain.ObserveOcrEngineUseCase
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -31,6 +34,12 @@ internal class OcrViewModelTest {
     private val recognizer = FakeTextRecognizer()
     private val imageLoader = mockk<ImageLoader>()
 
+    /** Drives the engine preference, so a test can switch engines mid-session. */
+    private val engine = MutableStateFlow(OcrEngine.MlKit)
+    private val observeOcrEngine = mockk<ObserveOcrEngineUseCase>().also {
+        every { it() } returns engine
+    }
+
     /** The decoder is mocked out entirely, so the bitmap only has to be a non-null instance. */
     private val bitmap = mockk<Bitmap>(relaxed = true)
 
@@ -39,6 +48,7 @@ internal class OcrViewModelTest {
         imageLoader = imageLoader,
         textRecognizer = recognizer,
         assembleText = AssembleTextUseCase(),
+        observeOcrEngine = observeOcrEngine,
     )
 
     private fun frame() = CapturedFrame(jpegBytes = ByteArray(0), rotationDegrees = 0)
@@ -389,6 +399,111 @@ internal class OcrViewModelTest {
 
         // Selection, not straight to the result — a picked image gets block selection too.
         assertEquals(OcrState.Stage.Selection, viewModel.state.value.stage)
+        assertNull(viewModel.state.value.notice)
+    }
+
+    // --- Engine selection ------------------------------------------------------------------
+
+    @Test
+    fun `the selected engine is mirrored into state`() = runTest {
+        val viewModel = viewModel()
+        engine.value = OcrEngine.PaddleOcr
+        advanceUntilIdle()
+
+        assertEquals(OcrEngine.PaddleOcr, viewModel.state.value.engine)
+    }
+
+    @Test
+    fun `changing engine re-reads the capture already on screen`() = runTest {
+        stubLoad()
+        recognizer.enqueue(FakeTextRecognizer.found("read by ML Kit"))
+
+        val viewModel = viewModel()
+        viewModel.onFrameCaptured(frame())
+        advanceUntilIdle()
+        assertEquals(1, recognizer.callCount)
+
+        recognizer.reportedEngine = OcrEngine.PaddleOcr
+        recognizer.enqueue(FakeTextRecognizer.found("read by PaddleOCR"))
+        engine.value = OcrEngine.PaddleOcr
+        advanceUntilIdle()
+
+        // The retained bitmap is re-read rather than the user being asked to shoot it again.
+        assertEquals(2, recognizer.callCount)
+        assertEquals(
+            "read by PaddleOCR",
+            viewModel.state.value.currentCapture?.text?.blocks?.single()?.text,
+        )
+    }
+
+    @Test
+    fun `re-reading after an engine change stays on one capture`() = runTest {
+        stubLoad()
+        recognizer.enqueue(FakeTextRecognizer.found("first"), FakeTextRecognizer.found("second"))
+
+        val viewModel = viewModel()
+        viewModel.onFrameCaptured(frame())
+        advanceUntilIdle()
+
+        engine.value = OcrEngine.PaddleOcr
+        advanceUntilIdle()
+
+        // Replaced, not appended — a settings visit must not silently become a second page.
+        assertEquals(1, viewModel.state.value.captures.size)
+        assertEquals(OcrState.Stage.Selection, viewModel.state.value.stage)
+    }
+
+    @Test
+    fun `the initial engine value does not trigger a re-read`() = runTest {
+        stubLoad()
+        recognizer.enqueue(FakeTextRecognizer.found("once"))
+
+        val viewModel = viewModel()
+        viewModel.onFrameCaptured(frame())
+        advanceUntilIdle()
+
+        // The preference flow replays its stored value on subscription. Treating that as a change
+        // would re-recognise on every return to the screen.
+        assertEquals(1, recognizer.callCount)
+        assertEquals(OcrState.Stage.Selection, viewModel.state.value.stage)
+    }
+
+    @Test
+    fun `nothing is re-read when there is no capture yet`() = runTest {
+        viewModel()
+        engine.value = OcrEngine.PaddleOcr
+        advanceUntilIdle()
+
+        assertEquals(0, recognizer.callCount)
+    }
+
+    @Test
+    fun `falling back to another engine says so`() = runTest {
+        stubLoad()
+        engine.value = OcrEngine.PaddleOcr
+        recognizer.enqueue(FakeTextRecognizer.found("text"))
+        // PaddleOCR was asked for; ML Kit is what actually ran.
+        recognizer.reportedEngine = OcrEngine.MlKit
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+        viewModel.onFrameCaptured(frame())
+        advanceUntilIdle()
+
+        assertEquals(OcrNotice.EngineUnavailable, viewModel.state.value.notice)
+        // The text still arrives — the fallback is announced, not fatal.
+        assertEquals(OcrState.Stage.Selection, viewModel.state.value.stage)
+    }
+
+    @Test
+    fun `no notice when the engine that ran is the one selected`() = runTest {
+        stubLoad()
+        recognizer.enqueue(FakeTextRecognizer.found("text"))
+
+        val viewModel = viewModel()
+        viewModel.onFrameCaptured(frame())
+        advanceUntilIdle()
+
         assertNull(viewModel.state.value.notice)
     }
 }

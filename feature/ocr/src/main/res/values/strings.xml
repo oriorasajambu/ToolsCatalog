@@ -56,4 +56,5 @@
     <string name="ocr_no_text">No text found. Try moving closer, or steadying the shot.</string>
     <string name="ocr_image_unreadable">That image could not be opened.</string>
     <string name="ocr_capture_failed">The camera could not take that shot. Try again.</string>
+    <string name="ocr_engine_unavailable">PaddleOCR could not run on this device, so ML Kit read the image instead.</string>
 </resources>

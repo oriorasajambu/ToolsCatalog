@@ -264,6 +264,7 @@ private fun OcrNotice.messageRes(): Int = when (this) {
     OcrNotice.ImageUnreadable -> R.string.ocr_image_unreadable
     OcrNotice.CaptureFailed -> R.string.ocr_capture_failed
     OcrNotice.TextTruncated -> R.string.ocr_truncated
+    OcrNotice.EngineUnavailable -> R.string.ocr_engine_unavailable
 }
 
 private const val MIME_TYPE_PLAIN_TEXT = "text/plain"
