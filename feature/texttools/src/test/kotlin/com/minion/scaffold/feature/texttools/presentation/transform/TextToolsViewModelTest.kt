@@ -1,6 +1,8 @@
 package com.minion.scaffold.feature.texttools.presentation.transform
 
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import com.minion.scaffold.core.navigation.TextToolsRoute
 import com.minion.scaffold.core.testing.MainDispatcherRule
 import com.minion.scaffold.core.text.model.TextError
 import com.minion.scaffold.core.text.model.TextOperation
@@ -19,7 +21,38 @@ internal class TextToolsViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val viewModel = TextToolsViewModel(TransformTextUseCase())
+    private val viewModel = viewModel()
+
+    /**
+     * @param seededText what another tool handed over, as navigation would have put it in the
+     *   handle. Read by name rather than through `toRoute()`, which needs an Android `Bundle`
+     *   that does not exist here — see `QrScanRoute.ARG_PURPOSE`.
+     */
+    private fun viewModel(seededText: String? = null) = TextToolsViewModel(
+        savedStateHandle = SavedStateHandle(
+            seededText?.let { mapOf(TextToolsRoute.ARG_TEXT to it) }.orEmpty(),
+        ),
+        transformText = TransformTextUseCase(),
+    )
+
+    @Test
+    fun `starts empty when nothing was handed over`() {
+        assertEquals("", viewModel.state.value.input)
+    }
+
+    @Test
+    fun `text handed over by another tool pre-fills the input and is transformed`() {
+        val seeded = viewModel(seededText = "Man")
+        seeded.onIntent(TextToolsIntent.OperationChanged(TextOperation.BASE64_ENCODE))
+
+        assertEquals("Man", seeded.state.value.input)
+        assertEquals("TWFu", seeded.state.value.output)
+    }
+
+    @Test
+    fun `an empty handover is ignored rather than seeding a blank input`() {
+        assertEquals("", viewModel(seededText = "").state.value.input)
+    }
 
     @Test
     fun `output recomputes as the input changes`() {

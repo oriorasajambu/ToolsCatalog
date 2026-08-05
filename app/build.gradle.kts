@@ -132,6 +132,7 @@ dependencies {
     implementation(project(":feature:qrcreate"))
     implementation(project(":feature:texttools"))
     implementation(project(":feature:weather"))
+    implementation(project(":feature:ocr"))
 
     implementation(libs.androidx.splashscreen)
 

@@ -69,6 +69,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minion.scaffold.core.designsystem.component.AppButton
 import com.minion.scaffold.core.designsystem.component.AppOutlinedButton
 import com.minion.scaffold.core.designsystem.theme.AppTheme
+import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
 import com.minion.scaffold.feature.qrscan.R
 import com.minion.scaffold.core.emv.model.QrParseError
@@ -143,7 +144,7 @@ internal fun QrScanScreen(
             )
             // Ask once, on arrival. Re-asking on every resume would trap a user who declined in
             // a dialog they cannot get past.
-            state.cameraPermission == CameraPermissionState.Unknown ->
+            state.cameraPermission == PermissionState.Unknown ->
                 permissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
@@ -389,7 +390,7 @@ private fun IdleContent(
             modifier = modifier.padding(horizontal = spacing),
         )
 
-        state.cameraPermission == CameraPermissionState.Granted -> CameraPreview(
+        state.cameraPermission == PermissionState.Granted -> CameraPreview(
             scanningEnabled = state.isScanning,
             torchEnabled = state.torchEnabled,
             onToggleTorch = { onIntent(QrScanIntent.TorchToggled) },
@@ -397,7 +398,7 @@ private fun IdleContent(
             modifier = modifier,
         )
 
-        state.cameraPermission == CameraPermissionState.PermanentlyDenied -> PermissionPanel(
+        state.cameraPermission == PermissionState.PermanentlyDenied -> PermissionPanel(
             message = stringResource(R.string.qrscan_permission_blocked),
             actionLabel = stringResource(R.string.qrscan_permission_open_settings),
             onAction = { onIntent(QrScanIntent.AppSettingsRequested) },
@@ -405,7 +406,7 @@ private fun IdleContent(
             modifier = modifier.padding(horizontal = spacing),
         )
 
-        state.cameraPermission == CameraPermissionState.Denied -> PermissionPanel(
+        state.cameraPermission == PermissionState.Denied -> PermissionPanel(
             message = stringResource(R.string.qrscan_permission_rationale),
             actionLabel = stringResource(R.string.qrscan_permission_grant),
             onAction = onRequestPermission,
@@ -558,7 +559,7 @@ internal fun QrScanManualInputPreview() {
 @Preview
 @Composable
 internal fun QrScanPermissionDeniedPreview() {
-    QrScanContentPreview(QrScanState(cameraPermission = CameraPermissionState.Denied))
+    QrScanContentPreview(QrScanState(cameraPermission = PermissionState.Denied))
 }
 
 @Preview

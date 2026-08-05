@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="camera_spacing">16dp</dimen>
+    <dimen name="camera_spacing_tight">4dp</dimen>
+    <dimen name="camera_focus_ring_radius">32dp</dimen>
+    <dimen name="camera_focus_ring_stroke">3dp</dimen>
+</resources>

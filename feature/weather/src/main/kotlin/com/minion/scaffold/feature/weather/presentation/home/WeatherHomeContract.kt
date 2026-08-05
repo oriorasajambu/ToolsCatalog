@@ -3,6 +3,7 @@ package com.minion.scaffold.feature.weather.presentation.home
 import com.minion.scaffold.core.common.error.DomainError
 import com.minion.scaffold.core.common.mvi.UiEffect
 import com.minion.scaffold.core.common.mvi.UiIntent
+import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.core.common.mvi.UiState
 import com.minion.scaffold.core.weather.model.WeatherCondition
 import com.minion.scaffold.core.weather.model.WeatherUnit
@@ -97,9 +98,6 @@ internal data class SavedCardUi(
         data object Failed : ForecastState
     }
 }
-
-/** See `QrScanContract.CameraPermissionState` — same shape, same reasoning, different permission. */
-internal enum class PermissionState { Unknown, Granted, Denied, PermanentlyDenied }
 
 internal sealed interface WeatherHomeIntent : UiIntent {
 

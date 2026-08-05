@@ -65,6 +65,7 @@ import com.minion.scaffold.core.designsystem.component.AppButton
 import com.minion.scaffold.core.designsystem.component.AppOutlinedButton
 import com.minion.scaffold.core.designsystem.theme.AppTheme
 import com.minion.scaffold.core.ui.error.toMessageRes
+import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
 import com.minion.scaffold.core.weather.model.WeatherCondition
 import com.minion.scaffold.core.weather.model.WeatherUnit

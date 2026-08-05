@@ -10,6 +10,7 @@ import com.minion.scaffold.core.navigation.ScanPurpose
 import com.minion.scaffold.core.navigation.UrlCreateRoute
 import com.minion.scaffold.core.navigation.VCardCreateRoute
 import com.minion.scaffold.core.navigation.WifiCreateRoute
+import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.core.testing.MainDispatcherRule
 import com.minion.scaffold.feature.qrscan.data.ImageDecodeResult
 import com.minion.scaffold.core.emv.model.QrParseError
@@ -415,7 +416,7 @@ internal class QrScanViewModelTest {
             QrScanIntent.PermissionResult(granted = true, shouldShowRationale = false),
         )
 
-        assertEquals(CameraPermissionState.Granted, viewModel.state.value.cameraPermission)
+        assertEquals(PermissionState.Granted, viewModel.state.value.cameraPermission)
         assertTrue(viewModel.state.value.isScanning)
     }
 
@@ -426,7 +427,7 @@ internal class QrScanViewModelTest {
             QrScanIntent.PermissionResult(granted = false, shouldShowRationale = true),
         )
 
-        assertEquals(CameraPermissionState.Denied, viewModel.state.value.cameraPermission)
+        assertEquals(PermissionState.Denied, viewModel.state.value.cameraPermission)
     }
 
     /**
@@ -440,7 +441,7 @@ internal class QrScanViewModelTest {
         )
 
         assertEquals(
-            CameraPermissionState.PermanentlyDenied,
+            PermissionState.PermanentlyDenied,
             viewModel.state.value.cameraPermission,
         )
     }
@@ -487,7 +488,7 @@ internal class QrScanViewModelTest {
         viewModel.onIntent(QrScanIntent.Cleared)
 
         assertTrue(viewModel.state.value.isScanning)
-        assertEquals(CameraPermissionState.Granted, viewModel.state.value.cameraPermission)
+        assertEquals(PermissionState.Granted, viewModel.state.value.cameraPermission)
     }
 
     @Test

@@ -1,26 +1,13 @@
 package com.minion.scaffold.feature.qrscan.presentation.camera
 
-import androidx.camera.view.CameraController
-import androidx.camera.view.LifecycleCameraController
-import androidx.camera.view.PreviewView
 import androidx.camera.view.TransformExperimental
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FlashOff
-import androidx.compose.material.icons.filled.FlashOn
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -31,29 +18,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.minion.scaffold.core.camera.CameraViewfinder
 import com.minion.scaffold.feature.qrscan.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import java.util.concurrent.Executors
 
 /**
- * The camera viewfinder: an aiming reticle, stepped and pinch zoom, tap to focus.
+ * The scanning viewfinder: an aiming reticle over the shared camera preview.
  *
- * Built on [LifecycleCameraController] rather than `ProcessCameraProvider`, which is what makes
- * pinch-to-zoom and tap-to-focus two property assignments instead of two gesture detectors and a
- * `FocusMeteringAction`. The controller also reports where a focus tap landed, which is what the
- * focus ring is drawn from.
+ * The camera itself — controller, torch, zoom, tap-to-focus, coordinate transform — lives in
+ * `:core:camera`, shared with the OCR tool. What is left here is everything specific to reading a
+ * QR code: the reticle, whether a code is aimed, and the brief lock before the payload is handed
+ * on.
  *
- * Everything about aiming lives here rather than in the ViewModel. It is geometry in view pixels
- * that means nothing once the camera is gone, and the only part worth testing — [isAimed] — is a
- * pure function that needs none of this.
+ * Aiming lives here rather than in the ViewModel. It is geometry in view pixels that means nothing
+ * once the camera is gone, and the only part worth testing — [isAimed] — is a pure function that
+ * needs none of this.
  *
  * @param scanningEnabled whether to look for codes. False detaches the analyzer, which is what
  *   stops the camera re-reading a code whose report is already on screen.
@@ -67,29 +51,7 @@ internal fun CameraPreview(
     onPayloadDetected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
     val haptics = LocalHapticFeedback.current
-
-    val controller = remember(context) {
-        LifecycleCameraController(context).apply {
-            // Preview is implicit; naming only IMAGE_ANALYSIS keeps the controller from allocating
-            // an ImageCapture nothing here uses.
-            setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
-            isPinchToZoomEnabled = true
-            isTapToFocusEnabled = true
-        }
-    }
-
-    val previewView = remember(context) {
-        PreviewView(context).apply {
-            // FILL_CENTER crops the stream to the view instead of letterboxing it, which is what
-            // makes the viewfinder edge-to-edge when the aspect ratios differ.
-            scaleType = PreviewView.ScaleType.FILL_CENTER
-        }
-    }
-
-    val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
 
     var detection by remember { mutableStateOf<DetectedCode?>(null) }
     var reticle by remember { mutableStateOf(Rect.Zero) }
@@ -104,16 +66,10 @@ internal fun CameraPreview(
     // State writes from the analysis executor are safe — snapshot state is thread-safe to write.
     val analyzer = remember { BarcodeAnalyzer { detection = it } }
 
-    DisposableEffect(controller, lifecycleOwner) {
-        previewView.controller = controller
-        controller.bindToLifecycle(lifecycleOwner)
-
-        onDispose {
-            previewView.controller = null
-            controller.unbind()
-            analyzer.close()
-            analysisExecutor.shutdown()
-        }
+    // The viewfinder attaches and detaches the analyzer but does not own it, because it cannot know
+    // whether one holds a native detector. This one does, so closing it is this file's job.
+    DisposableEffect(analyzer) {
+        onDispose { analyzer.close() }
     }
 
     /**
@@ -130,14 +86,12 @@ internal fun CameraPreview(
      */
     LaunchedEffect(scanningEnabled) {
         if (!scanningEnabled) {
-            controller.clearImageAnalysisAnalyzer()
             detection = null
             return@LaunchedEffect
         }
 
         detection = null
         locked = false
-        controller.setImageAnalysisAnalyzer(analysisExecutor, analyzer)
 
         // Reads both detection and the reticle, so it re-evaluates when either changes — including
         // a rotation that moves the box out from under a code.
@@ -153,18 +107,6 @@ internal fun CameraPreview(
         currentOnPayloadDetected(payload)
     }
 
-    LaunchedEffect(torchEnabled) {
-        controller.enableTorch(torchEnabled)
-    }
-
-    val streamState by previewView.previewStreamState.observeAsState()
-
-    // Refreshed on stream start and on every size change — the latter is what keeps the mapping
-    // right through a rotation, where a stale transform silently rejects centred codes.
-    LaunchedEffect(streamState, reticle) {
-        analyzer.onPreviewTransformChanged(previewView.outputTransform)
-    }
-
     val seen = detection
     val aim = when {
         // Stays green through the hold even if the code drifts, so the reticle agrees with the
@@ -175,28 +117,20 @@ internal fun CameraPreview(
         else -> AimState.OffTarget
     }
 
-    val zoomState by controller.zoomState.observeAsState()
-    val focusInfo by controller.tapToFocusInfoState.observeAsState()
     val spacing = dimensionResource(R.dimen.qrscan_spacing)
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .onSizeChanged { reticle = reticleIn(it) },
+    CameraViewfinder(
+        analyzer = analyzer.takeIf { scanningEnabled },
+        torchEnabled = torchEnabled,
+        onToggleTorch = onToggleTorch,
+        onTransformChanged = analyzer::onPreviewTransformChanged,
+        // The reticle is measured off the viewfinder's own bounds, so the size lands here rather
+        // than inside the overlay — the aim check below needs it outside composition.
+        modifier = modifier.onSizeChanged { reticle = reticleIn(it) },
     ) {
-        AndroidView(
-            factory = { previewView },
-            modifier = Modifier.matchParentSize(),
-        )
-
         ScanReticle(
             reticle = reticle,
             aim = aim,
-            modifier = Modifier.matchParentSize(),
-        )
-
-        FocusRing(
-            tapPoint = focusInfo?.tapPoint,
             modifier = Modifier.matchParentSize(),
         )
 
@@ -210,42 +144,6 @@ internal fun CameraPreview(
                     .padding(spacing),
             )
         }
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(spacing),
-            verticalArrangement = Arrangement.spacedBy(spacing),
-        ) {
-            ZoomControls(
-                currentRatio = zoomState?.zoomRatio ?: MIN_ZOOM_RATIO,
-                maxRatio = zoomState?.maxZoomRatio ?: MIN_ZOOM_RATIO,
-                onSelectRatio = { controller.setZoomRatio(it) },
-            )
-        }
-
-        // Hidden rather than disabled on a device with no flash: a control that cannot do anything
-        // is noise, and whether the hardware exists is knowable here.
-        //
-        // Gated on `streamState` rather than reading `cameraInfo` bare. The controller has no
-        // camera until it binds, which happens after the first composition — and a bare read gives
-        // Compose nothing to invalidate on, so the button would stay hidden forever. The stream
-        // state is observed, so it recomposes once there is a camera to ask.
-        if (streamState != null && controller.cameraInfo?.hasFlashUnit() == true) {
-            FilledTonalIconButton(
-                onClick = onToggleTorch,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(spacing),
-            ) {
-                Icon(
-                    imageVector = if (torchEnabled) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
-                    contentDescription = stringResource(
-                        if (torchEnabled) R.string.qrscan_torch_off else R.string.qrscan_torch_on,
-                    ),
-                )
-            }
-        }
     }
 }
 
@@ -258,5 +156,3 @@ private fun AimState.hintRes(): Int? = when (this) {
 
 /** How long the reticle stays green before the report replaces the viewfinder. */
 private const val LOCK_HOLD_MILLIS = 250L
-
-private const val MIN_ZOOM_RATIO = 1f

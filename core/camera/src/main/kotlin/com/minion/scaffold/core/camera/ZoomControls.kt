@@ -1,4 +1,4 @@
-package com.minion.scaffold.feature.qrscan.presentation.camera
+package com.minion.scaffold.core.camera
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -12,13 +12,12 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import com.minion.scaffold.feature.qrscan.R
 import kotlin.math.abs
 
 /**
  * The zoom ratios this control offers, before the lens has its say.
  *
- * Steps rather than a slider: reading a code at arm's length or across a room are the two cases,
+ * Steps rather than a slider: reading something at arm's length or across a room are the two cases,
  * and a tap gets there faster than dragging. Pinch remains available for anything between.
  */
 private val ZOOM_STEPS = listOf(1f, 2f, 5f)
@@ -46,7 +45,7 @@ internal fun ZoomControls(
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(
-            dimensionResource(R.dimen.qrscan_spacing_tight),
+            dimensionResource(R.dimen.camera_spacing_tight),
         ),
     ) {
         for (step in steps) {
@@ -61,8 +60,8 @@ internal fun ZoomControls(
 
 @Composable
 private fun ZoomStep(ratio: Float, selected: Boolean, onClick: () -> Unit) {
-    val label = stringResource(R.string.qrscan_zoom_step, ratio.formatted())
-    val description = stringResource(R.string.qrscan_zoom_select, ratio.formatted())
+    val label = stringResource(R.string.camera_zoom_step, ratio.formatted())
+    val description = stringResource(R.string.camera_zoom_select, ratio.formatted())
 
     val content: @Composable () -> Unit = {
         Text(text = label, style = MaterialTheme.typography.labelMedium)

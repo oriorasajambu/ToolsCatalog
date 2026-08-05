@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Resource names are prefixed with the module. Every module's resources merge into one namespace in
+  :app, so an unprefixed `torch_on` in two modules silently resolves to whichever the merger
+  visited last.
+-->
+<resources>
+    <string name="camera_zoom_step">×%1$s</string>
+    <string name="camera_zoom_select">Zoom %1$s times</string>
+    <string name="camera_torch_on">Turn on the torch</string>
+    <string name="camera_torch_off">Turn off the torch</string>
+</resources>

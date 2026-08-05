@@ -79,6 +79,11 @@
 -keep class com.google.mlkit.common.internal.CommonComponentRegistrar { *; }
 -keep class com.google.mlkit.vision.barcode.internal.BarcodeRegistrar { *; }
 -keep class com.google.mlkit.vision.common.internal.VisionCommonRegistrar { *; }
+# Text recognition, same mechanism. The wildcard above already covers these; they are named for the
+# same reason the barcode ones are — so the intent survives a consumer-rule regression, and so a
+# reader can see which detectors this app actually depends on.
+-keep class com.google.mlkit.vision.text.internal.TextRegistrar { *; }
+-keep class com.google.mlkit.vision.text.bundled.common.internal.BundledTextRegistrar { *; }
 
 # --- OkHttp: optional runtime providers it references but does not require -------------------
 -dontwarn org.bouncycastle.**

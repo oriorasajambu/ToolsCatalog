@@ -143,9 +143,36 @@ data class VCardCreateRoute(val payload: String? = null) : AppRoute {
     }
 }
 
-/** The text transform tool — encode, hash, reformat, re-case. No QR involved. */
+/**
+ * The text transform tool — encode, hash, reformat, re-case. No QR involved.
+ *
+ * [text] pre-fills the input, which is what lets the OCR tool hand its extraction straight here
+ * instead of making the user copy and paste. Capped by the caller — see [MAX_TEXT_LENGTH].
+ */
 @Serializable
-data object TextToolsRoute : AppRoute
+data class TextToolsRoute(val text: String? = null) : AppRoute {
+
+    companion object {
+
+        /** See [QrScanRoute.ARG_PURPOSE] for why this is read by name. */
+        const val ARG_TEXT = "text"
+
+        /**
+         * How much text may ride in the route.
+         *
+         * Navigation arguments are serialised into the saved-state `Bundle`, which shares the
+         * ~1MB Binder transaction ceiling with everything else being saved. A dense page of OCR'd
+         * text is only a few kilobytes, so this ceiling is far above any realistic single
+         * extraction — it exists so that a pathological one truncates visibly instead of crashing
+         * the process with `TransactionTooLargeException` on the next configuration change.
+         */
+        const val MAX_TEXT_LENGTH = 32_000
+    }
+}
+
+/** The on-device OCR tool: photograph or pick an image, get the text out. */
+@Serializable
+data object OcrRoute : AppRoute
 
 /** The generator tool — UUID, password, random hex. */
 @Serializable
