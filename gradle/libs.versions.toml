@@ -42,6 +42,7 @@ hilt-work = "1.4.0"
 camerax = "1.5.0"
 mlkit-barcode = "17.3.0"
 mlkit-text = "16.0.1"
+onnxruntime = "1.27.0"
 zxing = "3.5.3"
 
 [libraries]
@@ -128,6 +129,10 @@ mlkit-barcode = { group = "com.google.mlkit", name = "barcode-scanning", version
 # artifacts of about the same size — and ML Kit cannot auto-detect which script an image holds, so
 # adding one means adding a script picker to the UI, not just a dependency.
 mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkit-text" }
+# Runs the PaddleOCR PP-OCRv5 models, the alternative to ML Kit above. Ships native libraries per
+# ABI, which is why :app filters down to the two ARM ones — see its `ndk` block. Version matched to
+# ente-io/mobile_ocr, whose pipeline this repo vendors; the models were exported against it.
+onnxruntime-android = { group = "com.microsoft.onnxruntime", name = "onnxruntime-android", version.ref = "onnxruntime" }
 # Encoding only. ML Kit reads QR codes and cannot write one, which is what redrawing a scanned
 # payload needs. Pure Java `core`, not `zxing-android-embedded` — none of that library's Activity
 # and camera machinery is wanted here.
