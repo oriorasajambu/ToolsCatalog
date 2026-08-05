@@ -3,7 +3,9 @@ package com.minion.scaffold.feature.ocr.presentation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.minion.scaffold.core.navigation.OcrRoute
+import com.minion.scaffold.core.navigation.OcrSettingsRoute
 import com.minion.scaffold.core.navigation.TextToolsRoute
+import com.minion.scaffold.feature.ocr.presentation.settings.OcrSettingsScreen
 
 /**
  * This module's only public surface.
@@ -18,11 +20,28 @@ import com.minion.scaffold.core.navigation.TextToolsRoute
 fun NavGraphBuilder.ocrScreen(
     onNavigateBack: () -> Unit,
     onNavigateToTextTools: (TextToolsRoute) -> Unit,
+    onNavigateToSettings: () -> Unit,
 ) {
     composable<OcrRoute> {
         OcrScreen(
             onNavigateBack = onNavigateBack,
             onSendToTextTools = { text -> onNavigateToTextTools(TextToolsRoute(text)) },
+            onNavigateToSettings = onNavigateToSettings,
         )
+    }
+}
+
+/**
+ * The engine picker, a destination of its own.
+ *
+ * Separate from [ocrScreen] rather than nested inside it so the OCR screen stays on the back stack
+ * while settings is open — which is what lets its ViewModel see the engine change and re-recognise
+ * the capture it is still holding.
+ */
+fun NavGraphBuilder.ocrSettingsScreen(
+    onNavigateBack: () -> Unit,
+) {
+    composable<OcrSettingsRoute> {
+        OcrSettingsScreen(onNavigateBack = onNavigateBack)
     }
 }

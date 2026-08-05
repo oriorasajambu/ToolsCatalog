@@ -23,4 +23,8 @@ dependencies {
 
     // Bitmap decoding reads EXIF to find how the photographer was holding the phone.
     implementation(libs.androidx.exifinterface)
+
+    // The recognition-engine choice. Feature-local rather than :core:data — only this feature
+    // reads it, and the repo promotes to a core module on the second consumer, not the first.
+    implementation(libs.data.store)
 }

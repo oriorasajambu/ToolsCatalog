@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,6 +52,7 @@ import kotlinx.coroutines.launch
 internal fun OcrScreen(
     onNavigateBack: () -> Unit,
     onSendToTextTools: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: OcrViewModel = hiltViewModel(),
 ) {
@@ -151,6 +153,7 @@ internal fun OcrScreen(
                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
             )
         },
+        onNavigateToSettings = onNavigateToSettings,
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
@@ -172,6 +175,7 @@ private fun OcrContent(
     onNavigateBack: () -> Unit,
     onRequestPermission: () -> Unit,
     onPickImage: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -209,6 +213,16 @@ private fun OcrContent(
                                 contentDescription = stringResource(R.string.ocr_pick_image),
                             )
                         }
+                    }
+
+                    // Shown in every stage, unlike the picker above: switching engine mid-selection
+                    // re-reads the capture that is already on screen, which is the whole point of
+                    // being able to compare two engines on one photograph.
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = stringResource(R.string.ocr_settings),
+                        )
                     }
                 },
             )
