@@ -26,5 +26,9 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
+    // The metric/imperial toggle. Feature-local rather than :core:data — only this feature reads
+    // it, and the repo promotes to a core module on the second consumer, not the first.
+    implementation(libs.data.store)
+
     testImplementation(libs.room.testing)
 }

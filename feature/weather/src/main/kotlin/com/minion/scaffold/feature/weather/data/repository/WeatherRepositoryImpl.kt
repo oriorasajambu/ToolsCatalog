@@ -6,25 +6,34 @@ import com.minion.scaffold.core.common.result.AppResult
 import com.minion.scaffold.core.network.error.safeCall
 import com.minion.scaffold.core.weather.mapper.WmoConditionMapper
 import com.minion.scaffold.core.weather.model.Forecast
+import com.minion.scaffold.core.weather.model.Location
+import com.minion.scaffold.core.weather.model.LocationSearchResult
 import com.minion.scaffold.core.weather.usecase.EvaluateNotableConditionsUseCase
 import com.minion.scaffold.feature.weather.data.local.CachedForecast
 import com.minion.scaffold.feature.weather.data.local.ForecastCacheDao
 import com.minion.scaffold.feature.weather.data.local.ForecastCacheEntity
+import com.minion.scaffold.feature.weather.data.local.SavedLocationDao
 import com.minion.scaffold.feature.weather.data.local.toCache
 import com.minion.scaffold.feature.weather.data.local.toDomain
+import com.minion.scaffold.feature.weather.data.local.toEntity
 import com.minion.scaffold.feature.weather.data.location.LocationFixProvider
 import com.minion.scaffold.feature.weather.data.location.ReverseGeocoder
 import com.minion.scaffold.feature.weather.data.remote.ForecastFields
+import com.minion.scaffold.feature.weather.data.remote.GeocodingApi
+import com.minion.scaffold.feature.weather.data.remote.GeocodingFields
 import com.minion.scaffold.feature.weather.data.remote.WeatherApi
 import com.minion.scaffold.feature.weather.data.remote.toCurrentConditions
 import com.minion.scaffold.feature.weather.data.remote.toDailyEntries
 import com.minion.scaffold.feature.weather.data.remote.toHourlyEntries
+import com.minion.scaffold.feature.weather.data.remote.toSearchResults
 import com.minion.scaffold.feature.weather.domain.ForecastResult
 import com.minion.scaffold.feature.weather.domain.LocationCard
 import com.minion.scaffold.feature.weather.domain.LocationFixOutcome
 import com.minion.scaffold.feature.weather.domain.WeatherRepository
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import javax.inject.Inject
@@ -38,7 +47,9 @@ internal const val CURRENT_LOCATION_KEY = "current"
  */
 internal class WeatherRepositoryImpl @Inject constructor(
     private val weatherApi: WeatherApi,
+    private val geocodingApi: GeocodingApi,
     private val forecastCacheDao: ForecastCacheDao,
+    private val savedLocationDao: SavedLocationDao,
     private val locationFixProvider: LocationFixProvider,
     private val reverseGeocoder: ReverseGeocoder,
     private val conditionMapper: WmoConditionMapper,
@@ -135,6 +146,39 @@ internal class WeatherRepositoryImpl @Inject constructor(
                 ?: return@withContext AppResult.Failure(DomainError.EmptyCache)
 
             getForecast(locationKey, cached.latitude, cached.longitude, forceRefresh)
+        }
+
+    override fun observeSavedLocations(): Flow<List<Location>> =
+        savedLocationDao.observeAll().map { entities -> entities.map { it.toDomain() } }
+
+    override suspend fun addSavedLocation(location: Location) = withContext(ioDispatcher) {
+        // Appended, not inserted at the front: the pinned GPS card already owns the top of the
+        // list, and a newly added city dropping in above ones the user deliberately ordered would
+        // undo their arrangement every time they add another.
+        savedLocationDao.upsert(location.toEntity(sortOrder = savedLocationDao.maxSortOrder() + 1))
+    }
+
+    override suspend fun removeSavedLocation(locationId: String) = withContext(ioDispatcher) {
+        savedLocationDao.deleteById(locationId)
+        // The forecast row goes too. Leaving it would keep a cache entry no screen can reach, and
+        // re-adding the same city later would show it a stale forecast from before it was removed.
+        forecastCacheDao.deleteByKey(locationId)
+    }
+
+    override suspend fun reorderSavedLocations(orderedIds: List<String>) = withContext(ioDispatcher) {
+        savedLocationDao.replaceOrder(orderedIds)
+    }
+
+    override suspend fun searchLocations(query: String): AppResult<List<LocationSearchResult>> =
+        withContext(ioDispatcher) {
+            safeCall {
+                geocodingApi.search(
+                    name = query,
+                    count = GeocodingFields.RESULT_COUNT,
+                    language = GeocodingFields.LANGUAGE,
+                    format = GeocodingFields.FORMAT,
+                ).toSearchResults()
+            }
         }
 
     private fun ForecastCacheEntity.isStale(): Boolean =

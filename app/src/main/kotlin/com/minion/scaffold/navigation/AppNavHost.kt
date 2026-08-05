@@ -10,6 +10,8 @@ import androidx.navigation.compose.rememberNavController
 import com.minion.scaffold.core.designsystem.motion.slideInFromRight
 import com.minion.scaffold.core.designsystem.motion.slideOutToRight
 import com.minion.scaffold.core.navigation.ToolsRoute
+import com.minion.scaffold.core.navigation.WeatherSearchRoute
+import com.minion.scaffold.core.navigation.WeatherSettingsRoute
 import com.minion.scaffold.feature.qrcreate.presentation.qrCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.url.urlCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.vcard.vCardCreateScreen
@@ -82,6 +84,8 @@ fun AppNavHost(
         weatherScreen(
             onNavigateBack = { navController.popBackStack() },
             onNavigateToDetail = { route -> navController.navigate(route) },
+            onNavigateToSearch = { navController.navigate(WeatherSearchRoute) },
+            onNavigateToSettings = { navController.navigate(WeatherSettingsRoute) },
         )
     }
 }

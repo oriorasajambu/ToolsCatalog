@@ -12,9 +12,24 @@
     <string name="weather_no_fix">Waiting for a location fix…</string>
     <string name="weather_retry">Retry</string>
 
+    <!--
+      Three phrasings rather than one, because "Updated 73h ago" is arithmetic the reader has to do
+      themselves. Hours stay exact for the first day, where the number is the useful part.
+    -->
     <string name="weather_updated_hours_ago">Updated %dh ago</string>
+    <string name="weather_updated_yesterday">Updated yesterday</string>
+    <string name="weather_updated_days_ago">Updated %d days ago</string>
     <string name="weather_feels_like">Feels like %d°</string>
-    <string name="weather_humidity_wind">%1$d%% humidity · %2$d km/h wind</string>
+
+    <!--
+      Degree and wind suffixes are per-unit strings rather than one string plus a concatenated
+      symbol: some locales put the degree sign elsewhere, or space it differently, and a format
+      string is the only place a translator can express that.
+    -->
+    <string name="weather_temperature_celsius">%d°C</string>
+    <string name="weather_temperature_fahrenheit">%d°F</string>
+    <string name="weather_humidity_wind_metric">%1$d%% humidity · %2$d km/h wind</string>
+    <string name="weather_humidity_wind_imperial">%1$d%% humidity · %2$d mph wind</string>
 
     <string name="weather_today">Today</string>
     <string name="weather_now">Now</string>
@@ -41,4 +56,30 @@
     <string name="weather_notable_extreme_heat">Extreme heat expected</string>
     <string name="weather_notable_extreme_cold">Extreme cold expected</string>
     <string name="weather_notable_snow">Snow expected</string>
+
+    <!-- Saved locations -->
+    <string name="weather_saved_header">SAVED LOCATIONS</string>
+    <string name="weather_saved_empty">No saved locations yet. Use + to add a city.</string>
+    <string name="weather_saved_remove">Remove</string>
+    <string name="weather_saved_unavailable">Unavailable</string>
+    <string name="weather_add_location">Add location</string>
+
+    <!-- Location search -->
+    <string name="weather_search_title">Add location</string>
+    <string name="weather_search_hint">Search for a city</string>
+    <string name="weather_search_clear">Clear search</string>
+    <string name="weather_search_idle">Type at least two letters to search.</string>
+    <string name="weather_search_empty">No places match that name.</string>
+    <string name="weather_search_added">%1$s added</string>
+    <string name="weather_search_add">Add %1$s</string>
+    <string name="weather_search_already_saved">Already saved</string>
+
+    <!-- Settings -->
+    <string name="weather_settings_title">Weather settings</string>
+    <string name="weather_settings_units_header">UNITS</string>
+    <string name="weather_settings_units_note">Forecasts are always fetched in metric and converted for display, so switching units costs nothing and works offline.</string>
+    <string name="weather_unit_metric">Metric</string>
+    <string name="weather_unit_metric_detail">Celsius · km/h</string>
+    <string name="weather_unit_imperial">Imperial</string>
+    <string name="weather_unit_imperial_detail">Fahrenheit · mph</string>
 </resources>

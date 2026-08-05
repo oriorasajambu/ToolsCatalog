@@ -55,7 +55,11 @@ import com.minion.scaffold.core.weather.model.Forecast
 import com.minion.scaffold.core.weather.model.HourlyEntry
 import com.minion.scaffold.core.weather.model.NotableCondition
 import com.minion.scaffold.core.weather.model.WeatherCondition
+import com.minion.scaffold.core.weather.model.WeatherUnit
 import com.minion.scaffold.feature.weather.R
+import com.minion.scaffold.feature.weather.presentation.humidityWindFormatRes
+import com.minion.scaffold.feature.weather.presentation.stalenessLabel
+import com.minion.scaffold.feature.weather.presentation.temperatureFormatRes
 import com.minion.scaffold.feature.weather.presentation.toIcon
 import com.minion.scaffold.feature.weather.presentation.toLabelRes
 import java.time.Instant
@@ -123,6 +127,7 @@ private fun ForecastDetailContent(
                 is ForecastDetailState.ContentState.Success -> ForecastList(
                     forecast = content.forecast,
                     staleHoursAgo = content.staleHoursAgo,
+                    unit = state.unit,
                     spacing = spacing,
                 )
 
@@ -145,14 +150,19 @@ private fun ForecastDetailContent(
 }
 
 @Composable
-private fun ForecastList(forecast: Forecast, staleHoursAgo: Long?, spacing: Dp) {
+private fun ForecastList(forecast: Forecast, staleHoursAgo: Long?, unit: WeatherUnit, spacing: Dp) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(spacing),
         verticalArrangement = Arrangement.spacedBy(spacing),
     ) {
         item(key = "current") {
-            CurrentConditionsBlock(current = forecast.current, staleHoursAgo = staleHoursAgo, spacing = spacing)
+            CurrentConditionsBlock(
+                current = forecast.current,
+                staleHoursAgo = staleHoursAgo,
+                unit = unit,
+                spacing = spacing,
+            )
         }
 
         if (forecast.notableConditions.isNotEmpty()) {
@@ -180,7 +190,12 @@ private fun ForecastList(forecast: Forecast, staleHoursAgo: Long?, spacing: Dp) 
 }
 
 @Composable
-private fun CurrentConditionsBlock(current: CurrentConditions, staleHoursAgo: Long?, spacing: Dp) {
+private fun CurrentConditionsBlock(
+    current: CurrentConditions,
+    staleHoursAgo: Long?,
+    unit: WeatherUnit,
+    spacing: Dp,
+) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(spacing),
@@ -195,7 +210,7 @@ private fun CurrentConditionsBlock(current: CurrentConditions, staleHoursAgo: Lo
                     contentDescription = stringResource(current.condition.toLabelRes()),
                 )
                 Text(
-                    text = "${current.temperature.roundToInt()}°C",
+                    text = stringResource(unit.temperatureFormatRes(), current.temperature.roundToInt()),
                     style = MaterialTheme.typography.displaySmall,
                 )
             }
@@ -205,7 +220,7 @@ private fun CurrentConditionsBlock(current: CurrentConditions, staleHoursAgo: Lo
             )
             Text(
                 text = stringResource(
-                    R.string.weather_humidity_wind,
+                    unit.humidityWindFormatRes(),
                     current.humidity,
                     current.windSpeed.roundToInt(),
                 ),
@@ -213,7 +228,7 @@ private fun CurrentConditionsBlock(current: CurrentConditions, staleHoursAgo: Lo
             )
             staleHoursAgo?.let { hours ->
                 Text(
-                    text = stringResource(R.string.weather_updated_hours_ago, hours),
+                    text = stalenessLabel(hours),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

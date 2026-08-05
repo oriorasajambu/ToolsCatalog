@@ -176,3 +176,11 @@ data class WeatherDetailRoute(val locationId: String) : AppRoute {
         const val ARG_LOCATION_ID = "locationId"
     }
 }
+
+/** Place-name search, for adding a city to the saved-locations list. */
+@Serializable
+data object WeatherSearchRoute : AppRoute
+
+/** The weather tool's own settings — the metric/imperial toggle. */
+@Serializable
+data object WeatherSettingsRoute : AppRoute

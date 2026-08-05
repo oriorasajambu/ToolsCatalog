@@ -8,6 +8,7 @@ import com.minion.scaffold.core.weather.usecase.EvaluateNotableConditionsUseCase
 import com.minion.scaffold.feature.weather.data.local.CachedForecast
 import com.minion.scaffold.feature.weather.data.local.CachedCurrentConditions
 import com.minion.scaffold.feature.weather.data.local.ForecastCacheEntity
+import com.minion.scaffold.core.weather.model.Location
 import com.minion.scaffold.core.weather.model.WeatherCondition
 import com.minion.scaffold.feature.weather.data.location.LatLng
 import com.minion.scaffold.feature.weather.data.location.LocationFixProvider
@@ -17,8 +18,10 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -28,7 +31,9 @@ import java.net.UnknownHostException
 internal class WeatherRepositoryImplTest {
 
     private val weatherApi = FakeWeatherApi()
+    private val geocodingApi = FakeGeocodingApi()
     private val cacheDao = FakeForecastCacheDao()
+    private val savedLocationDao = FakeSavedLocationDao()
     private val locationFixProvider = mockk<LocationFixProvider>()
     private val reverseGeocoder = mockk<ReverseGeocoder>()
     private lateinit var repository: WeatherRepositoryImpl
@@ -37,7 +42,9 @@ internal class WeatherRepositoryImplTest {
     fun setUp() {
         repository = WeatherRepositoryImpl(
             weatherApi = weatherApi,
+            geocodingApi = geocodingApi,
             forecastCacheDao = cacheDao,
+            savedLocationDao = savedLocationDao,
             locationFixProvider = locationFixProvider,
             reverseGeocoder = reverseGeocoder,
             conditionMapper = WmoConditionMapper(),
@@ -46,6 +53,14 @@ internal class WeatherRepositoryImplTest {
             ioDispatcher = Dispatchers.Unconfined,
         )
     }
+
+    private fun location(id: String, name: String) = Location(
+        id = id,
+        name = name,
+        latitude = 1.0,
+        longitude = 2.0,
+        isCurrentLocation = false,
+    )
 
     private fun freshCacheRow(locationKey: String = "current") = ForecastCacheEntity(
         locationKey = locationKey,
@@ -154,6 +169,75 @@ internal class WeatherRepositoryImplTest {
 
         assertTrue(outcome is LocationFixOutcome.Found)
         assertEquals("Jakarta", (outcome as LocationFixOutcome.Found).card.displayName)
+    }
+
+    @Test
+    fun `saved locations are appended in add order`() = runTest {
+        repository.addSavedLocation(location("berlin", "Berlin"))
+        repository.addSavedLocation(location("cairo", "Cairo"))
+
+        assertEquals(
+            listOf("Berlin", "Cairo"),
+            repository.observeSavedLocations().first().map { it.name },
+        )
+    }
+
+    @Test
+    fun `removing a saved location also drops its cached forecast`() = runTest {
+        repository.addSavedLocation(location("berlin", "Berlin"))
+        cacheDao.seed(freshCacheRow(locationKey = "berlin"))
+
+        repository.removeSavedLocation("berlin")
+
+        assertTrue(repository.observeSavedLocations().first().isEmpty())
+        assertNull(cacheDao.getByKey("berlin"))
+    }
+
+    @Test
+    fun `reordering persists the new order`() = runTest {
+        repository.addSavedLocation(location("a", "Alpha"))
+        repository.addSavedLocation(location("b", "Bravo"))
+        repository.addSavedLocation(location("c", "Charlie"))
+
+        repository.reorderSavedLocations(listOf("c", "a", "b"))
+
+        assertEquals(
+            listOf("Charlie", "Alpha", "Bravo"),
+            repository.observeSavedLocations().first().map { it.name },
+        )
+    }
+
+    @Test
+    fun `search maps geocoding hits to domain results`() = runTest {
+        geocodingApi.response = FakeGeocodingApi.resultsFor("Jakarta", "Jakarta Barat")
+
+        val result = repository.searchLocations("Jakarta")
+
+        assertTrue(result is AppResult.Success)
+        assertEquals(
+            listOf("Jakarta", "Jakarta Barat"),
+            (result as AppResult.Success).data.map { it.name },
+        )
+    }
+
+    @Test
+    fun `a search matching nothing is an empty success, not a failure`() = runTest {
+        geocodingApi.response = FakeGeocodingApi.resultsFor()
+
+        val result = repository.searchLocations("zzzzzz")
+
+        assertTrue(result is AppResult.Success)
+        assertTrue((result as AppResult.Success).data.isEmpty())
+    }
+
+    @Test
+    fun `a search transport failure surfaces the typed DomainError`() = runTest {
+        geocodingApi.error = UnknownHostException()
+
+        val result = repository.searchLocations("Jakarta")
+
+        assertTrue(result is AppResult.Failure)
+        assertEquals(DomainError.NoInternet, (result as AppResult.Failure).error)
     }
 
     @Test

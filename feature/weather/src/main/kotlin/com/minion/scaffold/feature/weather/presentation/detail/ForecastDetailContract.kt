@@ -5,10 +5,17 @@ import com.minion.scaffold.core.common.mvi.UiEffect
 import com.minion.scaffold.core.common.mvi.UiIntent
 import com.minion.scaffold.core.common.mvi.UiState
 import com.minion.scaffold.core.weather.model.Forecast
+import com.minion.scaffold.core.weather.model.WeatherUnit
 
 /** One location's forecast: current conditions, notable-conditions banner, hourly strip, daily list. */
 internal data class ForecastDetailState(
     val content: ContentState = ContentState.Loading,
+
+    /**
+     * The display unit the [ContentState.Success] forecast has *already* been converted into. Here
+     * so the composable knows which degree suffix to print, not so it can convert anything itself.
+     */
+    val unit: WeatherUnit = WeatherUnit.METRIC,
 ) : UiState {
 
     sealed interface ContentState {

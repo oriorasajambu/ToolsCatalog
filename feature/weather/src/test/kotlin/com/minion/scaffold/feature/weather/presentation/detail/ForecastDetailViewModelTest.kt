@@ -10,10 +10,15 @@ import com.minion.scaffold.core.weather.model.Forecast
 import com.minion.scaffold.core.weather.model.WeatherCondition
 import com.minion.scaffold.feature.weather.domain.ForecastResult
 import com.minion.scaffold.feature.weather.domain.GetForecastUseCase
+import com.minion.scaffold.core.weather.model.WeatherUnit
+import com.minion.scaffold.core.weather.usecase.ConvertUnitsUseCase
+import com.minion.scaffold.feature.weather.domain.ObserveWeatherUnitUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -38,10 +43,18 @@ internal class ForecastDetailViewModelTest {
         fetchedAt = Instant.now(),
     )
 
-    private fun viewModel(locationId: String = "current") = ForecastDetailViewModel(
-        SavedStateHandle(mapOf(WeatherDetailRoute.ARG_LOCATION_ID to locationId)),
-        getForecast,
-    )
+    private val unit = MutableStateFlow(WeatherUnit.METRIC)
+
+    private fun viewModel(locationId: String = "current"): ForecastDetailViewModel {
+        val observeWeatherUnit = mockk<ObserveWeatherUnitUseCase>()
+        every { observeWeatherUnit() } returns unit
+        return ForecastDetailViewModel(
+            savedStateHandle = SavedStateHandle(mapOf(WeatherDetailRoute.ARG_LOCATION_ID to locationId)),
+            getForecast = getForecast,
+            convertUnits = ConvertUnitsUseCase(),
+            observeWeatherUnit = observeWeatherUnit,
+        )
+    }
 
     @Test
     fun `loads on init`() = runTest {
@@ -79,6 +92,41 @@ internal class ForecastDetailViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { getForecast("current", true) }
+    }
+
+    @Test
+    fun `switching to imperial reconverts the displayed forecast`() = runTest {
+        val zeroCelsius = forecast.copy(current = forecast.current.copy(temperature = 0.0))
+        coEvery { getForecast("current", false) } returns
+            AppResult.Success(ForecastResult(zeroCelsius, isStale = false))
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        unit.value = WeatherUnit.IMPERIAL
+        advanceUntilIdle()
+
+        val content = viewModel.state.value.content as ForecastDetailState.ContentState.Success
+        assertEquals(WeatherUnit.IMPERIAL, viewModel.state.value.unit)
+        assertEquals(32.0, content.forecast.current.temperature, 0.001)
+    }
+
+    @Test
+    fun `flipping the unit twice does not double-convert`() = runTest {
+        val zeroCelsius = forecast.copy(current = forecast.current.copy(temperature = 0.0))
+        coEvery { getForecast("current", false) } returns
+            AppResult.Success(ForecastResult(zeroCelsius, isStale = false))
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        unit.value = WeatherUnit.IMPERIAL
+        advanceUntilIdle()
+        unit.value = WeatherUnit.METRIC
+        advanceUntilIdle()
+
+        val content = viewModel.state.value.content as ForecastDetailState.ContentState.Success
+        assertEquals(0.0, content.forecast.current.temperature, 0.001)
     }
 
     @Test

@@ -18,6 +18,10 @@ internal class FakeForecastCacheDao : ForecastCacheDao {
         rows[entity.locationKey] = entity
     }
 
+    override suspend fun deleteByKey(locationKey: String) {
+        rows.remove(locationKey)
+    }
+
     fun seed(entity: ForecastCacheEntity) {
         rows[entity.locationKey] = entity
     }

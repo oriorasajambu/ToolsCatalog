@@ -12,4 +12,8 @@ internal interface ForecastCacheDao {
 
     @Upsert
     suspend fun upsert(entity: ForecastCacheEntity)
+
+    /** Called when a saved location is removed, so its forecast does not outlive it. */
+    @Query("DELETE FROM forecast_cache WHERE locationKey = :locationKey")
+    suspend fun deleteByKey(locationKey: String)
 }

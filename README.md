@@ -64,16 +64,23 @@ live-data problem, not something you can ship inside the binary the way an EMV t
 format can. It still degrades gracefully offline: every forecast it fetches is cached in its own
 Room database (`forecast_cache`, keyed by location, stale after 3h) so the screen keeps showing the
 last-known data — with a "stale" label — rather than an error, and only a location with **no** cache
-at all shows a failure state.
+at all shows a failure state. A second table, `saved_locations`, holds the cities the user added by
+name; the GPS card is not in it, since it is pinned, undeletable and unorderable.
 
 A few things about it worth knowing if you are using it as a template for another network-backed
 feature:
 
 - **Retrofit lives in the feature, not `:core:network`.** `:core:network` supplies the shared
-  `OkHttpClient`/`Gson` singletons; `:feature:weather`'s own `di/WeatherNetworkModule.kt` builds a
-  *second* `Retrofit` instance on top of them, pointed at Open-Meteo's host instead of `:app`'s
-  configured `BASE_URL` — because this is a fixed, keyless, third-party API, not the app's own
-  backend, so it does not go through the `@BaseUrl` qualifier `:app` provides.
+  `OkHttpClient`/`Gson` singletons; `:feature:weather`'s own `di/WeatherNetworkModule.kt` builds
+  two *more* `Retrofit` instances on top of them — Open-Meteo serves forecasts and place-name
+  search from genuinely different hosts — instead of using `:app`'s configured `BASE_URL`. These
+  are fixed, keyless, third-party APIs rather than the app's own backend, so they do not go through
+  the `@BaseUrl` qualifier `:app` provides. Note the helper that builds them is private: exposing
+  it as `@Provides Retrofit` would collide with `:core:network`'s own unqualified binding.
+- **Schema changes get a real migration.** `forecast_cache` is disposable, but `saved_locations` is
+  user data, so `WeatherDatabase` ships a hand-written `MIGRATION_1_2` rather than
+  `fallbackToDestructiveMigration()` — the destructive fallback would silently wipe someone's saved
+  cities on a version bump, which is invisible until they complain.
 - **Location comes from the platform `LocationManager`, not Play Services.** The repo carries no
   Play Services dependency, and `:feature:weather/data/location/LocationFixProvider.kt` uses
   `LocationManagerCompat.getCurrentLocation` so it keeps working on a device without Play Services.
@@ -82,6 +89,12 @@ feature:
   `CameraPermissionState` — `Unknown` / `Granted` / `Denied` / `PermanentlyDenied`, with the last
   one deep-linking to the app's system settings page rather than re-showing a dialog the system
   will not display again.
+- **Units are converted at the presentation edge, never on the way in.** Forecasts are fetched and
+  cached in metric whatever the user picked; each ViewModel keeps the raw metric copy beside its
+  state and re-derives the displayed numbers when the preference changes. Converting in place and
+  writing back would lose the original after the first flip and turn the second one into
+  °F-treated-as-°C. The DataStore preference itself lives in the feature, not `:core:data` — the
+  repo promotes to a core module on the *second* consumer, not the first.
 
 ### Dependency rules
 

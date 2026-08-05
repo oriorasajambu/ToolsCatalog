@@ -2,6 +2,9 @@ package com.minion.scaffold.feature.weather.domain
 
 import com.minion.scaffold.core.common.result.AppResult
 import com.minion.scaffold.core.weather.model.Forecast
+import com.minion.scaffold.core.weather.model.Location
+import com.minion.scaffold.core.weather.model.LocationSearchResult
+import kotlinx.coroutines.flow.Flow
 
 /**
  * A forecast for one location, plus whatever the repository knows about how fresh it is.
@@ -36,8 +39,8 @@ sealed interface LocationFixOutcome {
 }
 
 /**
- * The weather feature's one data-access seam: a GPS-resolved current-location forecast, and a
- * forecast for an arbitrary lat/lon (used by both the pinned card and, later, saved locations).
+ * The weather feature's one data-access seam: a GPS-resolved current-location forecast, forecasts
+ * for arbitrary lat/lons, the user's saved-location list, and place-name search.
  */
 internal interface WeatherRepository {
 
@@ -62,4 +65,29 @@ internal interface WeatherRepository {
      * screen is only ever opened from a card, so that means the caller passed a stale/unknown key.
      */
     suspend fun getForecastByKey(locationKey: String, forceRefresh: Boolean): AppResult<ForecastResult>
+
+    /**
+     * The user's saved locations, in their chosen order.
+     *
+     * A [Flow] so the home screen sees an add land while it is on the back stack behind the search
+     * screen, without anything having to tell it to re-read.
+     */
+    fun observeSavedLocations(): Flow<List<Location>>
+
+    /** Appends [location] to the end of the list. Re-adding an existing id is a no-op. */
+    suspend fun addSavedLocation(location: Location)
+
+    suspend fun removeSavedLocation(locationId: String)
+
+    /** Persists a new order. [orderedIds] is the complete list, front to back. */
+    suspend fun reorderSavedLocations(orderedIds: List<String>)
+
+    /**
+     * Place-name search against the geocoding host.
+     *
+     * A query that matches nothing is [AppResult.Success] with an empty list, not a failure —
+     * "no such place" is an answer, and the search screen renders it as an empty state rather than
+     * an error with a retry button.
+     */
+    suspend fun searchLocations(query: String): AppResult<List<LocationSearchResult>>
 }
