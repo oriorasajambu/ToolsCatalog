@@ -60,6 +60,28 @@ android {
         applicationId = "com.minion.scaffold"
         versionCode = 1
         versionName = "1.0"
+
+        // ONNX Runtime (:feature:ocr's PaddleOCR engine) ships a native library per ABI, and they
+        // are large: 26.7MB for arm64-v8a and 19.1MB for armeabi-v7a in the release APK. Only 64-bit
+        // ARM is shipped — Play has required 64-bit since 2019 and minSdk is already 29, so a
+        // genuinely 32-bit-only device is a small and shrinking slice, and x86 is emulator-only for
+        // a camera app. Everything outside this ABI still gets the tool, because the recognizer
+        // falls back to ML Kit and says so rather than failing.
+        //
+        // This is also why the APK did not grow by the full size of what was added: dropping the
+        // x86 ABIs shed ML Kit's native libraries for them too.
+        ndk {
+            abiFilters += "arm64-v8a"
+        }
+    }
+
+    androidResources {
+        // The PP-OCRv5 weights are float32 and deflate to about 87% of their size — roughly 2.8MB
+        // saved out of 21.8MB — so storing them costs little and makes first-run extraction a plain
+        // copy rather than an inflate of the whole set. Declared here rather than in :feature:ocr
+        // because packaging is decided by the application module; the library-level setting is
+        // ignored for the final APK.
+        noCompress += "onnx"
     }
 
     // The environment the app talks to is a product flavor, kept separate from the build type: each

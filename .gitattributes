@@ -1,0 +1,11 @@
+# The PP-OCRv5 weights are ~22MB of binary that would otherwise sit in every clone forever. LFS
+# keeps them out of the packfile — at the cost of needing git-lfs installed to get real files
+# rather than pointers. `ppocrv5_dict.txt` is deliberately not tracked here: it is 74KB of plain
+# text, so it diffs and reviews normally.
+feature/ocr/src/main/assets/ocr/ppocrv5/*.onnx filter=lfs diff=lfs merge=lfs -text
+
+# The dictionary maps the recogniser's output indices back to characters, one per line, and its
+# digest is documented beside it. Left out of line-ending conversion so a checkout on Windows is
+# byte-identical to what was published — otherwise the file on disk no longer matches the SHA-256
+# it is documented by, and every entry carries a trailing carriage return.
+feature/ocr/src/main/assets/ocr/ppocrv5/ppocrv5_dict.txt -text

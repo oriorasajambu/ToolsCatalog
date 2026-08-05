@@ -41,8 +41,20 @@
     <string name="ocr_remove_page">Remove page %1$d</string>
     <string name="ocr_truncated">That was too long to hand over in full, so it was shortened.</string>
 
+    <!-- Settings -->
+    <string name="ocr_settings">Recognition settings</string>
+    <string name="ocr_settings_title">Recognition</string>
+    <string name="ocr_settings_engine_header">Engine</string>
+    <string name="ocr_engine_mlkit">ML Kit</string>
+    <string name="ocr_engine_mlkit_detail">Fast. Reads signs, labels and short text well.</string>
+    <string name="ocr_engine_paddle">PaddleOCR</string>
+    <string name="ocr_engine_paddle_detail">A few times slower, but more accurate on dense or small text like receipts and documents. Uses about 22 MB of storage.</string>
+    <string name="ocr_settings_hints_note">Guide boxes in the viewfinder always use ML Kit, so aiming stays responsive. Your choice here applies to the photo you capture.</string>
+    <string name="ocr_settings_attribution">PaddleOCR PP-OCRv5 models © PaddlePaddle Authors, Apache License 2.0. Recognition pipeline adapted from ente-io/mobile_ocr, MIT License.</string>
+
     <!-- Notices -->
     <string name="ocr_no_text">No text found. Try moving closer, or steadying the shot.</string>
     <string name="ocr_image_unreadable">That image could not be opened.</string>
     <string name="ocr_capture_failed">The camera could not take that shot. Try again.</string>
+    <string name="ocr_engine_unavailable">PaddleOCR could not run on this device, so ML Kit read the image instead.</string>
 </resources>

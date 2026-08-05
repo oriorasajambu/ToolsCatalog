@@ -36,6 +36,29 @@ data class BoundingBox(
         return shorter > 0 && overlap.toFloat() / shorter >= ROW_OVERLAP_FRACTION
     }
 
+    /**
+     * How much these two boxes overlap horizontally, as a fraction of the narrower one.
+     *
+     * The horizontal counterpart to [sharesRowWith], and narrower-relative for the same reason:
+     * a short line inside a wide paragraph belongs to it, even though it covers little of the
+     * paragraph's width. Returns `0` when they do not overlap at all.
+     */
+    fun horizontalOverlapWith(other: BoundingBox): Float {
+        val overlap = minOf(right, other.right) - maxOf(left, other.left)
+        if (overlap <= 0) return 0f
+
+        val narrower = minOf(width, other.width)
+        return if (narrower > 0) overlap.toFloat() / narrower else 0f
+    }
+
+    /** The smallest box containing both. */
+    fun union(other: BoundingBox): BoundingBox = BoundingBox(
+        left = minOf(left, other.left),
+        top = minOf(top, other.top),
+        right = maxOf(right, other.right),
+        bottom = maxOf(bottom, other.bottom),
+    )
+
     private companion object {
 
         /**

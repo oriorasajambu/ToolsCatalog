@@ -174,6 +174,16 @@ data class TextToolsRoute(val text: String? = null) : AppRoute {
 @Serializable
 data object OcrRoute : AppRoute
 
+/**
+ * The OCR tool's own settings — which recognition engine reads a capture.
+ *
+ * A destination rather than a dialog because the choice needs room to explain itself: the engines
+ * differ in speed, accuracy and on-device size, and a bare pair of radio buttons would give the
+ * user nothing to choose on.
+ */
+@Serializable
+data object OcrSettingsRoute : AppRoute
+
 /** The generator tool — UUID, password, random hex. */
 @Serializable
 data object GenerateRoute : AppRoute

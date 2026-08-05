@@ -60,7 +60,14 @@ dependencies {
  *
  * Compile only, deliberately. Running them needs a device and belongs in a separate step;
  * catching "this no longer builds" does not, and is where nearly all of the value is.
+ *
+ * The task is matched by name pattern rather than named outright: a module with product flavors
+ * gets one compile task per variant (`compileDevelopmentDebugAndroidTestKotlin`, …) and the
+ * unflavored `compileDebugAndroidTestKotlin` never exists there. The collection is live, so it
+ * resolves once AGP has registered the variant tasks.
  */
+val androidTestCompileTasks = tasks.matching { it.name.matches(Regex("^compile.*DebugAndroidTestKotlin$")) }
+
 tasks.matching { it.name == "check" }.configureEach {
-    dependsOn("compileDebugAndroidTestKotlin")
+    dependsOn(androidTestCompileTasks)
 }

@@ -85,6 +85,14 @@
 -keep class com.google.mlkit.vision.text.internal.TextRegistrar { *; }
 -keep class com.google.mlkit.vision.text.bundled.common.internal.BundledTextRegistrar { *; }
 
+# --- ONNX Runtime: the PaddleOCR engine ------------------------------------------------------
+# The native library resolves these classes and their fields from JNI, so R8 sees no reference to
+# them from Kotlin and is free to rename or strip them. It presents as an UnsatisfiedLinkError or a
+# NoSuchMethodError the first time a session is created — release-only, and invisible in debug,
+# which is the same shape as the two release bugs this file already documents.
+-keep class ai.onnxruntime.** { *; }
+-dontwarn ai.onnxruntime.**
+
 # --- OkHttp: optional runtime providers it references but does not require -------------------
 -dontwarn org.bouncycastle.**
 -dontwarn org.conscrypt.**

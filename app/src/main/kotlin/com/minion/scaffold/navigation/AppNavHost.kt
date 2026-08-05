@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.minion.scaffold.core.designsystem.motion.slideInFromRight
 import com.minion.scaffold.core.designsystem.motion.slideOutToRight
+import com.minion.scaffold.core.navigation.OcrSettingsRoute
 import com.minion.scaffold.core.navigation.ToolsRoute
 import com.minion.scaffold.core.navigation.WeatherSearchRoute
 import com.minion.scaffold.core.navigation.WeatherSettingsRoute
@@ -17,6 +18,7 @@ import com.minion.scaffold.feature.qrcreate.presentation.url.urlCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.vcard.vCardCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.wifi.wifiCreateScreen
 import com.minion.scaffold.feature.ocr.presentation.ocrScreen
+import com.minion.scaffold.feature.ocr.presentation.ocrSettingsScreen
 import com.minion.scaffold.feature.qrscan.presentation.qrScanScreen
 import com.minion.scaffold.feature.texttools.presentation.generateScreen
 import com.minion.scaffold.feature.texttools.presentation.textToolsScreen
@@ -84,6 +86,10 @@ fun AppNavHost(
         ocrScreen(
             onNavigateBack = { navController.popBackStack() },
             onNavigateToTextTools = { route -> navController.navigate(route) },
+            onNavigateToSettings = { navController.navigate(OcrSettingsRoute) },
+        )
+        ocrSettingsScreen(
+            onNavigateBack = { navController.popBackStack() },
         )
         generateScreen(
             onNavigateBack = { navController.popBackStack() },
