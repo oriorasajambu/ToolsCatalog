@@ -5,8 +5,10 @@ An opinionated, buildable starting point for Android apps: **Kotlin**, **Jetpack
 the build rather than by code review.
 
 The scaffold now carries a worked example — **ToolBox**, a small offline utility app: scan and build
-EMV / Wi-Fi / link / vCard QR codes, plus text and generator tools, assembled entirely with the
-conventions below. Clone it, rename the package, drop the `feature/*` you do not want, and run
+EMV / Wi-Fi / link / vCard QR codes, text and generator tools, and a weather tool, assembled
+entirely with the conventions below. Weather is the one deliberate exception to the offline
+positioning — see [§1.1](#11-the-one-online-feature-weather) — everything else works with no
+network at all. Clone it, rename the package, drop the `feature/*` you do not want, and run
 `scripts/scaffold_feature.py` to generate the next vertical slice.
 
 ```bash
@@ -18,6 +20,7 @@ conventions below. Clone it, rename the package, drop the `feature/*` you do not
 - **Async** — Coroutines + `StateFlow`; one-shot events over a buffered `Channel`
 - **DI** — Hilt, with bindings living beside the implementations they bind
 - **Network** — Retrofit + OkHttp + Gson; Chucker on debug builds only
+- **Persistence** — Room, where a feature needs an offline cache (first used by `:feature:weather`)
 - **Build** — `development`/`production` flavors × `debug`/`release`; environment and signing read from gitignored properties files; R8 on release
 - **Testing** — JUnit + MockK + Turbine, with a shared `MainDispatcherRule`
 - **Previews** — Showkase, aggregating every `@Preview` into a browsable catalog
@@ -44,11 +47,41 @@ conventions below. Clone it, rename the package, drop the `feature/*` you do not
 ├── :core:url            Pure Kotlin. Web-link QR codes.
 ├── :core:vcard          Pure Kotlin. vCard 3.0 contact cards (RFC 2426).
 ├── :core:text           Pure Kotlin. Text / developer transforms — encoding, hashing, generators.
+├── :core:weather        Pure Kotlin. WMO weather-code mapping, notable-condition thresholds,
+│                        metric/imperial conversion — the one domain module a feature also owns a
+│                        Retrofit API and a Room cache for (see §1.1).
 │
-└── :feature:*           tools, qrscan, qrcreate, texttools — one module per screen area.
+└── :feature:*           tools, qrscan, qrcreate, texttools, weather — one module per screen area.
                          (The domain lives in the pure-Kotlin :core:* modules above; add more with
                          scripts/scaffold_feature.py.)
 ```
+
+### 1.1 The one online feature: weather
+
+`:feature:weather` is the single exception to "this app works with no network" — it fetches from
+[Open-Meteo](https://open-meteo.com) (free, no API key) because current conditions are inherently a
+live-data problem, not something you can ship inside the binary the way an EMV table or a Wi-Fi QR
+format can. It still degrades gracefully offline: every forecast it fetches is cached in its own
+Room database (`forecast_cache`, keyed by location, stale after 3h) so the screen keeps showing the
+last-known data — with a "stale" label — rather than an error, and only a location with **no** cache
+at all shows a failure state.
+
+A few things about it worth knowing if you are using it as a template for another network-backed
+feature:
+
+- **Retrofit lives in the feature, not `:core:network`.** `:core:network` supplies the shared
+  `OkHttpClient`/`Gson` singletons; `:feature:weather`'s own `di/WeatherNetworkModule.kt` builds a
+  *second* `Retrofit` instance on top of them, pointed at Open-Meteo's host instead of `:app`'s
+  configured `BASE_URL` — because this is a fixed, keyless, third-party API, not the app's own
+  backend, so it does not go through the `@BaseUrl` qualifier `:app` provides.
+- **Location comes from the platform `LocationManager`, not Play Services.** The repo carries no
+  Play Services dependency, and `:feature:weather/data/location/LocationFixProvider.kt` uses
+  `LocationManagerCompat.getCurrentLocation` so it keeps working on a device without Play Services.
+- **The permission gate is modeled as state, not a separate screen or route.** See
+  `WeatherHomeContract.PermissionState`, which mirrors `:feature:qrscan`'s
+  `CameraPermissionState` — `Unknown` / `Granted` / `Denied` / `PermanentlyDenied`, with the last
+  one deep-linking to the app's system settings page rather than re-showing a dialog the system
+  will not display again.
 
 ### Dependency rules
 
@@ -78,8 +111,8 @@ to enforce.
 ## 2. Convention plugins
 
 `build-logic/` is an included build compiled before anything else configures. Module build files
-apply one plugin and set a namespace; everything else is centralised, so twelve modules cannot
-drift apart.
+apply one plugin and set a namespace; everything else is centralised, so the module count can keep
+growing without any of them drifting apart.
 
 | Plugin | Applies to | Provides |
 |---|---|---|
@@ -95,6 +128,13 @@ drift apart.
 nobody finds out for weeks.
 
 Dependency versions live in `gradle/libs.versions.toml`, shared by both builds.
+
+Room and KSP are **not** part of any convention plugin — no module used them until
+`:feature:weather`. A feature that needs a local database wires `androidx.room` + `ksp(room-compiler)`
+directly in its own `build.gradle.kts` (`minion.android.hilt`, applied transitively via
+`minion.android.feature`, already brings KSP), and keeps its own `RoomDatabase` rather than sharing
+one — matching the rule that something only moves into a shared module once a second feature needs
+it too.
 
 ---
 
@@ -352,5 +392,18 @@ Everything is under `com.minion.scaffold`. To rebrand:
   build on this.
 - **Give every `LazyColumn` item a stable `key`.** Without one, inserting at the top shifts every
   position and recomposes every row.
+- **`LocationManagerCompat` needs `androidx.core` on the classpath explicitly.** Unlike the
+  lifecycle/navigation/Hilt bundles, `minion.android.feature` does not pull in `androidx-core` for
+  you — `:feature:weather/build.gradle.kts` adds `implementation(libs.androidx.core)` itself, the
+  same way `:feature:qrscan` adds CameraX rather than putting it on every feature's classpath for
+  one consumer.
+- **A permission-gated feature's own `AndroidManifest.xml` declares the permission, not `:app`'s.**
+  `:feature:weather` and `:feature:qrscan` each carry their own `<uses-permission>`, merged in by
+  the manifest merger — this keeps a permission a feature actually needs out of `:app`'s manifest
+  when that feature module is dropped.
+- **Reverse geocoding can legitimately return nothing** — no Play Services, no geocoder backend on
+  the device, or a fix over open water. `:feature:weather`'s `ReverseGeocoder` treats that as
+  expected, not an error, and falls back to a formatted lat/lon string rather than blocking the
+  pinned card on a service the app cannot guarantee.
 - Default Gradle dependencies to `implementation`; reach for `api` only when a type appears in the
   module's own public signatures.
