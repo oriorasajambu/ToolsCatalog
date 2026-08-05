@@ -73,10 +73,13 @@ feature:
 - **Retrofit lives in the feature, not `:core:network`.** `:core:network` supplies the shared
   `OkHttpClient`/`Gson` singletons; `:feature:weather`'s own `di/WeatherNetworkModule.kt` builds
   two *more* `Retrofit` instances on top of them — Open-Meteo serves forecasts and place-name
-  search from genuinely different hosts — instead of using `:app`'s configured `BASE_URL`. These
-  are fixed, keyless, third-party APIs rather than the app's own backend, so they do not go through
-  the `@BaseUrl` qualifier `:app` provides. Note the helper that builds them is private: exposing
-  it as `@Provides Retrofit` would collide with `:core:network`'s own unqualified binding.
+  search from genuinely different hosts. Each host's URL is injected through its own qualifier
+  (`@ForecastBaseUrl`, `@GeocodingBaseUrl`) rather than inlined, mirroring `:core:network`'s
+  `@BaseUrl`. Those qualifiers are provided *by the feature*, not by `:app`: `@BaseUrl` comes from
+  the app because it varies per flavor and is read from `BuildConfig`, whereas a fixed public API
+  has no such split — routing it through `:app` would only teach the application module about
+  hosts that are one feature's business. Note the helper that builds the two instances is private:
+  exposing it as `@Provides Retrofit` would collide with `:core:network`'s unqualified binding.
 - **Schema changes get a real migration.** `forecast_cache` is disposable, but `saved_locations` is
   user data, so `WeatherDatabase` ships a hand-written `MIGRATION_1_2` rather than
   `fallbackToDestructiveMigration()` — the destructive fallback would silently wipe someone's saved

@@ -14,9 +14,13 @@ import kotlin.coroutines.resume
 
 /**
  * Resolves a GPS fix to a display name for the pinned current-location card, using the on-device
- * [Geocoder] — not Open-Meteo's Geocoding API, which is search-by-name only and has no reverse
- * (lat/lon -> name) endpoint to call (a deviation from SPEC.md §5's wording, confirmed with the
- * product owner).
+ * [Geocoder].
+ *
+ * Deliberately *not* Open-Meteo's Geocoding API, even though the original spec asked for it: that
+ * API is search-by-name only (`/v1/search`, `/v1/get`) and has no reverse lat/lon -> name endpoint
+ * to call. Upstream has acknowledged the gap and put it on their task list with no ETA
+ * (github.com/open-meteo/open-meteo discussion #698), so this is an upstream limitation rather
+ * than an oversight here — worth re-checking if that ever ships.
  *
  * Best-effort by design: [Geocoder.isPresent] is false on some devices (no Play Services / no
  * geocoder backend installed), and even where it's present a fix in open water or unmapped terrain
