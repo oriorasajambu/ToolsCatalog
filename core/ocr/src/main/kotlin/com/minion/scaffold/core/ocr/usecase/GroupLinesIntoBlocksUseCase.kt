@@ -6,55 +6,56 @@ import com.minion.scaffold.core.ocr.model.RecognizedLine
 import javax.inject.Inject
 
 /**
- * Gathers individual recognised lines into paragraph-sized blocks.
+ * Gathers individual recognised lines into paragraph-sized blocks, in reading order.
  *
  * PaddleOCR's detector finds *lines*; ML Kit reports *blocks*. Passing lines straight through would
- * make the two engines behave differently in the one place the user is trying to compare them — and
- * it would turn a receipt into forty tappable boxes instead of five, so "drop the footer" becomes
- * fifteen taps. This normalises PaddleOCR onto ML Kit's granularity.
+ * make the two engines behave differently in the one place the user is trying to compare them, and
+ * would turn a page of prose into dozens of tappable boxes instead of a handful.
  *
- * Two lines join the same block when they overlap horizontally and sit close together vertically.
- * The vertical threshold is expressed as a fraction of the *median* line height rather than an
- * absolute pixel count, because the same page photographed from twice the distance has half the
- * line height and must group identically.
+ * **Order first, merge second — not the other way around.** Merging first and then running
+ * [OrderBlocksUseCase] over the result looks equivalent and is not: a receipt's item list merges
+ * into one tall block, which then vertically overlaps every price in the column beside it, pulls
+ * them all into a single row, and — their left edges being equal — leaves their order arbitrary.
+ * The prices end up detached from their items and shuffled. Ordering the *lines* first avoids it
+ * entirely, because lines on one printed row genuinely do overlap each other and nothing else.
  *
- * Each line is offered to whichever open block it overlaps *most*, not simply the last one seen:
- * on a two-column layout the greedy choice would alternate between columns and merge them into one
- * block, while picking the best overlap keeps them apart.
+ * Consequently only *consecutive* lines merge. Two columns stay interleaved line by line, which is
+ * how they read; a paragraph's lines are consecutive and merge as one.
  *
- * Output is in no particular order — [OrderBlocksUseCase] runs afterwards, exactly as it does for
- * ML Kit's blocks.
+ * The vertical threshold is a fraction of the *median* line height rather than an absolute pixel
+ * count, because the same page photographed from twice the distance has half the line height and
+ * must group identically.
  */
 class GroupLinesIntoBlocksUseCase @Inject constructor() {
 
     operator fun invoke(lines: List<RecognizedLine>): List<RecognizedBlock> {
         if (lines.isEmpty()) return emptyList()
 
-        // Top-first, so a block is always seeded by its highest line and every later line is
-        // compared against a block whose bottom edge is already final for the lines seen so far.
-        val ordered = lines.sortedBy { it.box.top }
+        val ordered = readingOrder(lines) { it.box }
         val medianHeight = ordered.map { it.box.height }.sorted()[ordered.size / 2]
         val maxGap = (medianHeight * GAP_FRACTION).coerceAtLeast(1f)
 
         val blocks = mutableListOf<MutableList<RecognizedLine>>()
 
         for (line in ordered) {
-            val host = blocks
-                .filter { block -> block.canAccept(line, maxGap) }
-                .maxByOrNull { block -> block.bounds().horizontalOverlapWith(line.box) }
+            val open = blocks.lastOrNull()
 
-            if (host != null) host.add(line) else blocks.add(mutableListOf(line))
+            if (open != null && open.canAccept(line, maxGap)) {
+                open.add(line)
+            } else {
+                blocks.add(mutableListOf(line))
+            }
         }
 
         return blocks.mapIndexed { index, block -> block.toBlock(index) }
     }
 
     /**
-     * Whether [line] belongs with the lines already in this block.
+     * Whether [line] continues the block being built.
      *
-     * The gap is measured from the block's *bottom* edge, so a line that overlaps the block
-     * vertically gives a negative gap and is always close enough — which is what keeps a line
-     * detected at a slight angle attached to its paragraph.
+     * Measured against the block's accumulated bounds, so a paragraph whose lines drift slightly
+     * still holds together. The gap comes from the block's *bottom* edge, so a line overlapping it
+     * vertically gives a negative gap and is always close enough.
      */
     private fun List<RecognizedLine>.canAccept(line: RecognizedLine, maxGap: Float): Boolean {
         val bounds = bounds()
@@ -67,24 +68,18 @@ class GroupLinesIntoBlocksUseCase @Inject constructor() {
     private fun List<RecognizedLine>.bounds(): BoundingBox =
         map { it.box }.reduce(BoundingBox::union)
 
-    private fun List<RecognizedLine>.toBlock(index: Int): RecognizedBlock {
-        // Sorted here rather than relying on insertion order: a line can be added to an older block
-        // after a newer one was started, so the list is not necessarily top-to-bottom by the end.
-        val sorted = sortedBy { it.box.top }
-
-        return RecognizedBlock(
-            // The index is the only stable handle available, and stable within one recognition is
-            // all it needs to be — ids are regenerated each time and never persisted. Same
-            // reasoning as the ML Kit mapper's.
-            id = index.toString(),
-            text = sorted.joinToString(separator = "\n") { it.text },
-            box = bounds(),
-            // The weakest line, not the mean: a block containing one badly-read line is worth
-            // proofreading even if its other six lines were perfect, and averaging hides exactly
-            // that case.
-            confidence = sorted.mapNotNull { it.confidence }.minOrNull(),
-        )
-    }
+    private fun List<RecognizedLine>.toBlock(index: Int): RecognizedBlock = RecognizedBlock(
+        // The index is the only stable handle available, and stable within one recognition is all
+        // it needs to be — ids are regenerated each time and never persisted. Same reasoning as the
+        // ML Kit mapper's.
+        id = index.toString(),
+        // Already in reading order, so insertion order is the order to join in.
+        text = joinToString(separator = "\n") { it.text },
+        box = bounds(),
+        // The weakest line, not the mean: a block containing one badly-read line is worth
+        // proofreading even if its other six lines were perfect, and averaging hides exactly that.
+        confidence = mapNotNull { it.confidence }.minOrNull(),
+    )
 
     private companion object {
 
@@ -93,9 +88,7 @@ class GroupLinesIntoBlocksUseCase @Inject constructor() {
          * line height.
          *
          * Below one line height, so ordinary line spacing within a paragraph joins while a blank
-         * line separates. Tuned to split on a deliberate paragraph break rather than on the leading
-         * of a single body of text; worth revisiting against real documents rather than treating as
-         * exact.
+         * line separates. Worth revisiting against real documents rather than treating as exact.
          */
         const val GAP_FRACTION = 0.8f
 
@@ -103,7 +96,7 @@ class GroupLinesIntoBlocksUseCase @Inject constructor() {
          * How much of the narrower box must overlap horizontally to join.
          *
          * Low, because a short last line of a paragraph — or an indented one — still belongs to it.
-         * Its job is only to keep two side-by-side columns from merging.
+         * Its job is only to keep two side-by-side columns apart.
          */
         const val MIN_HORIZONTAL_OVERLAP = 0.3f
     }

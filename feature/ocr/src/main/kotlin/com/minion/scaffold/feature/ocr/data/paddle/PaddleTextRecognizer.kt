@@ -8,7 +8,6 @@ import com.minion.scaffold.core.ocr.model.BoundingBox
 import com.minion.scaffold.core.ocr.model.RecognizedLine
 import com.minion.scaffold.core.ocr.model.RecognizedText
 import com.minion.scaffold.core.ocr.usecase.GroupLinesIntoBlocksUseCase
-import com.minion.scaffold.core.ocr.usecase.OrderBlocksUseCase
 import com.minion.scaffold.feature.ocr.data.OcrResult
 import com.minion.scaffold.feature.ocr.data.TextRecognitionEngine
 import com.minion.scaffold.feature.ocr.data.paddle.vendor.OcrProcessor
@@ -41,7 +40,6 @@ internal class PaddleTextRecognizer @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val modelAssets: PaddleModelAssets,
     private val groupLines: GroupLinesIntoBlocksUseCase,
-    private val orderBlocks: OrderBlocksUseCase,
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : TextRecognitionEngine {
 
@@ -110,6 +108,13 @@ internal class PaddleTextRecognizer @Inject constructor(
         )
     }
 
+    /**
+     * No `OrderBlocksUseCase` pass here, unlike the ML Kit path.
+     *
+     * Grouping already emits blocks in reading order, and re-ordering them afterwards actively
+     * breaks a receipt: the merged item list is tall enough to overlap every price beside it, so
+     * they collapse into one row and shuffle. See `GroupLinesIntoBlocksUseCase`.
+     */
     private fun List<RecognizedLine>.toRecognizedText(): RecognizedText =
-        RecognizedText(blocks = orderBlocks(groupLines(this)))
+        RecognizedText(blocks = groupLines(this))
 }

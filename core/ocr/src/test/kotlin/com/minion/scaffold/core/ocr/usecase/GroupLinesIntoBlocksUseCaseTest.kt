@@ -69,26 +69,31 @@ class GroupLinesIntoBlocksUseCaseTest {
     }
 
     @Test
-    fun `a receipt keeps items and prices in separate columns`() {
-        // Item names down the left, right-aligned prices down the right, no horizontal overlap
-        // between the two — the case that must not collapse into one block.
+    fun `a receipt keeps every price with its own item`() {
+        // Item names down the left, right-aligned prices down the right. Found on a real device:
+        // merging first and ordering afterwards produced one tall item block that vertically
+        // overlapped every price, collapsing them into a single row where their equal left edges
+        // left the order arbitrary — the prices came out detached from their items and shuffled.
         val blocks = groupLines(
             listOf(
                 line("Coffee", top = 0, left = 0, right = 200),
-                line("Sandwich", top = 30, left = 0, right = 200),
                 line("2.50", top = 0, left = 400, right = 500),
+                line("Sandwich", top = 30, left = 0, right = 200),
                 line("6.00", top = 30, left = 400, right = 500),
+                line("Cake", top = 60, left = 0, right = 200),
+                line("4.25", top = 60, left = 400, right = 500),
             ),
         )
 
-        assertEquals(2, blocks.size)
-        assertEquals(setOf("Coffee\nSandwich", "2.50\n6.00"), blocks.map { it.text }.toSet())
+        // Interleaved line by line, which is how a receipt reads — never one column then the other.
+        assertEquals(
+            listOf("Coffee", "2.50", "Sandwich", "6.00", "Cake", "4.25"),
+            blocks.map { it.text },
+        )
     }
 
     @Test
-    fun `a line is claimed by the column it overlaps most`() {
-        // The third line sits below both columns and overlaps the left one far more. Greedily
-        // taking the most recently opened block would put it in the right column instead.
+    fun `columns do not merge into one another`() {
         val blocks = groupLines(
             listOf(
                 line("left top", top = 0, left = 0, right = 200),
@@ -97,8 +102,9 @@ class GroupLinesIntoBlocksUseCaseTest {
             ),
         )
 
-        assertEquals(2, blocks.size)
-        assertEquals("left top\nleft continues", blocks.first { it.box.left == 0 }.text)
+        // No horizontal overlap between the columns, so nothing merges across them.
+        assertEquals(3, blocks.size)
+        assertEquals(listOf("left top", "right top", "left continues"), blocks.map { it.text })
     }
 
     @Test
@@ -110,6 +116,20 @@ class GroupLinesIntoBlocksUseCaseTest {
         )
 
         assertEquals(groupLines(lines).map { it.text }, groupLines(lines.reversed()).map { it.text })
+    }
+
+    @Test
+    fun `blocks come back in reading order`() {
+        val blocks = groupLines(
+            listOf(
+                line("third", top = 400),
+                line("first", top = 0),
+                line("second", top = 200),
+            ),
+        )
+
+        // Ordering happens here rather than in a later pass, so this is the contract.
+        assertEquals(listOf("first", "second", "third"), blocks.map { it.text })
     }
 
     @Test
