@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Spacing and drawing tokens for this feature. Values live here rather than as `16.dp` literals in
+  the composables so a density change is one edit, matching :feature:qrscan's reticle dimensions.
+-->
+<resources>
+    <dimen name="level_spacing">16dp</dimen>
+    <dimen name="level_spacing_tight">8dp</dimen>
+
+    <!-- Bullseye -->
+    <dimen name="level_ring_stroke">2dp</dimen>
+    <dimen name="level_crosshair">1dp</dimen>
+    <dimen name="level_bubble_radius">18dp</dimen>
+</resources>

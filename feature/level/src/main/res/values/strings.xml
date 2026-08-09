@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Resource names are prefixed with the feature. Every module's resources are merged into one
+  namespace in :app, so an unprefixed `title` in two features silently resolves to whichever
+  module the merger happened to visit last.
+-->
+<resources>
+    <string name="level_title">Level</string>
+    <string name="level_navigate_back">Back</string>
+
+    <!-- Readout -->
+    <string name="level_degrees_format">%1$s°</string>
+    <string name="level_grade_format">%1$s%% grade</string>
+    <string name="level_value_unavailable">—</string>
+    <string name="level_axis_pitch">Pitch</string>
+    <string name="level_axis_roll">Roll</string>
+
+    <!-- Actions -->
+    <string name="level_freeze">Hold this reading</string>
+    <string name="level_unfreeze">Resume</string>
+    <string name="level_reference_set">Set as reference</string>
+    <string name="level_reference_clear">Measure from level again</string>
+    <string name="level_sound_enable">Turn on sound</string>
+    <string name="level_sound_disable">Turn off sound</string>
+
+    <!-- Banners -->
+    <string name="level_frozen_banner">Held. This is not a live reading.</string>
+    <string name="level_reference_banner">Measuring against your reference surface, not level.</string>
+    <string name="level_hold_still">Hold still — a moving phone cannot measure an angle.</string>
+    <string name="level_accelerometer_fallback">This device has no fused gravity sensor, so readings settle more slowly.</string>
+    <string name="level_unsupported">This device has no motion sensor, so it cannot measure angles.</string>
+
+    <!-- Calibration summary -->
+    <string name="level_uncalibrated_summary">Not calibrated. Phones typically read a few tenths of a degree off, which is more than the level mark allows for.</string>
+    <string name="level_calibrated_summary">Correcting %1$s° of device tilt, measured %2$s.</string>
+    <string name="level_calibrated_flat_only">Calibrated for flat use. Readings taken against a wall are only partly corrected.</string>
+    <string name="level_calibrate">Calibrate</string>
+    <string name="level_recalibrate">Calibrate again</string>
+    <string name="level_calibration_reset">Clear calibration</string>
+    <string name="level_calibration_cleared">Calibration cleared.</string>
+    <string name="level_calibration_prompt">Calibrating takes about twenty seconds and removes the error built into every phone. Worth doing before you trust a reading.</string>
+    <string name="level_calibration_prompt_dismiss">Not now</string>
+
+    <!-- Notices -->
+    <string name="level_reference_captured">Reference set.</string>
+    <string name="level_reference_not_steady">Hold the phone still, then set the reference.</string>
+
+    <!-- Calibration flow -->
+    <string name="level_calibration_title">Calibrate</string>
+    <string name="level_calibration_intro">Put the phone on a flat surface. It does not need to be level — the second step cancels whatever slope it has.</string>
+    <string name="level_calibration_step_one">Step 1 of 2 — lay the phone down and hold still.</string>
+    <string name="level_calibration_step_two">Step 2 of 2 — now turn the phone 180° <b>flat on the same spot</b>. Do not lift it or turn it over.</string>
+    <string name="level_calibration_capture">Capture</string>
+    <string name="level_calibration_capturing">Reading…</string>
+    <string name="level_calibration_hold_still">Hold still…</string>
+    <string name="level_calibration_done">Calibrated. Your device reads %1$s° off, and the surface you used is %2$s° from level.</string>
+    <string name="level_calibration_save">Save</string>
+    <string name="level_calibration_retry">Start over</string>
+    <string name="level_calibration_failed_not_steady">The phone moved during a reading. Try again, keeping it still.</string>
+    <string name="level_calibration_failed_not_a_flip">That did not look like a flat 180° turn. Rotate the phone on the spot without lifting it or turning it over.</string>
+    <string name="level_calibration_failed_implausible">That produced a result too large to be a real device error. Try again on a flat surface, turning the phone 180° flat.</string>
+    <string name="level_calibration_failed_reading">Those readings could not be used. Try again on a flat surface.</string>
+</resources>

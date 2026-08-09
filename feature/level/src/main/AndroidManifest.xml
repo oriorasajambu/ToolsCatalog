@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Not required. Declaring it required would remove the app from Play for any device without an
+      accelerometer, over a single tool — and the tool itself explains the situation rather than
+      appearing broken. Same reasoning as the camera declarations in :feature:qrscan and
+      :feature:ocr.
+
+      Only the accelerometer is named. TYPE_GRAVITY is a fused stream rather than a piece of
+      hardware, so there is no feature constant for it, and where it is absent the level falls back
+      to filtering the raw accelerometer.
+    -->
+    <uses-feature
+        android:name="android.hardware.sensor.accelerometer"
+        android:required="false" />
+
+</manifest>

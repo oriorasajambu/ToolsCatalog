@@ -155,6 +155,7 @@ dependencies {
     implementation(project(":feature:texttools"))
     implementation(project(":feature:weather"))
     implementation(project(":feature:ocr"))
+    implementation(project(":feature:level"))
 
     implementation(libs.androidx.splashscreen)
 

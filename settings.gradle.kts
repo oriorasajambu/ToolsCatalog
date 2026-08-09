@@ -95,4 +95,5 @@ include(":feature:qrcreate")
 include(":feature:texttools")
 include(":feature:weather")
 include(":feature:ocr")
+include(":feature:level")
 
