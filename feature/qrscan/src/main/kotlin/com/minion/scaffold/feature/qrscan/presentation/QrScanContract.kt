@@ -53,7 +53,19 @@ internal data class QrScanState(
 
         data class Success(val content: ScannedContent) : ContentState
 
-        data class Failure(val error: QrScanError) : ContentState
+        /**
+         * Nothing could be made of the input.
+         *
+         * [payload] is the trimmed string the parse offsets index, and it is empty for the failures
+         * that have no payload to speak of — no barcode in the image, an unreadable file. Carrying
+         * it here rather than relying on [QrScanState.manualPayload] is what lets a *camera* or
+         * gallery failure show the damaged payload at all; that field is only ever written by
+         * typing.
+         */
+        data class Failure(
+            val error: QrScanError,
+            val payload: String = "",
+        ) : ContentState
     }
 }
 
@@ -76,8 +88,17 @@ internal sealed interface QrScanIntent : UiIntent {
     /** An image chosen from the photo picker, to be searched for a QR code. */
     data class ImagePicked(val uri: Uri) : QrScanIntent
 
-    /** Discard the current result and go back to accepting input. */
+    /** Discard the current result **and** the payload, going back to an empty screen. */
     data object Cleared : QrScanIntent
+
+    /**
+     * Put the current result away but keep the payload.
+     *
+     * The back gesture and the top-bar arrow both land here rather than on [Cleared]. Once the
+     * failure screen is somewhere you sit and repair a few hundred characters, a stray back-swipe
+     * wiping it is data loss with no undo — and discarding is a thing worth having to ask for.
+     */
+    data object Dismissed : QrScanIntent
 
     /**
      * The outcome of a camera permission request.

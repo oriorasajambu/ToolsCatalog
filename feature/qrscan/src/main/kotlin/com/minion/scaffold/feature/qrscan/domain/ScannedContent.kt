@@ -46,8 +46,14 @@ internal sealed interface ScanResult {
 
     data class Recognised(val content: ScannedContent) : ScanResult
 
-    /** It was a payment code, and something about it does not hold up. */
-    data class Malformed(val error: QrParseError) : ScanResult
+    /**
+     * It was a payment code, and something about it does not hold up.
+     *
+     * [payload] is the **trimmed** string the offsets in [error] index. Carried rather than left to
+     * the caller because the trim happens here: comparing against the untrimmed original would put
+     * every reported position out by however much whitespace a scanner or clipboard added.
+     */
+    data class Malformed(val error: QrParseError, val payload: String) : ScanResult
 
     /** Neither a payment code nor Wi-Fi credentials. */
     data object Unrecognised : ScanResult

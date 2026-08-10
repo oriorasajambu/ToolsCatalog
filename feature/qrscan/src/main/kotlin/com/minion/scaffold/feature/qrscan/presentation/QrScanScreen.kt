@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
@@ -72,16 +73,21 @@ import com.minion.scaffold.core.designsystem.theme.AppTheme
 import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
 import com.minion.scaffold.feature.qrscan.R
+import com.minion.scaffold.core.emv.model.HeaderDefect
+import com.minion.scaffold.core.emv.model.PayloadSpan
 import com.minion.scaffold.core.emv.model.QrParseError
+import com.minion.scaffold.core.emv.model.SegmentTrace
 import com.minion.scaffold.core.navigation.AppRoute
 import com.minion.scaffold.core.vcard.model.ContactCard
 import com.minion.scaffold.feature.qrscan.domain.ScannedContent
 import com.minion.scaffold.feature.qrscan.presentation.camera.CameraPreview
 import com.minion.scaffold.feature.qrscan.presentation.report.ContactReportView
+import com.minion.scaffold.feature.qrscan.presentation.report.PayloadDiagnosticCard
 import com.minion.scaffold.feature.qrscan.presentation.report.QrInquiryReportView
 import com.minion.scaffold.feature.qrscan.presentation.report.WebReportView
 import com.minion.scaffold.feature.qrscan.presentation.report.WifiReportView
 import com.minion.scaffold.feature.qrscan.presentation.report.describe
+import com.minion.scaffold.feature.qrscan.presentation.report.describeContext
 import com.minion.scaffold.feature.qrscan.presentation.report.toPlainText
 import kotlinx.coroutines.launch
 
@@ -227,11 +233,15 @@ private fun QrScanContent(
     // result" before it means "leave", or scanning one code and glancing backdrops the user all
     // the way out to the tool list.
     val hasResult = state.content !is QrScanState.ContentState.Idle
-    val onBack = { if (hasResult) onIntent(QrScanIntent.Cleared) else onNavigateBack() }
+
+    // `Dismissed`, not `Cleared`. Back puts the result away and keeps the payload: on a failure
+    // this screen is where a few hundred characters get repaired, and a mis-swipe wiping that is
+    // data loss with no undo. Discarding stays on the explicit Clear button.
+    val onBack = { if (hasResult) onIntent(QrScanIntent.Dismissed) else onNavigateBack() }
 
     // The system gesture and the arrow have to agree; handling only the arrow leaves the swipe
     // still exiting the feature.
-    BackHandler(enabled = hasResult) { onIntent(QrScanIntent.Cleared) }
+    BackHandler(enabled = hasResult) { onIntent(QrScanIntent.Dismissed) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -248,13 +258,20 @@ private fun QrScanContent(
                     }
                 },
                 actions = {
-                    if (state.content is QrScanState.ContentState.Idle) {
+                    // The picker stays available on a failure — trying another photo is one of the
+                    // two obvious next moves. The mode toggle does not: the editor is already on
+                    // screen there, so the button would do nothing visible.
+                    if (state.content is QrScanState.ContentState.Idle ||
+                        state.content is QrScanState.ContentState.Failure
+                    ) {
                         IconButton(onClick = onPickImage) {
                             Icon(
                                 imageVector = Icons.Filled.Image,
                                 contentDescription = stringResource(R.string.qrscan_pick_image),
                             )
                         }
+                    }
+                    if (state.content is QrScanState.ContentState.Idle) {
                         InputModeAction(mode = state.mode, onIntent = onIntent)
                     }
                     // Only offered once there is a report. An always-present copy button that
@@ -302,9 +319,14 @@ private fun QrScanContent(
                 )
 
                 is QrScanState.ContentState.Failure -> FailureContent(
-                    error = content.error,
+                    failure = content,
+                    editedPayload = state.manualPayload,
                     onIntent = onIntent,
-                    modifier = Modifier.padding(horizontal = spacing),
+                    // `weight`, so the grid and the editor scroll. Without it this column had no
+                    // bounded height and no scroller at all — survivable with one sentence in it,
+                    // not with thirty rows of payload.
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = spacing, vertical = spacing),
                 )
 
                 is QrScanState.ContentState.Success -> when (val scanned = content.content) {
@@ -382,11 +404,12 @@ private fun IdleContent(
     val spacing = dimensionResource(R.dimen.qrscan_spacing)
 
     when {
-        state.mode == InputMode.Manual -> ManualInputPanel(
+        state.mode == InputMode.Manual -> PayloadEditorPanel(
             payload = state.manualPayload,
             onPayloadChanged = { onIntent(QrScanIntent.ManualPayloadChanged(it)) },
             onDecode = { onIntent(QrScanIntent.PayloadSubmitted(state.manualPayload)) },
             onClear = { onIntent(QrScanIntent.Cleared) },
+            showHint = true,
             modifier = modifier.padding(horizontal = spacing),
         )
 
@@ -446,13 +469,22 @@ private fun PermissionPanel(
     }
 }
 
+/**
+ * The payload field and its two actions.
+ *
+ * Shared by the idle screen and the failure screen, so a decode that fails leaves the text exactly
+ * where it was rather than replacing it with a dead end. It does not survive as the *same*
+ * composition node across that transition — different branch, different node — but nothing is lost
+ * but focus, because the text itself lives in the ViewModel.
+ */
 @Composable
-private fun ManualInputPanel(
+private fun PayloadEditorPanel(
     payload: String,
     onPayloadChanged: (String) -> Unit,
     onDecode: () -> Unit,
     onClear: () -> Unit,
     modifier: Modifier = Modifier,
+    showHint: Boolean = false,
 ) {
     val spacing = dimensionResource(R.dimen.qrscan_spacing)
 
@@ -486,11 +518,13 @@ private fun ManualInputPanel(
             )
         }
 
-        Text(
-            text = stringResource(R.string.qrscan_idle_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (showHint) {
+            Text(
+                text = stringResource(R.string.qrscan_idle_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -511,36 +545,87 @@ private fun DecodingContent(modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * A failure, as somewhere to work rather than somewhere to leave.
+ *
+ * The old version was one sentence and a button that discarded the payload — for a few hundred
+ * characters that is not enough to act on, and it threw away the only copy. This keeps the payload
+ * editable, says what was expected and what was found, and draws the payload with the damage marked.
+ */
 @Composable
 private fun FailureContent(
-    error: QrScanError,
+    failure: QrScanState.ContentState.Failure,
+    editedPayload: String,
     onIntent: (QrScanIntent) -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     val resources = LocalResources.current
     val spacing = dimensionResource(R.dimen.qrscan_spacing)
+    val parseError = (failure.error as? QrScanError.Parse)?.error
 
-    Column(
+    // Trimmed on both sides: the parser trims before framing, so the offsets belong to the trimmed
+    // string. Comparing raw would call a payload stale over a trailing newline nobody typed.
+    val stale = failure.payload.isNotEmpty() && editedPayload.trim() != failure.payload
+
+    LazyColumn(
         modifier = modifier.fillMaxWidth(),
+        contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(spacing),
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-            ),
-        ) {
-            Text(
-                text = error.describe(resources),
-                modifier = Modifier.padding(spacing),
-                style = MaterialTheme.typography.bodyMedium,
-            )
+        item(key = "summary") {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                ),
+            ) {
+                Column(
+                    modifier = Modifier.padding(spacing),
+                    verticalArrangement = Arrangement.spacedBy(
+                        dimensionResource(R.dimen.qrscan_spacing_tight),
+                    ),
+                ) {
+                    Text(
+                        text = failure.error.describe(resources),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    // The other end of the bracket: where the parser stopped is rarely where the
+                    // payload went wrong, and the last segment that read cleanly is the closest
+                    // honest pointer at the difference.
+                    parseError?.describeContext(resources)?.let { context ->
+                        Text(text = context, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
         }
 
-        AppButton(
-            text = stringResource(R.string.qrscan_try_again),
-            onClick = { onIntent(QrScanIntent.Cleared) },
-        )
+        if (failure.payload.isNotEmpty()) {
+            item(key = "editor") {
+                PayloadEditorPanel(
+                    payload = editedPayload,
+                    onPayloadChanged = { onIntent(QrScanIntent.ManualPayloadChanged(it)) },
+                    onDecode = { onIntent(QrScanIntent.PayloadSubmitted(editedPayload)) },
+                    onClear = { onIntent(QrScanIntent.Cleared) },
+                )
+            }
+
+            item(key = "diagnostic") {
+                PayloadDiagnosticCard(
+                    payload = failure.payload,
+                    error = failure.error,
+                    stale = stale,
+                    onCopyDiagnostic = { onIntent(QrScanIntent.CopyValueRequested(it)) },
+                )
+            }
+        }
+
+        item(key = "actions") {
+            AppOutlinedButton(
+                text = stringResource(R.string.qrscan_scan_again),
+                onClick = { onIntent(QrScanIntent.Cleared) },
+            )
+        }
     }
 }
 
@@ -606,15 +691,33 @@ internal fun QrScanUnrecognisedPreview() {
     )
 }
 
+/**
+ * The payload that prompted the diagnostic work: tag `32` missing its two length digits.
+ *
+ * A preview rather than only a test, because the grid's layout — row length, gutter alignment, where
+ * the highlight lands across a row boundary — is the kind of thing that only shows itself drawn.
+ */
 @Preview
 @Composable
 internal fun QrScanParseFailurePreview() {
+    val payload = "000201010212320011SA.GOV.SAMA011612345678901234560206VVSSRR030212520412345" +
+        "3036825403100550201570310580 2SA5925merchantNameUpTo25char12"
+
     QrScanContentPreview(
         QrScanState(
             content = QrScanState.ContentState.Failure(
-                QrScanError.Parse(QrParseError.MissingCrc),
+                error = QrScanError.Parse(
+                    QrParseError.MalformedTlv(
+                        offset = 16,
+                        span = PayloadSpan(18, 20),
+                        defect = HeaderDefect.NON_NUMERIC_LENGTH,
+                        found = "SA",
+                        lastGoodSegment = SegmentTrace("32", 0, PayloadSpan(12, 16)),
+                    ),
+                ),
+                payload = payload,
             ),
-            manualPayload = "000201010212",
+            manualPayload = payload,
         ),
     )
 }

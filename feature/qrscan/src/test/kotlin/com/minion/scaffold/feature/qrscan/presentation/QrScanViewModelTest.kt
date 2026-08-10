@@ -221,10 +221,59 @@ internal class QrScanViewModelTest {
         // Frames as EMV — opens with tag 00 — but has no checksum segment.
         viewModel.onIntent(QrScanIntent.PayloadSubmitted("000201010212"))
 
-        assertEquals(
-            QrScanState.ContentState.Failure(QrScanError.Parse(QrParseError.MissingCrc)),
-            viewModel.state.value.content,
-        )
+        val content = viewModel.state.value.content
+        assertTrue(content is QrScanState.ContentState.Failure)
+        val error = (content as QrScanState.ContentState.Failure).error
+        assertTrue(error is QrScanError.Parse)
+        assertTrue((error as QrScanError.Parse).error is QrParseError.MissingCrc)
+    }
+
+    /**
+     * The failure has to carry the payload for a *camera* scan, not just a typed one.
+     *
+     * Previously the scanned string was discarded the moment parsing failed, and only the manual
+     * field kept a copy — so the path most people arrive by ended on a screen with nothing to look
+     * at and nothing to fix.
+     */
+    @Test
+    fun `a failed scan keeps the payload for the diagnostic`() {
+        viewModel.onIntent(QrScanIntent.PayloadSubmitted("000201010212"))
+
+        val failure = viewModel.state.value.content as QrScanState.ContentState.Failure
+        assertEquals("000201010212", failure.payload)
+        // Also seeded into the editor, so it can be repaired in place.
+        assertEquals("000201010212", viewModel.state.value.manualPayload)
+    }
+
+    @Test
+    fun `the payload offsets index the trimmed string`() {
+        // Whitespace a scanner or clipboard added must not shift every reported position.
+        viewModel.onIntent(QrScanIntent.PayloadSubmitted("  000201010212\n"))
+
+        val failure = viewModel.state.value.content as QrScanState.ContentState.Failure
+        assertEquals("000201010212", failure.payload)
+    }
+
+    @Test
+    fun `dismissing keeps the payload where clearing discards it`() {
+        viewModel.onIntent(QrScanIntent.PayloadSubmitted("000201010212"))
+
+        viewModel.onIntent(QrScanIntent.Dismissed)
+        assertEquals(QrScanState.ContentState.Idle, viewModel.state.value.content)
+        assertEquals("000201010212", viewModel.state.value.manualPayload)
+
+        viewModel.onIntent(QrScanIntent.Cleared)
+        assertEquals("", viewModel.state.value.manualPayload)
+    }
+
+    @Test
+    fun `a repaired payload decodes without clearing first`() {
+        viewModel.onIntent(QrScanIntent.PayloadSubmitted("000201010212"))
+        assertTrue(viewModel.state.value.content is QrScanState.ContentState.Failure)
+
+        viewModel.onIntent(QrScanIntent.PayloadSubmitted(ScanSamples.QRIS_DYNAMIC))
+
+        assertTrue(viewModel.state.value.content is QrScanState.ContentState.Success)
     }
 
     @Test

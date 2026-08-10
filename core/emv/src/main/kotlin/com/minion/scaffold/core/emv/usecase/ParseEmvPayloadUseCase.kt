@@ -3,6 +3,7 @@ package com.minion.scaffold.core.emv.usecase
 import com.minion.scaffold.core.emv.model.CrcVerification
 import com.minion.scaffold.core.emv.model.EmvParseResult
 import com.minion.scaffold.core.emv.model.EmvSegment
+import com.minion.scaffold.core.emv.model.PayloadSpan
 import com.minion.scaffold.core.emv.model.QrInquiryReport
 import com.minion.scaffold.core.emv.model.QrParseError
 import com.minion.scaffold.core.emv.model.TagInterpretation
@@ -41,8 +42,21 @@ class ParseEmvPayloadUseCase @Inject constructor() {
         payload: String,
         segments: List<TlvNode>,
     ): EmvParseResult<QrInquiryReport> {
-        if (segments.firstOrNull()?.tag != EmvTagCatalog.TAG_PAYLOAD_FORMAT_INDICATOR) {
-            return EmvParseResult.Failure(QrParseError.MissingPayloadFormatIndicator)
+        // Spans come from the parser's own framing arithmetic rather than being recomputed here.
+        // A successful parse of a non-blank payload always yields at least one segment, so both
+        // branches below have something concrete to point at.
+        val first = segments.firstOrNull()
+        if (first == null || first.tag != EmvTagCatalog.TAG_PAYLOAD_FORMAT_INDICATOR) {
+            return EmvParseResult.Failure(
+                QrParseError.MissingPayloadFormatIndicator(
+                    span = if (first == null) {
+                        PayloadSpan.at(0)
+                    } else {
+                        EmvTlvParser.spanOf(segments, 0)
+                    },
+                    foundTag = first?.tag.orEmpty(),
+                ),
+            )
         }
 
         val crcSegment = segments.lastOrNull()
@@ -50,7 +64,19 @@ class ParseEmvPayloadUseCase @Inject constructor() {
             crcSegment.tag != EmvTagCatalog.TAG_CRC ||
             crcSegment.length != EmvTagCatalog.CRC_VALUE_LENGTH
         ) {
-            return EmvParseResult.Failure(QrParseError.MissingCrc)
+            // The *last segment*, not a caret at the tail. "This payload ends on tag 58" is
+            // something a reader can act on; a zero-width mark past the final character is not.
+            return EmvParseResult.Failure(
+                QrParseError.MissingCrc(
+                    span = if (crcSegment == null) {
+                        PayloadSpan.at(payload.length)
+                    } else {
+                        EmvTlvParser.spanOf(segments, segments.lastIndex)
+                    },
+                    foundTag = crcSegment?.tag.orEmpty(),
+                    foundLength = crcSegment?.length ?: 0,
+                ),
+            )
         }
 
         // The checksum covers everything up to and including its own `6304` header. Since tag 63

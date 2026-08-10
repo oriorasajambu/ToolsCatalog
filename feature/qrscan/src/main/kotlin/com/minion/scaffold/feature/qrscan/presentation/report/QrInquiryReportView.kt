@@ -34,6 +34,7 @@ import androidx.compose.ui.text.withStyle
 import com.minion.scaffold.core.designsystem.component.QrCodeImage
 import com.minion.scaffold.feature.qrscan.R
 import com.minion.scaffold.core.emv.model.EmvSegment
+import com.minion.scaffold.core.emv.model.Nesting
 import com.minion.scaffold.core.emv.model.QrInquiryReport
 import com.minion.scaffold.core.emv.model.TlvNode
 
@@ -160,6 +161,19 @@ private fun SegmentCard(
                 text = segment.valueText(),
                 style = MaterialTheme.typography.bodyMedium,
             )
+
+            // Low emphasis and deliberately not an error tint. A tag in the 26–51 range holding a
+            // plain identifier rather than sub-segments is ordinary in live payloads, so this fires
+            // on perfectly good codes — dressed as a warning it would train people to ignore it.
+            // What it is for is the case where a template's insides *are* damaged, which used to
+            // be completely silent.
+            if (segment.node.nesting == Nesting.Unframed) {
+                Text(
+                    text = stringResource(R.string.qrscan_report_unframed_template),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             for (child in segment.node.children) {
                 SubtagRow(

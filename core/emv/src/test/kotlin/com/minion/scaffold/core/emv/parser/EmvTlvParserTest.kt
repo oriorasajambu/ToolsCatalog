@@ -2,7 +2,11 @@ package com.minion.scaffold.core.emv.parser
 
 import com.minion.scaffold.core.emv.EmvSamples
 import com.minion.scaffold.core.emv.assertFailedWith
+import com.minion.scaffold.core.emv.model.HeaderDefect
+import com.minion.scaffold.core.emv.model.Nesting
+import com.minion.scaffold.core.emv.model.PayloadSpan
 import com.minion.scaffold.core.emv.model.QrParseError
+import com.minion.scaffold.core.emv.model.SegmentTrace
 import com.minion.scaffold.core.emv.model.TlvNode
 import com.minion.scaffold.core.emv.valueOrFail
 import org.junit.Assert.assertEquals
@@ -131,23 +135,49 @@ internal class EmvTlvParserTest {
 
     @Test
     fun `rejects a barcode that is not EMV at all`() {
-        EmvTlvParser.parse("https://example.com").assertFailedWith(QrParseError.NotAnEmvPayload)
+        EmvTlvParser.parse("https://example.com").assertFailedWith(
+            QrParseError.NotAnEmvPayload(span = PayloadSpan(0, 2), found = "ht"),
+        )
     }
 
     @Test
     fun `reports a non-numeric tag at its offset`() {
-        EmvTlvParser.parse("000201XY0212").assertFailedWith(QrParseError.MalformedTlv(offset = 6))
+        EmvTlvParser.parse("000201XY0212").assertFailedWith(
+            QrParseError.MalformedTlv(
+                offset = 6,
+                span = PayloadSpan(6, 8),
+                defect = HeaderDefect.NON_NUMERIC_TAG,
+                found = "XY",
+                lastGoodSegment = SegmentTrace("00", 2, PayloadSpan(0, 6)),
+            ),
+        )
     }
 
     @Test
     fun `reports a truncated segment header at its offset`() {
-        EmvTlvParser.parse("000201012").assertFailedWith(QrParseError.MalformedTlv(offset = 6))
+        EmvTlvParser.parse("000201012").assertFailedWith(
+            QrParseError.MalformedTlv(
+                offset = 6,
+                span = PayloadSpan(6, 9),
+                defect = HeaderDefect.TRUNCATED,
+                found = "012",
+                lastGoodSegment = SegmentTrace("00", 2, PayloadSpan(0, 6)),
+            ),
+        )
     }
 
     @Test
     fun `reports a length that runs past the end of the payload`() {
         EmvTlvParser.parse("0099AB").assertFailedWith(
-            QrParseError.LengthOverrun(tag = "00", declaredLength = 99, available = 2),
+            QrParseError.LengthOverrun(
+                tag = "00",
+                declaredLength = 99,
+                available = 2,
+                offset = 0,
+                span = PayloadSpan(0, 6),
+                // Nothing parsed before it, so there is no last good segment to report.
+                lastGoodSegment = null,
+            ),
         )
     }
 
@@ -172,14 +202,108 @@ internal class EmvTlvParserTest {
     @Test
     fun `reports a template whose declared length overruns the payload`() {
         EmvTlvParser.parse("00020126080004TES").assertFailedWith(
-            QrParseError.LengthOverrun(tag = "26", declaredLength = 8, available = 7),
+            QrParseError.LengthOverrun(
+                tag = "26",
+                declaredLength = 8,
+                available = 7,
+                offset = 6,
+                span = PayloadSpan(6, 17),
+                lastGoodSegment = SegmentTrace("00", 2, PayloadSpan(0, 6)),
+            ),
         )
     }
 
     @Test
     fun `reports offsets against the payload rather than the current segment`() {
-        // Three valid segments (24 characters, the third a nested template) then a bad tag.
-        EmvTlvParser.parse("00020101021226080004TESTZZ0201")
-            .assertFailedWith(QrParseError.MalformedTlv(offset = 24))
+        // Three valid segments (24 characters, the third a nested template) then a bad tag. The
+        // last good span covers the whole template including its base offset, which is what shows
+        // nested framing has not shifted the outer arithmetic.
+        EmvTlvParser.parse("00020101021226080004TESTZZ0201").assertFailedWith(
+            QrParseError.MalformedTlv(
+                offset = 24,
+                span = PayloadSpan(24, 26),
+                defect = HeaderDefect.NON_NUMERIC_TAG,
+                found = "ZZ",
+                lastGoodSegment = SegmentTrace("26", 8, PayloadSpan(12, 24)),
+            ),
+        )
+    }
+
+    /**
+     * The regression guard for the whole diagnostic feature.
+     *
+     * A payload whose tag `32` lost its two length digits. Every number here is load-bearing and no
+     * two are the same: the break is reported at **16**, the characters at fault are at **18**, and
+     * the actual damage is at **14**, where `51` should have been. Only the last good segment — tag
+     * 32 declaring zero characters, which a template that size cannot possibly do — points at the
+     * real defect. That is why the error carries it.
+     */
+    @Test
+    fun `brackets a missing length between the break and the last good segment`() {
+        EmvTlvParser.parse(EmvSamples.SAMA_MISSING_LENGTH_DIGITS).assertFailedWith(
+            QrParseError.MalformedTlv(
+                offset = 16,
+                span = PayloadSpan(18, 20),
+                defect = HeaderDefect.NON_NUMERIC_LENGTH,
+                found = "SA",
+                lastGoodSegment = SegmentTrace("32", 0, PayloadSpan(12, 16)),
+            ),
+        )
+    }
+
+    /**
+     * A valid tag followed by an invalid length is a *length* defect.
+     *
+     * Guards the split of what used to be one fused condition: reporting "a tag or length could not
+     * be read" points at four characters when two of them are fine.
+     */
+    @Test
+    fun `distinguishes a bad length from a bad tag`() {
+        EmvTlvParser.parse("00020111SA12").assertFailedWith(
+            QrParseError.MalformedTlv(
+                offset = 6,
+                span = PayloadSpan(8, 10),
+                defect = HeaderDefect.NON_NUMERIC_LENGTH,
+                found = "SA",
+                lastGoodSegment = SegmentTrace("00", 2, PayloadSpan(0, 6)),
+            ),
+        )
+    }
+
+    // --- Nesting -----------------------------------------------------------------------------
+
+    @Test
+    fun `marks a template that framed`() {
+        val acquirer = EmvTlvParser.parse(EmvSamples.QRIS_DYNAMIC).valueOrFail()
+            .single { it.tag == "26" }
+
+        assertEquals(Nesting.Framed, acquirer.nesting)
+    }
+
+    @Test
+    fun `marks a template that did not frame`() {
+        val segments = EmvTlvParser.parse("2608ABCDEFGH").valueOrFail()
+
+        assertEquals(Nesting.Unframed, segments.single().nesting)
+    }
+
+    @Test
+    fun `leaves a non-template unmarked`() {
+        // Tag 04 sits below the 26..51 template range, so nesting was never attempted — a
+        // different statement from having attempted it and failed.
+        val identifier = EmvTlvParser.parse(EmvSamples.QRIS_DYNAMIC).valueOrFail()
+            .single { it.tag == "04" }
+
+        assertEquals(Nesting.NotApplicable, identifier.nesting)
+    }
+
+    @Test
+    fun `treats an empty template value as framed`() {
+        // Zero characters frame as zero segments, vacuously. Calling that unframed would flag every
+        // legitimately empty template as suspicious.
+        val segments = EmvTlvParser.parse("2600").valueOrFail()
+
+        assertEquals(Nesting.Framed, segments.single().nesting)
+        assertTrue(segments.single().children.isEmpty())
     }
 }
