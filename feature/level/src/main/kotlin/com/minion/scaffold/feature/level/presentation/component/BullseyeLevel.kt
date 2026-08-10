@@ -83,7 +83,11 @@ internal fun BullseyeLevel(
                     scale = scale,
                     stroke = ringStroke,
                 )
-                drawCrosshair(scheme.outlineVariant, crosshair)
+                // `onSurfaceVariant`, not `outlineVariant`. The vial is filled with
+                // `surfaceContainerHighest`, and in the dark theme `outlineVariant` sits so close
+                // to it that the crosshair effectively disappeared — which matters because it is
+                // the only thing marking dead centre.
+                drawCrosshair(scheme.onSurfaceVariant, crosshair)
                 drawBubble(
                     x = bubbleX(),
                     y = bubbleY(),

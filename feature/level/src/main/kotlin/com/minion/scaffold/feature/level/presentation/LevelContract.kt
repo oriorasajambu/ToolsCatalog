@@ -41,9 +41,6 @@ internal data class LevelState(
 
     val calibration: Calibration = Calibration.NONE,
 
-    /** Whether to nudge the user towards calibrating. Dismissed permanently once acted on. */
-    val showCalibrationPrompt: Boolean = false,
-
     val soundEnabled: Boolean = false,
 
     /**
@@ -129,6 +126,13 @@ internal sealed interface LevelEffect : UiEffect {
     data class Notice(val notice: LevelNotice) : LevelEffect
 }
 
+/**
+ * The one-shot messages, shown as a snackbar.
+ *
+ * Only genuinely transient things belong here. Persistent modes — held, measuring against a
+ * reference — go to the always-present status line instead, because a message that dismisses itself
+ * cannot be trusted to represent a state the user is still in.
+ */
 internal enum class LevelNotice {
 
     /** A reference was taken while the phone was moving, so it was not captured. */
@@ -137,4 +141,10 @@ internal enum class LevelNotice {
     ReferenceCaptured,
 
     CalibrationCleared,
+
+    /** No fused gravity sensor on this device, so readings settle more slowly. */
+    UsingAccelerometer,
+
+    /** Uncalibrated, and the user has not yet dismissed the suggestion. Carries an action. */
+    CalibrationSuggested,
 }

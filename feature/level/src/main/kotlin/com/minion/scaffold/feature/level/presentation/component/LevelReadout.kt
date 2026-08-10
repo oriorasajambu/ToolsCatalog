@@ -47,6 +47,7 @@ import kotlin.math.roundToInt
 @Composable
 internal fun LevelReadout(
     degrees: State<Double>,
+    status: State<LevelStatus>,
     modifier: Modifier = Modifier,
 ) {
     val quantised by remember(degrees) {
@@ -83,7 +84,54 @@ internal fun LevelReadout(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+
+        LevelStatusLine(status = status)
     }
+}
+
+/**
+ * One line saying whether the number above it can be believed.
+ *
+ * **Always occupies its line**, even when there is nothing remarkable to say — that is the whole
+ * point. These used to be banners stacked above the bullseye, which pushed the entire screen down
+ * and back up as the phone was moved, so the thing you were reading kept sliding out from under
+ * your eyes.
+ *
+ * Deliberately *not* a snackbar, unlike the one-shot notices. "Held" and "measuring against a
+ * reference" are persistent modes, and a message that dismisses itself after four seconds would
+ * leave a frozen reading looking live — the single most dangerous thing this screen could do.
+ */
+@Composable
+private fun LevelStatusLine(status: State<LevelStatus>) {
+    val current by status
+
+    Text(
+        text = stringResource(current.labelRes()),
+        style = MaterialTheme.typography.labelLarge,
+        color = when (current) {
+            LevelStatus.Held -> MaterialTheme.colorScheme.tertiary
+            LevelStatus.Relative -> MaterialTheme.colorScheme.tertiary
+            LevelStatus.Moving -> MaterialTheme.colorScheme.error
+            LevelStatus.Live -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        textAlign = TextAlign.Center,
+    )
+}
+
+/**
+ * What the reading currently is, in priority order.
+ *
+ * Held outranks everything: a stale number presented as live is worse than any other confusion
+ * here. Moving outranks Relative because it says the number is meaningless right now, where
+ * Relative only says what it is measured against.
+ */
+internal enum class LevelStatus { Held, Moving, Relative, Live }
+
+private fun LevelStatus.labelRes(): Int = when (this) {
+    LevelStatus.Held -> R.string.level_status_held
+    LevelStatus.Moving -> R.string.level_status_moving
+    LevelStatus.Relative -> R.string.level_status_relative
+    LevelStatus.Live -> R.string.level_status_live
 }
 
 /** Pitch and roll side by side, for the flat pose where one number is not enough. */

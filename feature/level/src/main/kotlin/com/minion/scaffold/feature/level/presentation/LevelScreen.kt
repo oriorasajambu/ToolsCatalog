@@ -18,8 +18,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -40,14 +42,15 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minion.scaffold.core.level.model.LevelPose
+import com.minion.scaffold.core.level.usecase.Steadiness
 import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
 import com.minion.scaffold.feature.level.R
 import com.minion.scaffold.feature.level.domain.GravitySensor
 import com.minion.scaffold.feature.level.presentation.component.AxisReadout
 import com.minion.scaffold.feature.level.presentation.component.BullseyeLevel
 import com.minion.scaffold.feature.level.presentation.component.LevelActions
-import com.minion.scaffold.feature.level.presentation.component.LevelNotices
 import com.minion.scaffold.feature.level.presentation.component.LevelReadout
+import com.minion.scaffold.feature.level.presentation.component.LevelStatus
 import com.minion.scaffold.feature.level.presentation.component.LevelTone
 import kotlinx.coroutines.launch
 
@@ -94,7 +97,25 @@ internal fun LevelScreen(
     ObserveAsEvents(viewModel.effect) { effect ->
         when (effect) {
             is LevelEffect.Notice -> coroutineScope.launch {
-                snackbarHostState.showSnackbar(resources.getString(effect.notice.messageRes()))
+                val result = snackbarHostState.showSnackbar(
+                    message = resources.getString(effect.notice.messageRes()),
+                    actionLabel = effect.notice.actionRes()?.let(resources::getString),
+                    duration = if (effect.notice == LevelNotice.CalibrationSuggested) {
+                        SnackbarDuration.Long
+                    } else {
+                        SnackbarDuration.Short
+                    },
+                )
+
+                if (result == SnackbarResult.ActionPerformed &&
+                    effect.notice == LevelNotice.CalibrationSuggested
+                ) {
+                    onNavigateToCalibration()
+                }
+                // Either way it has been shown once and answered; do not nag again.
+                if (effect.notice == LevelNotice.CalibrationSuggested) {
+                    viewModel.onIntent(LevelIntent.CalibrationPromptDismissed)
+                }
             }
         }
     }
@@ -220,8 +241,6 @@ private fun LevelContent(
                 .padding(spacing),
             verticalArrangement = Arrangement.spacedBy(spacing),
         ) {
-            LevelNotices(state = state, onIntent = onIntent)
-
             BullseyeLevel(
                 bubbleX = { state.value.bubbleX },
                 bubbleY = { state.value.bubbleY },
@@ -232,6 +251,7 @@ private fun LevelContent(
                 degrees = remember(state) {
                     derivedStateOf { state.value.displayed.primaryAngle(state.value.pose) }
                 },
+                status = remember(state) { derivedStateOf { state.value.status() } },
             )
 
             val isFlat by remember(state) {
@@ -279,4 +299,25 @@ private fun LevelNotice.messageRes(): Int = when (this) {
     LevelNotice.ReferenceNotSteady -> R.string.level_reference_not_steady
     LevelNotice.ReferenceCaptured -> R.string.level_reference_captured
     LevelNotice.CalibrationCleared -> R.string.level_calibration_cleared
+    LevelNotice.UsingAccelerometer -> R.string.level_accelerometer_fallback
+    LevelNotice.CalibrationSuggested -> R.string.level_calibration_prompt
+}
+
+private fun LevelNotice.actionRes(): Int? = when (this) {
+    LevelNotice.CalibrationSuggested -> R.string.level_calibrate
+    else -> null
+}
+
+/**
+ * Which of the four things the status line says, in priority order.
+ *
+ * Held first, always: a stale reading presented as live is the worst confusion this screen can
+ * cause. Moving next, because it says the number means nothing right now, where Relative only says
+ * what it is measured against.
+ */
+private fun LevelState.status(): LevelStatus = when {
+    frozen != null -> LevelStatus.Held
+    steadiness == Steadiness.Moving -> LevelStatus.Moving
+    reference != null -> LevelStatus.Relative
+    else -> LevelStatus.Live
 }

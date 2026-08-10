@@ -2,6 +2,7 @@ package com.minion.scaffold.feature.level.presentation.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
@@ -18,12 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import com.minion.scaffold.core.designsystem.component.AppButton
 import com.minion.scaffold.core.designsystem.component.AppOutlinedButton
-import com.minion.scaffold.core.level.usecase.Steadiness
 import com.minion.scaffold.feature.level.R
-import com.minion.scaffold.feature.level.domain.GravitySensor
 import com.minion.scaffold.feature.level.presentation.LevelIntent
 import com.minion.scaffold.feature.level.presentation.LevelState
 
@@ -125,99 +123,28 @@ private fun CalibrationSummary(
                 )
             }
 
-            TextButton(onClick = onNavigateToCalibration) {
-                Text(
-                    text = stringResource(
-                        if (calibrated) R.string.level_recalibrate else R.string.level_calibrate,
-                    ),
-                )
-            }
-
-            if (calibrated) {
-                TextButton(onClick = { onIntent(LevelIntent.CalibrationCleared) }) {
-                    Text(text = stringResource(R.string.level_calibration_reset))
-                }
-            }
-        }
-    }
-}
-
-/** The transient banners: hold-still, frozen, relative mode, and the first-use calibration nudge. */
-@Composable
-internal fun LevelNotices(
-    state: State<LevelState>,
-    onIntent: (LevelIntent) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val steadiness by remember(state) { derivedStateOf { state.value.steadiness } }
-    val frozen by remember(state) { derivedStateOf { state.value.frozen != null } }
-    val hasReference by remember(state) { derivedStateOf { state.value.reference != null } }
-    val sensor by remember(state) { derivedStateOf { state.value.sensor } }
-    val showPrompt by remember(state) {
-        derivedStateOf { state.value.showCalibrationPrompt && !state.value.isCalibrated }
-    }
-
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(
-            dimensionResource(R.dimen.level_spacing_tight),
-        ),
-    ) {
-        // Frozen first: a held reading that looks live is the worst thing this screen can show.
-        if (frozen) Banner(textRes = R.string.level_frozen_banner, emphasised = true)
-
-        if (hasReference) Banner(textRes = R.string.level_reference_banner, emphasised = true)
-
-        if (steadiness == Steadiness.Moving) Banner(textRes = R.string.level_hold_still)
-
-        if (sensor == GravitySensor.Accelerometer) {
-            Banner(textRes = R.string.level_accelerometer_fallback)
-        }
-
-        if (showPrompt) {
-            Card(
+            // Side by side: two stacked text buttons read as a list of unrelated choices, where
+            // these are the two halves of one decision about the same stored value.
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                horizontalArrangement = Arrangement.spacedBy(
+                    dimensionResource(R.dimen.level_spacing_tight),
                 ),
             ) {
-                Column(
-                    modifier = Modifier.padding(dimensionResource(R.dimen.level_spacing)),
-                ) {
+                TextButton(onClick = onNavigateToCalibration) {
                     Text(
-                        text = stringResource(R.string.level_calibration_prompt),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        text = stringResource(
+                            if (calibrated) R.string.level_recalibrate else R.string.level_calibrate,
+                        ),
                     )
-                    TextButton(
-                        onClick = { onIntent(LevelIntent.CalibrationPromptDismissed) },
-                    ) {
-                        Text(text = stringResource(R.string.level_calibration_prompt_dismiss))
+                }
+
+                if (calibrated) {
+                    TextButton(onClick = { onIntent(LevelIntent.CalibrationCleared) }) {
+                        Text(text = stringResource(R.string.level_calibration_reset))
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun Banner(textRes: Int, emphasised: Boolean = false) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (emphasised) MaterialTheme.colorScheme.tertiaryContainer
-            else MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
-    ) {
-        Text(
-            text = stringResource(textRes),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(dimensionResource(R.dimen.level_spacing)),
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center,
-            color = if (emphasised) MaterialTheme.colorScheme.onTertiaryContainer
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }

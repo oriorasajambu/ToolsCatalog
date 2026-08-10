@@ -9,6 +9,7 @@
 
     <!-- Bullseye -->
     <dimen name="level_ring_stroke">2dp</dimen>
-    <dimen name="level_crosshair">1dp</dimen>
+    <!-- Hairline-thin at 1dp was invisible against the vial fill as well as being too dark. -->
+    <dimen name="level_crosshair">1.5dp</dimen>
     <dimen name="level_bubble_radius">18dp</dimen>
 </resources>

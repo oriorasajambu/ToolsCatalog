@@ -23,10 +23,16 @@
     <string name="level_sound_enable">Turn on sound</string>
     <string name="level_sound_disable">Turn off sound</string>
 
-    <!-- Banners -->
-    <string name="level_frozen_banner">Held. This is not a live reading.</string>
-    <string name="level_reference_banner">Measuring against your reference surface, not level.</string>
-    <string name="level_hold_still">Hold still — a moving phone cannot measure an angle.</string>
+    <!--
+      The status line, which always occupies its row so the layout never shifts. Kept short: it
+      sits directly under the reading and is glanced at, not read.
+    -->
+    <string name="level_status_live">Live</string>
+    <string name="level_status_held">Held — not a live reading</string>
+    <string name="level_status_moving">Hold still…</string>
+    <string name="level_status_relative">Relative to your reference</string>
+
+    <!-- Snackbars -->
     <string name="level_accelerometer_fallback">This device has no fused gravity sensor, so readings settle more slowly.</string>
     <string name="level_unsupported">This device has no motion sensor, so it cannot measure angles.</string>
 
@@ -39,7 +45,6 @@
     <string name="level_calibration_reset">Clear calibration</string>
     <string name="level_calibration_cleared">Calibration cleared.</string>
     <string name="level_calibration_prompt">Calibrating takes about twenty seconds and removes the error built into every phone. Worth doing before you trust a reading.</string>
-    <string name="level_calibration_prompt_dismiss">Not now</string>
 
     <!-- Notices -->
     <string name="level_reference_captured">Reference set.</string>

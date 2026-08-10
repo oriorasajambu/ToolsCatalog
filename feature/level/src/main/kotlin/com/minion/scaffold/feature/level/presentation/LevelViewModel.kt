@@ -16,6 +16,7 @@ import com.minion.scaffold.core.level.usecase.Steadiness
 import com.minion.scaffold.core.ui.mvi.MviViewModel
 import com.minion.scaffold.feature.level.domain.ClearCalibrationUseCase
 import com.minion.scaffold.feature.level.domain.DismissCalibrationPromptUseCase
+import com.minion.scaffold.feature.level.domain.GravitySensor
 import com.minion.scaffold.feature.level.domain.GravitySource
 import com.minion.scaffold.feature.level.domain.ObserveCalibrationPromptSeenUseCase
 import com.minion.scaffold.feature.level.domain.ObserveCalibrationUseCase
@@ -24,6 +25,8 @@ import com.minion.scaffold.feature.level.domain.SetSoundEnabledUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
@@ -82,6 +85,10 @@ internal class LevelViewModel @Inject constructor(
      */
     private var displayRotationDegrees = 0.0
 
+    /** Guards, so the one-shot snackbars fire once per screen rather than on every resume. */
+    private var calibrationSuggested = false
+    private var accelerometerNoticed = false
+
     init {
         reduce { copy(sensor = gravitySource.sensor) }
 
@@ -93,8 +100,19 @@ internal class LevelViewModel @Inject constructor(
             .onEach { enabled -> reduce { copy(soundEnabled = enabled) } }
             .launchIn(viewModelScope)
 
-        observeCalibrationPromptSeen()
-            .onEach { seen -> reduce { copy(showCalibrationPrompt = !seen) } }
+        // Combined rather than read separately: both arrive asynchronously from DataStore, so
+        // checking them independently at resume would miss the prompt on a cold start, when
+        // neither has emitted yet.
+        combine(observeCalibrationPromptSeen(), observeCalibration()) { seen, calibration ->
+            !seen && calibration.measuredMask == 0
+        }
+            .distinctUntilChanged()
+            .onEach { shouldSuggest ->
+                if (shouldSuggest && !calibrationSuggested) {
+                    calibrationSuggested = true
+                    emitEffect(LevelEffect.Notice(LevelNotice.CalibrationSuggested))
+                }
+            }
             .launchIn(viewModelScope)
 
         // Gated on the screen being visible rather than collected outright. `viewModelScope`
@@ -112,7 +130,20 @@ internal class LevelViewModel @Inject constructor(
 
     override fun onIntent(intent: LevelIntent) {
         when (intent) {
-            LevelIntent.ScreenResumed -> screenVisible.value = true
+            LevelIntent.ScreenResumed -> {
+                screenVisible.value = true
+
+                // Once per screen instance, not once per resume — a message repeated every time
+                // the user glances away and back is noise rather than information.
+                if (!accelerometerNoticed &&
+                    currentState.sensor == GravitySensor.Accelerometer
+                ) {
+                    accelerometerNoticed = true
+                    viewModelScope.launch {
+                        emitEffect(LevelEffect.Notice(LevelNotice.UsingAccelerometer))
+                    }
+                }
+            }
 
             LevelIntent.ScreenPaused -> {
                 screenVisible.value = false
