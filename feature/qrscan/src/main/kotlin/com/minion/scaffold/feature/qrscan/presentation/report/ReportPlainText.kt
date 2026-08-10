@@ -2,6 +2,7 @@ package com.minion.scaffold.feature.qrscan.presentation.report
 
 import android.content.res.Resources
 import com.minion.scaffold.feature.qrscan.R
+import com.minion.scaffold.core.emv.model.Nesting
 import com.minion.scaffold.core.emv.model.QrInquiryReport
 import com.minion.scaffold.core.emv.model.TlvNode
 
@@ -33,6 +34,11 @@ internal fun QrInquiryReport.toPlainText(resources: Resources): String = buildSt
             .orEmpty()
 
         appendLine("- $heading: ${segment.node.rawValue}$meaning")
+
+        // Mirrors the card on screen, so a pasted report says the same things it did.
+        if (segment.node.nesting == Nesting.Unframed) {
+            appendLine("  (" + resources.getString(R.string.qrscan_report_unframed_template) + ")")
+        }
 
         for (child in segment.node.children) {
             appendLine("  - ${child.subtagLabel(resources)}: ${child.rawValue}")

@@ -49,8 +49,11 @@ internal class DecodeScannedPayloadUseCase @Inject constructor(
 
             is EmvParseResult.Failure -> when (parsed.error) {
                 // Not EMV either, and Wi-Fi already declined it.
-                QrParseError.NotAnEmvPayload -> ScanResult.Unrecognised
-                else -> ScanResult.Malformed(parsed.error)
+                is QrParseError.NotAnEmvPayload -> ScanResult.Unrecognised
+
+                // `trimmed`, not `payload`: the parser trims before framing, so this is the string
+                // the error's offsets actually index.
+                else -> ScanResult.Malformed(parsed.error, trimmed)
             }
         }
     }
