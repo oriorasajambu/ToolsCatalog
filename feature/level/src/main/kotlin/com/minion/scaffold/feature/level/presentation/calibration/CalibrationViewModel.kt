@@ -11,6 +11,10 @@ import com.minion.scaffold.core.ui.mvi.MviViewModel
 import com.minion.scaffold.feature.level.domain.GravitySource
 import com.minion.scaffold.feature.level.domain.SaveCalibrationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -27,6 +31,7 @@ import javax.inject.Inject
  * moving phone bakes an acceleration into the device's permanent bias, which is the one error the
  * user has no way to see afterwards.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 internal class CalibrationViewModel @Inject constructor(
     gravitySource: GravitySource,
@@ -34,6 +39,9 @@ internal class CalibrationViewModel @Inject constructor(
     private val solveFlip: SolveFlipCalibrationUseCase,
     private val saveCalibration: SaveCalibrationUseCase,
 ) : MviViewModel<CalibrationState, CalibrationIntent, CalibrationEffect>(CalibrationState()) {
+
+    /** See LevelViewModel: the sensor follows the screen, not the ViewModel's lifetime. */
+    private val screenVisible = MutableStateFlow(false)
 
     private var stability = StabilityState()
     private var latestUp: UpVector? = null
@@ -44,7 +52,8 @@ internal class CalibrationViewModel @Inject constructor(
     private var firstCapture: UpVector? = null
 
     init {
-        gravitySource.samples()
+        screenVisible
+            .flatMapLatest { visible -> if (visible) gravitySource.samples() else emptyFlow() }
             .onEach { sample ->
                 val up = sample.normalizedOrNull() ?: return@onEach
                 stability = detectStability(stability, up, sample.timestampNanos)
@@ -60,6 +69,17 @@ internal class CalibrationViewModel @Inject constructor(
 
     override fun onIntent(intent: CalibrationIntent) {
         when (intent) {
+            CalibrationIntent.ScreenResumed -> screenVisible.value = true
+
+            CalibrationIntent.ScreenPaused -> {
+                screenVisible.value = false
+                stability = StabilityState()
+                // A capture interrupted by leaving the screen is abandoned rather than resumed:
+                // the phone has almost certainly moved.
+                window.clear()
+                reduce { copy(capturing = false) }
+            }
+
             CalibrationIntent.CaptureRequested -> beginCapture()
 
             CalibrationIntent.SaveRequested -> viewModelScope.launch {

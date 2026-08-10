@@ -36,6 +36,8 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minion.scaffold.core.level.model.LevelPose
 import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
@@ -68,6 +70,15 @@ internal fun LevelScreen(
     // inside the handler would keep resolving against whichever locale was active when the screen
     // was first composed.
     val resources = LocalResources.current
+
+    // The sensor is tied to the screen being visible, not to the ViewModel's lifetime — the
+    // ViewModel is scoped to the navigation entry and outlives both.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.onIntent(LevelIntent.ScreenResumed)
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
+        viewModel.onIntent(LevelIntent.ScreenPaused)
+    }
 
     LevelScreenSetup(onDisplayRotation = { degrees ->
         viewModel.onIntent(LevelIntent.DisplayRotationChanged(degrees))

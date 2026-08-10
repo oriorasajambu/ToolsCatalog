@@ -22,6 +22,10 @@ import com.minion.scaffold.feature.level.domain.ObserveCalibrationUseCase
 import com.minion.scaffold.feature.level.domain.ObserveSoundEnabledUseCase
 import com.minion.scaffold.feature.level.domain.SetSoundEnabledUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -42,6 +46,7 @@ import javax.inject.Inject
  * Calibration comes first so that every consumer downstream — flat, edge, relative and the bubble —
  * is corrected by the same one rotation in the same one place.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 internal class LevelViewModel @Inject constructor(
     private val gravitySource: GravitySource,
@@ -57,6 +62,9 @@ internal class LevelViewModel @Inject constructor(
     private val clearCalibration: ClearCalibrationUseCase,
     private val dismissCalibrationPrompt: DismissCalibrationPromptUseCase,
 ) : MviViewModel<LevelState, LevelIntent, LevelEffect>(LevelState()) {
+
+    /** Whether the screen is on show. The sensor follows this, not the ViewModel's lifetime. */
+    private val screenVisible = MutableStateFlow(false)
 
     private var smoothing = SmoothingState()
     private var poseState = PoseState()
@@ -89,13 +97,31 @@ internal class LevelViewModel @Inject constructor(
             .onEach { seen -> reduce { copy(showCalibrationPrompt = !seen) } }
             .launchIn(viewModelScope)
 
-        gravitySource.samples()
+        // Gated on the screen being visible rather than collected outright. `viewModelScope`
+        // outlives the screen, so a bare `launchIn` here keeps the sensor registered while the
+        // phone is in a pocket — confirmed on a device, where `dumpsys sensorservice` still showed
+        // an active connection after backgrounding. `flatMapLatest` tears the upstream down on
+        // pause, which unregisters through the flow's own `awaitClose`.
+        screenVisible
+            .flatMapLatest { visible ->
+                if (visible) gravitySource.samples() else emptyFlow()
+            }
             .onEach(::onSample)
             .launchIn(viewModelScope)
     }
 
     override fun onIntent(intent: LevelIntent) {
         when (intent) {
+            LevelIntent.ScreenResumed -> screenVisible.value = true
+
+            LevelIntent.ScreenPaused -> {
+                screenVisible.value = false
+                // Dropped so the next visit starts from the first real sample rather than
+                // interpolating from a reading that may be minutes old.
+                smoothing = SmoothingState()
+                stability = StabilityState()
+            }
+
             LevelIntent.FreezeToggled -> reduce {
                 copy(frozen = if (frozen == null) tilt else null)
             }

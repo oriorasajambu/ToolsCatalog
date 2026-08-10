@@ -24,6 +24,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minion.scaffold.core.designsystem.component.AppButton
 import com.minion.scaffold.core.designsystem.component.AppOutlinedButton
@@ -39,6 +41,13 @@ internal fun CalibrationScreen(
     viewModel: CalibrationViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.onIntent(CalibrationIntent.ScreenResumed)
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
+        viewModel.onIntent(CalibrationIntent.ScreenPaused)
+    }
 
     ObserveAsEvents(viewModel.effect) { effect ->
         when (effect) {
@@ -134,7 +143,9 @@ private fun CaptureStep(state: CalibrationState, onIntent: (CalibrationIntent) -
             when {
                 state.capturing -> R.string.level_calibration_capturing
                 !state.steady -> R.string.level_calibration_hold_still
-                else -> R.string.level_calibration_capture
+                // Not the button's own label, which is what this said before and which read as
+                // the word "Capture" printed twice, one above the other.
+                else -> R.string.level_calibration_ready
             },
         ),
         style = MaterialTheme.typography.bodyMedium,

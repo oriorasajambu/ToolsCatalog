@@ -44,6 +44,11 @@ internal data class CalibrationState(
 
 internal sealed interface CalibrationIntent : UiIntent {
 
+    /** Sensor registration follows the screen — see `LevelIntent.ScreenResumed`. */
+    data object ScreenResumed : CalibrationIntent
+
+    data object ScreenPaused : CalibrationIntent
+
     data object CaptureRequested : CalibrationIntent
 
     data object SaveRequested : CalibrationIntent

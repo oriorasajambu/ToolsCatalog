@@ -51,6 +51,7 @@
     <string name="level_calibration_step_one">Step 1 of 2 — lay the phone down and hold still.</string>
     <string name="level_calibration_step_two">Step 2 of 2 — now turn the phone 180° <b>flat on the same spot</b>. Do not lift it or turn it over.</string>
     <string name="level_calibration_capture">Capture</string>
+    <string name="level_calibration_ready">Steady — ready to capture.</string>
     <string name="level_calibration_capturing">Reading…</string>
     <string name="level_calibration_hold_still">Hold still…</string>
     <string name="level_calibration_done">Calibrated. Your device reads %1$s° off, and the surface you used is %2$s° from level.</string>

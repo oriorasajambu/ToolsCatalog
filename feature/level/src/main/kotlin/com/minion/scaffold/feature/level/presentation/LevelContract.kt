@@ -96,6 +96,17 @@ internal data class ReferenceCapture(
 
 internal sealed interface LevelIntent : UiIntent {
 
+    /**
+     * The screen became visible, or stopped being visible.
+     *
+     * Drives sensor registration. The ViewModel outlives the screen — it is scoped to the
+     * navigation entry — so collecting in `init` would leave the accelerometer powered with the
+     * phone in someone's pocket. These two are what tie the hardware to what is actually on screen.
+     */
+    data object ScreenResumed : LevelIntent
+
+    data object ScreenPaused : LevelIntent
+
     data object FreezeToggled : LevelIntent
 
     data object ReferenceCaptured : LevelIntent
