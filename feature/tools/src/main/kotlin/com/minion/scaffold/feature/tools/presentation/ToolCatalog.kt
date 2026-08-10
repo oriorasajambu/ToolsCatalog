@@ -2,6 +2,7 @@ package com.minion.scaffold.feature.tools.presentation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Architecture
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.ContactPage
 import androidx.compose.material.icons.filled.DocumentScanner
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.minion.scaffold.core.navigation.AppRoute
 import com.minion.scaffold.core.navigation.GenerateRoute
+import com.minion.scaffold.core.navigation.LevelRoute
 import com.minion.scaffold.core.navigation.OcrRoute
 import com.minion.scaffold.core.navigation.QrCreateRoute
 import com.minion.scaffold.core.navigation.QrScanRoute
@@ -129,6 +131,14 @@ internal object ToolCatalog {
             descriptionRes = R.string.tools_weather_description,
             icon = Icons.Filled.WbSunny,
             route = WeatherRoute,
+            category = ToolCategory.Utility,
+        ),
+        Tool(
+            id = "level",
+            titleRes = R.string.tools_level_title,
+            descriptionRes = R.string.tools_level_description,
+            icon = Icons.Filled.Architecture,
+            route = LevelRoute,
             category = ToolCategory.Utility,
         ),
         Tool(

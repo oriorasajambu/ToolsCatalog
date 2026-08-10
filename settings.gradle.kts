@@ -59,6 +59,11 @@ include(":core:text")
 // because it mirrors every other format module's shape.
 include(":core:weather")
 
+// Tilt geometry — the angles a gravity vector implies, the pose machine, the smoothing filter and
+// the flip-calibration algebra. Pure Kotlin because a level has no visible ground truth: the only
+// way to know the maths is right is to prove it against synthesised vectors in a JVM test.
+include(":core:level")
+
 // Text-recognition shaping — reading-order reconstruction and block assembly. Pure Kotlin; the
 // ML Kit types it maps from stay in :feature:ocr, so the ordering algorithm is unit-testable
 // without an emulator.
@@ -90,4 +95,5 @@ include(":feature:qrcreate")
 include(":feature:texttools")
 include(":feature:weather")
 include(":feature:ocr")
+include(":feature:level")
 

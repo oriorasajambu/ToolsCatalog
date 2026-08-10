@@ -188,6 +188,19 @@ data object OcrSettingsRoute : AppRoute
 @Serializable
 data object GenerateRoute : AppRoute
 
+/** The bubble level and clinometer: is this surface level, and what is its slope. */
+@Serializable
+data object LevelRoute : AppRoute
+
+/**
+ * The level's guided two-point calibration.
+ *
+ * A destination rather than a dialog because the procedure asks the user to leave the phone alone on
+ * a surface and turn it — something a sheet they have to reach past actively works against.
+ */
+@Serializable
+data object LevelCalibrationRoute : AppRoute
+
 /**
  * The weather home screen: location permission gate plus the pinned current-location card.
  *

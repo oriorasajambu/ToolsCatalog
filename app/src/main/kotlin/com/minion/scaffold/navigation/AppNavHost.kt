@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.minion.scaffold.core.designsystem.motion.slideInFromRight
 import com.minion.scaffold.core.designsystem.motion.slideOutToRight
+import com.minion.scaffold.core.navigation.LevelCalibrationRoute
 import com.minion.scaffold.core.navigation.OcrSettingsRoute
 import com.minion.scaffold.core.navigation.ToolsRoute
 import com.minion.scaffold.core.navigation.WeatherSearchRoute
@@ -17,6 +18,8 @@ import com.minion.scaffold.feature.qrcreate.presentation.qrCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.url.urlCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.vcard.vCardCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.wifi.wifiCreateScreen
+import com.minion.scaffold.feature.level.presentation.levelCalibrationScreen
+import com.minion.scaffold.feature.level.presentation.levelScreen
 import com.minion.scaffold.feature.ocr.presentation.ocrScreen
 import com.minion.scaffold.feature.ocr.presentation.ocrSettingsScreen
 import com.minion.scaffold.feature.qrscan.presentation.qrScanScreen
@@ -92,6 +95,13 @@ fun AppNavHost(
             onNavigateBack = { navController.popBackStack() },
         )
         generateScreen(
+            onNavigateBack = { navController.popBackStack() },
+        )
+        levelScreen(
+            onNavigateBack = { navController.popBackStack() },
+            onNavigateToCalibration = { navController.navigate(LevelCalibrationRoute) },
+        )
+        levelCalibrationScreen(
             onNavigateBack = { navController.popBackStack() },
         )
         weatherScreen(

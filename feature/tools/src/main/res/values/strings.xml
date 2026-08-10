@@ -39,4 +39,6 @@
     <string name="tools_weather_description">Current conditions and a forecast for your location</string>
     <string name="tools_ocr_title">Image to text</string>
     <string name="tools_ocr_description">Pull the text out of a photo, on the device</string>
+    <string name="tools_level_title">Level</string>
+    <string name="tools_level_description">Check whether a surface is level, and measure its slope</string>
 </resources>
