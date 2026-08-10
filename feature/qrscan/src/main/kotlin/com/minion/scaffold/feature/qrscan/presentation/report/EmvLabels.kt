@@ -2,6 +2,7 @@ package com.minion.scaffold.feature.qrscan.presentation.report
 
 import android.content.res.Resources
 import com.minion.scaffold.feature.qrscan.R
+import com.minion.scaffold.core.emv.model.HeaderDefect
 import com.minion.scaffold.core.emv.model.PointOfInitiationMethod
 import com.minion.scaffold.core.emv.model.QrParseError
 import com.minion.scaffold.core.emv.model.TagInterpretation
@@ -102,17 +103,63 @@ internal fun QrScanError.describe(resources: Resources): String = when (this) {
     QrScanError.ImageUnreadable -> resources.getString(R.string.qrscan_error_image_unreadable)
 }
 
-/** Why a payload could not be read. */
+/**
+ * Why a payload could not be read.
+ *
+ * States what was expected and what was there instead, because "damaged at position 16" tells
+ * someone holding 325 characters nothing they can act on. The wording deliberately does not claim
+ * to know the *cause* — the parser reports where it stopped, which is usually a little past where
+ * the payload actually went wrong, and guessing at the difference would be worse than saying
+ * nothing. What bridges the gap is [describeContext], below.
+ */
 internal fun QrParseError.describe(resources: Resources): String = when (this) {
     QrParseError.EmptyPayload -> resources.getString(R.string.qrscan_error_empty)
-    QrParseError.NotAnEmvPayload -> resources.getString(R.string.qrscan_error_not_emv)
-    QrParseError.MissingPayloadFormatIndicator ->
-        resources.getString(R.string.qrscan_error_missing_format_indicator)
+    is QrParseError.NotAnEmvPayload -> resources.getString(R.string.qrscan_error_not_emv)
 
-    QrParseError.MissingCrc -> resources.getString(R.string.qrscan_error_missing_crc)
-    is QrParseError.MalformedTlv -> resources.getString(R.string.qrscan_error_malformed, offset)
+    is QrParseError.MissingPayloadFormatIndicator ->
+        resources.getString(R.string.qrscan_error_missing_format_indicator, foundTag)
+
+    is QrParseError.MissingCrc ->
+        resources.getString(R.string.qrscan_error_missing_crc, foundTag, foundLength)
+
+    is QrParseError.MalformedTlv -> when (defect) {
+        HeaderDefect.TRUNCATED ->
+            resources.getString(R.string.qrscan_error_truncated, offset, found.length)
+
+        HeaderDefect.NON_NUMERIC_TAG ->
+            resources.getString(R.string.qrscan_error_bad_tag, offset, found)
+
+        // Named separately from a bad tag because the two send a reader to different characters.
+        HeaderDefect.NON_NUMERIC_LENGTH ->
+            resources.getString(R.string.qrscan_error_bad_length, span.start, found, offset)
+    }
+
     is QrParseError.LengthOverrun ->
         resources.getString(R.string.qrscan_error_overrun, tag, declaredLength, available)
+}
+
+/**
+ * The sentence that brackets the damage, or null when there is nothing to bracket.
+ *
+ * The last segment that read cleanly is the closest thing to a root cause this can honestly offer.
+ * For a payload whose tag `32` lost its length digits it reads "tag 32, declaring 0 characters,
+ * at 12–16" — and a template declaring nothing is the giveaway, sitting exactly where the missing
+ * characters belong.
+ */
+internal fun QrParseError.describeContext(resources: Resources): String? {
+    val lastGood = when (this) {
+        is QrParseError.MalformedTlv -> lastGoodSegment
+        is QrParseError.LengthOverrun -> lastGoodSegment
+        else -> null
+    } ?: return null
+
+    return resources.getString(
+        R.string.qrscan_error_last_good,
+        lastGood.tag,
+        lastGood.declaredLength,
+        lastGood.span.start,
+        lastGood.span.endExclusive,
+    )
 }
 
 private const val TAG_PAYLOAD_FORMAT_INDICATOR = 0

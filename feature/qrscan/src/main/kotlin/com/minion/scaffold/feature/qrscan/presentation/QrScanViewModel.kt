@@ -23,7 +23,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 internal class QrScanViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     private val decodeScannedPayload: DecodeScannedPayloadUseCase,
     private val imageBarcodeDecoder: ImageBarcodeDecoder,
 ) : MviViewModel<QrScanState, QrScanIntent, QrScanEffect>(QrScanState()) {
@@ -39,14 +39,30 @@ internal class QrScanViewModel @Inject constructor(
         .get<ScanPurpose>(QrScanRoute.ARG_PURPOSE)
         ?: ScanPurpose.Inspect
 
+    init {
+        // A `MutableStateFlow` survives rotation but not process death, and the failure screen is
+        // now somewhere a user sits for minutes and switches away from to compare payloads —
+        // exactly when Android reclaims the process. Restored the same way `:feature:ocr` keeps its
+        // extracted text.
+        savedStateHandle.get<String>(KEY_PAYLOAD)
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { restored -> reduce { copy(manualPayload = restored) } }
+    }
+
     override fun onIntent(intent: QrScanIntent) {
         when (intent) {
-            is QrScanIntent.ManualPayloadChanged -> reduce { copy(manualPayload = intent.payload) }
+            is QrScanIntent.ManualPayloadChanged -> rememberPayload(intent.payload)
             is QrScanIntent.PayloadSubmitted -> decode(intent.payload)
             is QrScanIntent.ImagePicked -> decodeImage(intent.uri)
 
-            QrScanIntent.Cleared -> reduce {
-                copy(content = QrScanState.ContentState.Idle, manualPayload = "")
+            QrScanIntent.Cleared -> {
+                rememberPayload("")
+                reduce { copy(content = QrScanState.ContentState.Idle) }
+            }
+
+            // Deliberately keeps the payload — see the intent's own note.
+            QrScanIntent.Dismissed -> reduce {
+                copy(content = QrScanState.ContentState.Idle)
             }
 
             is QrScanIntent.PermissionResult -> reduce {
@@ -155,16 +171,35 @@ internal class QrScanViewModel @Inject constructor(
         }
     }
 
-    /** Decodes [payload] into the state that renders its outcome. */
+    /**
+     * Decodes [payload] into the state that renders its outcome.
+     *
+     * A malformed payload is also written back to the editor, so a failed **camera** scan lands
+     * somewhere the user can repair it. Previously the scanned string was discarded at this point
+     * and only a typed one survived, which made the failure screen a dead end for the path most
+     * people arrive by.
+     */
     private fun contentFor(payload: String): QrScanState.ContentState =
         when (val result = decodeScannedPayload(payload)) {
             is ScanResult.Recognised -> QrScanState.ContentState.Success(result.content)
-            is ScanResult.Malformed ->
-                QrScanState.ContentState.Failure(QrScanError.Parse(result.error))
+
+            is ScanResult.Malformed -> {
+                rememberPayload(result.payload)
+                QrScanState.ContentState.Failure(
+                    error = QrScanError.Parse(result.error),
+                    payload = result.payload,
+                )
+            }
 
             ScanResult.Unrecognised ->
                 QrScanState.ContentState.Failure(QrScanError.UnrecognisedFormat)
         }
+
+    /** Holds the payload in state and in saved state, which must not be allowed to disagree. */
+    private fun rememberPayload(payload: String) {
+        savedStateHandle[KEY_PAYLOAD] = payload
+        reduce { copy(manualPayload = payload) }
+    }
 
     /**
      * Where a scanned code goes to be edited.
@@ -195,6 +230,10 @@ internal class QrScanViewModel @Inject constructor(
 
     private fun emit(effect: QrScanEffect) {
         viewModelScope.launch { emitEffect(effect) }
+    }
+
+    private companion object {
+        const val KEY_PAYLOAD = "qrscan_payload"
     }
 }
 

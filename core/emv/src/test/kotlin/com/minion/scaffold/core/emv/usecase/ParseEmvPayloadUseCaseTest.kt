@@ -2,6 +2,7 @@ package com.minion.scaffold.core.emv.usecase
 
 import com.minion.scaffold.core.emv.EmvSamples
 import com.minion.scaffold.core.emv.assertFailedWith
+import com.minion.scaffold.core.emv.model.PayloadSpan
 import com.minion.scaffold.core.emv.model.PointOfInitiationMethod
 import com.minion.scaffold.core.emv.model.QrInquiryReport
 import com.minion.scaffold.core.emv.model.QrParseError
@@ -128,28 +129,62 @@ internal class ParseEmvPayloadUseCaseTest {
 
     @Test
     fun `rejects a payload that does not open with the format indicator`() {
-        parse("0102126304ABCD").assertFailedWith(QrParseError.MissingPayloadFormatIndicator)
+        parse("0102126304ABCD").assertFailedWith(
+            QrParseError.MissingPayloadFormatIndicator(
+                span = PayloadSpan(0, 6),
+                foundTag = "01",
+            ),
+        )
     }
 
     @Test
     fun `rejects a payload with no checksum segment`() {
-        parse("000201010212").assertFailedWith(QrParseError.MissingCrc)
+        // The span covers the last segment, so the message can name what the payload ends on
+        // instead of pointing at nothing past the final character.
+        parse("000201010212").assertFailedWith(
+            QrParseError.MissingCrc(
+                span = PayloadSpan(6, 12),
+                foundTag = "01",
+                foundLength = 2,
+            ),
+        )
     }
 
     @Test
     fun `rejects a checksum segment that is not last`() {
-        parse("00020163043D585802ID").assertFailedWith(QrParseError.MissingCrc)
+        parse("00020163043D585802ID").assertFailedWith(
+            QrParseError.MissingCrc(
+                span = PayloadSpan(14, 20),
+                foundTag = "58",
+                foundLength = 2,
+            ),
+        )
     }
 
     @Test
     fun `rejects a checksum that is not four characters`() {
-        parse("0002016302AB").assertFailedWith(QrParseError.MissingCrc)
+        // Tag 63 is present and last, so `foundTag` alone would look correct. The length is what
+        // makes it wrong, which is why it is reported alongside.
+        parse("0002016302AB").assertFailedWith(
+            QrParseError.MissingCrc(
+                span = PayloadSpan(6, 12),
+                foundTag = "63",
+                foundLength = 2,
+            ),
+        )
     }
 
     @Test
     fun `propagates a framing failure unchanged`() {
         parse("0099AB").assertFailedWith(
-            QrParseError.LengthOverrun(tag = "00", declaredLength = 99, available = 2),
+            QrParseError.LengthOverrun(
+                tag = "00",
+                declaredLength = 99,
+                available = 2,
+                offset = 0,
+                span = PayloadSpan(0, 6),
+                lastGoodSegment = null,
+            ),
         )
     }
 

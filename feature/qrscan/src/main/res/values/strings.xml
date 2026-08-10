@@ -131,13 +131,45 @@
     <string name="qrscan_error_empty">There is nothing to decode.</string>
     <string name="qrscan_error_not_emv">This is not an EMV payment QR. Try a different code.</string>
     <string name="qrscan_error_unrecognised">This is a QR code, but not one this app reads. It is neither a payment code nor Wi-Fi credentials.</string>
-    <string name="qrscan_error_missing_format_indicator">This payload does not start with a Payload Format Indicator, so it is not a valid EMV QR.</string>
-    <string name="qrscan_error_missing_crc">This payload has no CRC checksum as its last segment, so it cannot be verified.</string>
-    <string name="qrscan_error_malformed">The payload is damaged at position %1$d — a tag or length could not be read there.</string>
+    <string name="qrscan_error_missing_format_indicator">Every EMV payload opens with tag 00, the Payload Format Indicator. This one opens with tag %1$s.</string>
+    <string name="qrscan_error_missing_crc" tools:ignore="PluralsCandidate">An EMV payload ends with tag 63 holding a 4-character checksum. This one ends with tag %1$s holding %2$d.</string>
+
+    <!--
+      One string per defect rather than one covering all three. "A tag or length could not be read"
+      points at four characters when two of them are usually fine, and sends the reader to the wrong
+      place — which is the entire complaint this work exists to answer.
+    -->
+    <string name="qrscan_error_bad_tag">Reading a segment at %1$d: expected a 2-digit tag, found “%2$s”.</string>
+    <string name="qrscan_error_bad_length">Expected a 2-digit length at %1$d, found “%2$s”. The tag at %3$d is fine; its length is not.</string>
+    <string name="qrscan_error_truncated" tools:ignore="PluralsCandidate">The payload stops mid-segment at %1$d — a header needs 4 characters and only %2$d remain.</string>
+
+    <!--
+      The closest thing to a root cause that can be stated without guessing. A parser reports where
+      it stopped, which is a little past where the payload went wrong; the last segment it read
+      cleanly is the other end of that bracket.
+    -->
+    <string name="qrscan_error_last_good" tools:ignore="PluralsCandidate">The last segment read cleanly was tag %1$s, declaring %2$d characters, at %3$d–%4$d.</string>
+
     <!--
       Not converted to <plurals>: it has two independent quantities (declared vs. remaining
       characters), and Android plurals resolve against exactly one. A single grammatical form
       reads fine for an error message.
     -->
     <string name="qrscan_error_overrun" tools:ignore="PluralsCandidate">Tag %1$s declares %2$d characters but only %3$d remain, so the payload is truncated.</string>
+
+    <!-- Diagnostic view -->
+    <string name="qrscan_diagnostic_title">Payload</string>
+    <string name="qrscan_diagnostic_offsets_note">Positions are 0-based. The gutter shows each row\'s starting position.</string>
+    <string name="qrscan_diagnostic_stale">Edited since decoding — press Decode to re-check. The highlight below is from the previous attempt.</string>
+    <string name="qrscan_diagnostic_copy">Copy diagnostic</string>
+    <string name="qrscan_diagnostic_length" tools:ignore="PluralsCandidate">%1$d characters</string>
+    <string name="qrscan_diagnostic_placeholder_note">Characters outside the plain ASCII range are shown as “·” so the positions stay aligned.</string>
+    <string name="qrscan_scan_again">Scan again</string>
+
+    <!--
+      Deliberately declarative, not a warning. Plenty of live payloads put a plain identifier in a
+      tag the specification reserves for a template, so this fires on perfectly good codes; wording
+      it as damage would train people to ignore it.
+    -->
+    <string name="qrscan_report_unframed_template">Read as a plain value — its contents do not frame as sub-segments.</string>
 </resources>
