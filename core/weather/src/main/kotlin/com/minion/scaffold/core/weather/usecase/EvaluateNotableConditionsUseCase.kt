@@ -20,6 +20,14 @@ import javax.inject.Inject
  */
 class EvaluateNotableConditionsUseCase @Inject constructor() {
 
+    /**
+     * Evaluates the thresholds and returns the conditions worth surfacing.
+     *
+     * @param current The right-now readings.
+     * @param hourly  Upcoming hours; only the next 24 are considered.
+     * @param daily   The daily outlook; only the first day is considered.
+     * @return The notable conditions, possibly empty.
+     */
     operator fun invoke(
         current: CurrentConditions,
         hourly: List<HourlyEntry>,

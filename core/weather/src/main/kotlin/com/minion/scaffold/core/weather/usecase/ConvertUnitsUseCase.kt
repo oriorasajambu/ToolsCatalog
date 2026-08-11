@@ -16,6 +16,13 @@ import javax.inject.Inject
  */
 class ConvertUnitsUseCase @Inject constructor() {
 
+    /**
+     * Converts [forecast] into [unit], or returns it unchanged when [unit] is metric.
+     *
+     * @param forecast The metric forecast as fetched and cached.
+     * @param unit     The unit system to display in.
+     * @return The forecast in [unit] — the same instance when [unit] is [WeatherUnit.METRIC].
+     */
     operator fun invoke(forecast: Forecast, unit: WeatherUnit): Forecast {
         if (unit == WeatherUnit.METRIC) return forecast
         return forecast.copy(

@@ -15,6 +15,12 @@ import javax.inject.Inject
  */
 class WmoConditionMapper @Inject constructor() {
 
+    /**
+     * Maps a WMO weather code to a [WeatherCondition] bucket.
+     *
+     * @param wmoCode The numeric WMO code from Open-Meteo.
+     * @return The matching bucket, or [WeatherCondition.CLOUDY] for an unrecognised code.
+     */
     operator fun invoke(wmoCode: Int): WeatherCondition = when (wmoCode) {
         0 -> WeatherCondition.CLEAR
         1, 2 -> WeatherCondition.PARTLY_CLOUDY
