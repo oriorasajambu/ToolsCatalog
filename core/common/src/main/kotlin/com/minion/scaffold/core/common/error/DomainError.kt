@@ -65,6 +65,8 @@ sealed interface DomainError {
     /**
      * 5xx. Carries [code] because "server error" and "service unavailable" sometimes warrant
      * different copy, and because it is the one class of failure worth logging verbatim.
+     *
+     * @property code The HTTP status code the server returned.
      */
     data class Server(val code: Int) : DomainError
 
@@ -77,6 +79,8 @@ sealed interface DomainError {
     /**
      * Input the domain rejected. Carries which [field] failed so the UI can highlight it rather
      * than showing a form-level banner.
+     *
+     * @property field Which input failed validation.
      */
     data class Validation(val field: Field) : DomainError {
 
