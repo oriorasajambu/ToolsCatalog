@@ -40,6 +40,13 @@ enum class TipIndicator(val code: String?) {
     ;
 
     companion object {
+
+        /**
+         * The indicator for [code], or [UNKNOWN] for any code the specification does not define.
+         *
+         * @param code The two-character tag `55` value, e.g. `"01"`, `"02"` or `"03"`.
+         * @return The matching entry, never `null`.
+         */
         fun fromCode(code: String): TipIndicator =
             entries.firstOrNull { it.code == code } ?: UNKNOWN
     }

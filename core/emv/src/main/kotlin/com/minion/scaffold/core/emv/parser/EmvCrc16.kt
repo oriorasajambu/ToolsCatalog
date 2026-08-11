@@ -31,6 +31,9 @@ internal object EmvCrc16 {
      * Encoded as UTF-8. EMV payloads are ASCII in practice, where the choice is immaterial; it
      * matters only if a merchant name carries a non-ASCII character, and UTF-8 is what such a
      * payload would have been generated from.
+     *
+     * @param data The payload up to and including the `6304` header of the checksum tag.
+     * @return The checksum as four uppercase hexadecimal characters, e.g. `"29B1"`.
      */
     fun compute(data: String): String {
         var crc = INITIAL_VALUE

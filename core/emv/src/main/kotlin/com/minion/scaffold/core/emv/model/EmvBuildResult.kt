@@ -8,8 +8,18 @@ package com.minion.scaffold.core.emv.model
  */
 sealed interface EmvBuildResult {
 
+    /**
+     * The draft was valid and produced a payload.
+     *
+     * @property payload The complete EMV payload string, including tag `00` and the tag `63` checksum.
+     */
     data class Success(val payload: String) : EmvBuildResult
 
+    /**
+     * The draft was rejected. Carries every violation so a form can mark all bad fields at once.
+     *
+     * @property violations One entry per rejected field. Never empty — an empty list is [Success].
+     */
     data class Invalid(val violations: List<FieldViolation>) : EmvBuildResult
 }
 
@@ -21,7 +31,9 @@ sealed interface EmvBuildResult {
  * copy in a module that has no resources.
  */
 data class FieldViolation(
+    /** The input that was rejected. */
     val field: EmvField,
+    /** Why [field] was rejected. */
     val reason: ViolationReason,
     /**
      * Which merchant account the violation belongs to, or null for a top-level field.

@@ -29,6 +29,10 @@ internal object EmvTlvParser {
      * Fails on framing problems only. A structurally valid payload that is missing mandatory tags
      * still parses — those are the caller's checks, because a payload with no tag `63` is still
      * worth showing to whoever is trying to work out why it is broken.
+     *
+     * @param payload The raw payload to frame. Assumed already trimmed by the caller.
+     * @return [EmvParseResult.Success] with the framed segments, or [EmvParseResult.Failure]
+     *         carrying the [QrParseError] describing the framing problem.
      */
     fun parse(payload: String): EmvParseResult<List<TlvNode>> {
         if (payload.isBlank()) return EmvParseResult.Failure(QrParseError.EmptyPayload)
@@ -55,6 +59,10 @@ internal object EmvTlvParser {
      * Segments are contiguous and each occupies its header plus its declared length, so a forward
      * sum is exact. Lives here because framing arithmetic is this object's business — a caller
      * recomputing it would be a second implementation of the one rule that must not drift.
+     *
+     * @param segments The top-level segments, in payload order.
+     * @param index    The position in [segments] whose span to compute.
+     * @return The [PayloadSpan] the segment at [index] occupies in the payload.
      */
     fun spanOf(segments: List<TlvNode>, index: Int): PayloadSpan {
         var start = 0

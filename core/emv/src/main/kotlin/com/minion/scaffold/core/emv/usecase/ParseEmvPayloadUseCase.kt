@@ -27,6 +27,16 @@ import javax.inject.Inject
  */
 class ParseEmvPayloadUseCase @Inject constructor() {
 
+    /**
+     * Parses [rawPayload] into a report of its segments and checksum verdict.
+     *
+     * The payload is trimmed before parsing, so surrounding whitespace from a scanner or clipboard
+     * does not affect the result.
+     *
+     * @param rawPayload The scanned or pasted payload, whitespace and all.
+     * @return [EmvParseResult.Success] with the [QrInquiryReport], or [EmvParseResult.Failure]
+     *         carrying the [QrParseError] that stopped the parse.
+     */
     operator fun invoke(rawPayload: String): EmvParseResult<QrInquiryReport> {
         // Scanners and clipboards both add surrounding whitespace; a trailing newline would
         // otherwise be included in the checksummed range and fail every payload.

@@ -1,6 +1,12 @@
 package com.minion.scaffold.core.emv.reference
 
-/** An ISO 4217 currency: its numeric code as it appears in tag `53`, plus how to name it. */
+/**
+ * An ISO 4217 currency: its numeric code as it appears in tag `53`, plus how to name it.
+ *
+ * @property numericCode The three-digit ISO 4217 numeric code, e.g. `"360"`.
+ * @property alphaCode   The three-letter ISO 4217 alphabetic code, e.g. `"IDR"`.
+ * @property name        The currency's English display name, e.g. `"Indonesian Rupiah"`.
+ */
 data class Currency(
     val numericCode: String,
     val alphaCode: String,
@@ -69,6 +75,9 @@ object CurrencyCodes {
      *
      * Pads to three digits: the code is fixed-width in the payload, but a caller holding `"36"`
      * from somewhere else should still find `IDR` rather than silently miss.
+     *
+     * @param numericCode The ISO 4217 numeric code, with or without leading zeroes.
+     * @return The matching [Currency], or `null` if the code is not in the table.
      */
     fun of(numericCode: String): Currency? = byNumericCode[numericCode.padStart(3, '0')]
 }

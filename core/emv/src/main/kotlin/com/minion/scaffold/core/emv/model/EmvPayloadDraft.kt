@@ -11,15 +11,23 @@ package com.minion.scaffold.core.emv.model
  * Tags `00` (Payload Format Indicator) and `63` (CRC) are absent by design — neither is a choice.
  */
 data class EmvPayloadDraft(
+    /** Tag `01` — whether the payload is static (reusable) or dynamic (per-transaction). */
     val initiationMethod: PointOfInitiationMethod,
+    /** Tags `26`–`51` — one entry per merchant account template. At least one is required. */
     val merchantAccounts: List<MerchantAccount>,
+    /** Tag `52` — the four-digit ISO 18245 merchant category code. */
     val merchantCategoryCode: String,
+    /** Tag `53` — the three-digit ISO 4217 numeric currency code. */
     val currencyNumericCode: String,
     /** Required when [initiationMethod] is dynamic, and refused when it is static. */
     val amount: String?,
+    /** Tag `58` — the two-letter ISO 3166-1 alpha-2 country code. */
     val countryCode: String,
+    /** Tag `59` — the merchant's display name. */
     val merchantName: String,
+    /** Tag `60` — the merchant's city. */
     val merchantCity: String,
+    /** Tag `61` — the merchant's postal code, or null to write none. */
     val postalCode: String?,
     /** Tags `55`–`57`. Null writes none of them. */
     val tip: TipSpec? = null,
