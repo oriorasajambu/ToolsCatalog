@@ -20,6 +20,9 @@ import kotlin.coroutines.resume
  *
  * A plain class rather than a `data class` because [jpegBytes] is an array: the generated `equals`
  * would compare identity while looking like it compares content.
+ *
+ * @property jpegBytes       The still frame as compressed JPEG bytes.
+ * @property rotationDegrees The clockwise rotation, in degrees, needed to display it upright.
  */
 class CapturedFrame(
     val jpegBytes: ByteArray,
@@ -29,6 +32,11 @@ class CapturedFrame(
 /** The outcome of a shutter press. */
 sealed interface CaptureResult {
 
+    /**
+     * The shot was taken.
+     *
+     * @property frame The captured still.
+     */
     class Success(val frame: CapturedFrame) : CaptureResult
 
     /**
@@ -61,6 +69,12 @@ class CameraCaptureController {
     /** Whether a shot can be taken right now — false before the viewfinder has bound a camera. */
     val isReady: Boolean get() = controller != null
 
+    /**
+     * Takes a single still.
+     *
+     * @return [CaptureResult.Success] with the frame, or [CaptureResult.Failed] when no camera is
+     *   bound or the capture errors.
+     */
     suspend fun capture(): CaptureResult {
         val camera = controller
         val callbackExecutor = executor
@@ -103,5 +117,10 @@ class CameraCaptureController {
     }
 }
 
+/**
+ * Remembers a [CameraCaptureController] across recompositions.
+ *
+ * @return The retained controller to pass into [CameraViewfinder] and drive from a shutter button.
+ */
 @Composable
 fun rememberCameraCaptureController(): CameraCaptureController = remember { CameraCaptureController() }
