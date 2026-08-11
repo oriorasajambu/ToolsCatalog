@@ -6,6 +6,10 @@ import javax.inject.Inject
 internal class GetCurrentLocationForecastUseCase @Inject constructor(
     private val repository: WeatherRepository,
 ) {
+    /**
+     * @param forceRefresh Skip the cache and fetch fresh.
+     * @return [LocationFixOutcome.Found] with the card, or a reason there is nothing to show.
+     */
     suspend operator fun invoke(forceRefresh: Boolean): LocationFixOutcome =
         repository.getCurrentLocationCard(forceRefresh)
 }

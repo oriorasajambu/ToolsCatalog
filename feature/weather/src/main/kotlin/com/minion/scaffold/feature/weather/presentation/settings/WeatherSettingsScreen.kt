@@ -31,6 +31,13 @@ import com.minion.scaffold.core.designsystem.theme.AppTheme
 import com.minion.scaffold.core.weather.model.WeatherUnit
 import com.minion.scaffold.feature.weather.R
 
+/**
+ * The weather settings: the metric/imperial unit toggle.
+ *
+ * @param onNavigateBack Called when the user leaves the settings screen.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun WeatherSettingsScreen(
     onNavigateBack: () -> Unit,

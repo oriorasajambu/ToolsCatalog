@@ -14,5 +14,10 @@ internal interface WeatherPreferencesRepository {
     /** Defaults to [WeatherUnit.METRIC]. Explicitly not locale-derived — see SPEC.md §6. */
     val unit: Flow<WeatherUnit>
 
+    /**
+     * Stores the display-unit choice.
+     *
+     * @param unit The unit system to display in.
+     */
     suspend fun setUnit(unit: WeatherUnit)
 }

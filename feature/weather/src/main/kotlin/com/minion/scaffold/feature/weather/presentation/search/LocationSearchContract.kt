@@ -11,7 +11,9 @@ import com.minion.scaffold.core.weather.model.LocationSearchResult
  * it.
  */
 internal data class LocationSearchState(
+    /** The current search query. */
     val query: String = "",
+    /** The mutually exclusive search phase. */
     val content: ContentState = ContentState.Idle,
 
     /**
@@ -25,31 +27,63 @@ internal data class LocationSearchState(
     val savedIds: Set<String> = emptySet(),
 ) : UiState {
 
+    /** The search phase. */
     sealed interface ContentState {
 
         /** Nothing typed yet, or the query is still below the search floor. */
         data object Idle : ContentState
 
+        /** A search is in flight. */
         data object Searching : ContentState
 
+        /**
+         * The search returned matches.
+         *
+         * @property results The matching locations.
+         */
         data class Results(val results: List<LocationSearchResult>) : ContentState
 
         /** The search ran and matched nothing — an answer, not a failure. See SPEC.md §8. */
         data object Empty : ContentState
 
+        /**
+         * The search failed.
+         *
+         * @property error Why the search could not complete.
+         */
         data class Failure(val error: DomainError) : ContentState
     }
 }
 
+/** Everything the user can do on the location search screen. */
 internal sealed interface LocationSearchIntent : UiIntent {
+
+    /**
+     * The search query changed.
+     *
+     * @property query The new query.
+     */
     data class QueryChanged(val query: String) : LocationSearchIntent
+
+    /**
+     * A search result was selected to save.
+     *
+     * @property result The selected location.
+     */
     data class ResultSelected(val result: LocationSearchResult) : LocationSearchIntent
+
+    /** Retry a failed search. */
     data object Retry : LocationSearchIntent
 }
 
+/** One-shot events from the location search screen. */
 internal sealed interface LocationSearchEffect : UiEffect {
 
-    /** Confirms an add, so the user gets feedback without the screen closing under them — they
-     *  are likely adding more than one city in a sitting. */
+    /**
+     * Confirms an add, so the user gets feedback without the screen closing under them — they
+     * are likely adding more than one city in a sitting.
+     *
+     * @property name The name of the location that was added.
+     */
     data class LocationAdded(val name: String) : LocationSearchEffect
 }

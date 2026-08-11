@@ -76,6 +76,16 @@ import com.minion.scaffold.feature.weather.presentation.toIcon
 import com.minion.scaffold.feature.weather.presentation.toLabelRes
 import kotlin.math.roundToInt
 
+/**
+ * The weather home screen: the permission gate, the pinned current-location card, and the saved list.
+ *
+ * @param onNavigateBack Called when the user leaves the home screen.
+ * @param onOpenDetail   Called with a location id to open its forecast detail.
+ * @param onOpenSearch   Called to open place-name search.
+ * @param onOpenSettings Called to open the weather settings.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun WeatherHomeScreen(
     onNavigateBack: () -> Unit,

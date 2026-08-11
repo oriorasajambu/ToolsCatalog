@@ -9,6 +9,7 @@ import com.minion.scaffold.core.weather.model.WeatherUnit
 
 /** One location's forecast: current conditions, notable-conditions banner, hourly strip, daily list. */
 internal data class ForecastDetailState(
+    /** The mutually exclusive load phase. */
     val content: ContentState = ContentState.Loading,
 
     /**
@@ -18,21 +19,42 @@ internal data class ForecastDetailState(
     val unit: WeatherUnit = WeatherUnit.METRIC,
 ) : UiState {
 
+    /** The forecast load phase. */
     sealed interface ContentState {
+
+        /** The forecast is loading. */
         data object Loading : ContentState
 
-        /** [staleHoursAgo] non-null only when shown after a failed background refresh — see
-         *  `WeatherHomeState.LocationCardUi.staleHoursAgo` for the same reasoning. */
+        /**
+         * The forecast is ready.
+         *
+         * [staleHoursAgo] non-null only when shown after a failed background refresh — see
+         * `WeatherHomeState.LocationCardUi.staleHoursAgo` for the same reasoning.
+         *
+         * @property forecast      The forecast to show.
+         * @property staleHoursAgo Hours since fetch when shown stale, or `null` when fresh.
+         */
         data class Success(val forecast: Forecast, val staleHoursAgo: Long?) : ContentState
 
-        /** Only reachable when there is no cache at all (SPEC.md §8) — a cached failure never
-         *  reaches this state, it stays [Success] with a stale label. */
+        /**
+         * The fetch failed with no cache to fall back to.
+         *
+         * Only reachable when there is no cache at all (SPEC.md §8) — a cached failure never
+         * reaches this state, it stays [Success] with a stale label.
+         *
+         * @property error Why the forecast could not be retrieved.
+         */
         data class Failure(val error: DomainError) : ContentState
     }
 }
 
+/** Everything the user can do on the forecast detail screen. */
 internal sealed interface ForecastDetailIntent : UiIntent {
+
+    /** Pull-to-refresh: force-refresh the forecast. */
     data object PullToRefresh : ForecastDetailIntent
+
+    /** Retry a failed fetch. */
     data object Retry : ForecastDetailIntent
 }
 

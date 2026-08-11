@@ -50,6 +50,13 @@ import com.minion.scaffold.core.weather.model.LocationSearchResult
 import com.minion.scaffold.feature.weather.R
 import kotlinx.coroutines.launch
 
+/**
+ * The add-location screen: type-ahead place-name search, tap a hit to save it.
+ *
+ * @param onNavigateBack Called when the user leaves the search screen.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun LocationSearchScreen(
     onNavigateBack: () -> Unit,

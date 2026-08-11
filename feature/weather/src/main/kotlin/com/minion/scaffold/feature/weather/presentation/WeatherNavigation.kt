@@ -20,6 +20,12 @@ import com.minion.scaffold.feature.weather.presentation.settings.WeatherSettings
  * The navigation lambdas take route objects rather than the screens navigating directly: `:app` is
  * the only module allowed to hold a `NavHostController` (see `AppNavHost`'s doc comment), so this
  * hands back a destination and lets the host decide what reaching it means.
+ *
+ * @receiver The nav graph builder to register the destinations on.
+ * @param onNavigateBack       Called when the user leaves a weather screen.
+ * @param onNavigateToDetail   Called with the route for a location's forecast detail.
+ * @param onNavigateToSearch   Called when the user opens place-name search.
+ * @param onNavigateToSettings Called when the user opens the weather settings.
  */
 fun NavGraphBuilder.weatherScreen(
     onNavigateBack: () -> Unit,
