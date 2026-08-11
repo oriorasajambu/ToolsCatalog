@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="exifstrip_title">Photo metadata</string>
+    <string name="exifstrip_navigate_back">Back</string>
+    <string name="exifstrip_settings">What is removed</string>
+    <string name="exifstrip_preview">The photo being inspected</string>
+
+    <!-- Empty state -->
+    <string name="exifstrip_empty_title">See what a photo is carrying</string>
+    <string name="exifstrip_empty_body">Photos usually record where and when they were taken and which device took them. Pick one to see what is in it, then export a copy without any of it.</string>
+    <string name="exifstrip_pick">Choose a photo</string>
+    <string name="exifstrip_pick_another">Choose another photo</string>
+
+    <!--
+      The one-line answer, before any detail. Someone opening this tool has a single question, and it
+      should be answered in the first screenful rather than at row ninety of a tag dump.
+    -->
+    <string name="exifstrip_verdict_location">This photo records where it was taken.</string>
+    <string name="exifstrip_verdict_identifying">This photo records details that identify your device.</string>
+    <string name="exifstrip_verdict_some">This photo carries some metadata, none of it locating.</string>
+    <string name="exifstrip_verdict_clean">No metadata found in this photo.</string>
+
+    <!-- Bands -->
+    <string name="exifstrip_band_location">Location</string>
+    <string name="exifstrip_band_location_body">Where the photo was taken, usually accurate to a few metres.</string>
+    <string name="exifstrip_band_device">Device</string>
+    <string name="exifstrip_band_device_body">Which camera took it. Some cameras include a serial number, which ties every photo you have ever shared to the same body.</string>
+    <string name="exifstrip_band_time">Time</string>
+    <string name="exifstrip_band_time_body">When it was taken, usually to the second and often with your timezone.</string>
+    <string name="exifstrip_band_provenance">People and software</string>
+    <string name="exifstrip_band_provenance_body">Names, copyright and the app that edited it.</string>
+    <string name="exifstrip_band_capture">Camera settings</string>
+    <string name="exifstrip_band_capture_body">Exposure and lens details. Describes the shot rather than you.</string>
+
+    <string name="exifstrip_open_in_maps">Open in a map app</string>
+
+    <!--
+      Worded to make the point rather than to name a format. This is the least understood item on the
+      screen and the one most likely to surprise someone.
+    -->
+    <string name="exifstrip_thumbnail_title">Embedded preview</string>
+    <string name="exifstrip_thumbnail_body">A small copy of the image is stored inside the file. It is made when the photo is taken and is not always updated when the photo is edited — so a cropped or blurred photo can still carry a preview of the original.</string>
+    <string name="exifstrip_thumbnail_detail">%1$d × %2$d, %3$d kB</string>
+    <string name="exifstrip_thumbnail_detail_size_only">%1$d kB</string>
+
+    <string name="exifstrip_other_tags" tools:ignore="PluralsCandidate">Everything else (%1$d)</string>
+    <string name="exifstrip_expand">Show all tags</string>
+    <string name="exifstrip_collapse">Hide the rest</string>
+
+    <!-- Export -->
+    <string name="exifstrip_export">Export a clean copy</string>
+    <string name="exifstrip_share">Share the clean copy</string>
+    <string name="exifstrip_share_hint">The clean copy is not saved to your gallery. It is held only for sharing, and replaced the next time you export.</string>
+    <string name="exifstrip_verified">Checked: the exported file is clean</string>
+    <string name="exifstrip_removed_summary">Removed %1$s — %2$d kB smaller.</string>
+    <string name="exifstrip_removed_video">Also removed an embedded video of about %1$d kB. Some phones record a few seconds of motion with every photo.</string>
+    <string name="exifstrip_removed_trailing">Also removed %1$d kB of data stored after the end of the image.</string>
+    <string name="exifstrip_retained_summary">Kept on purpose: %1$s.</string>
+    <string name="exifstrip_retained_nothing">Nothing was kept.</string>
+    <string name="exifstrip_pixels_identical">The image itself is untouched — not re-saved, not recompressed.</string>
+    <string name="exifstrip_recompressed">This copy was re-saved, so the image quality is slightly lower than the original.</string>
+    <string name="exifstrip_renamed">Renamed to %1$s.</string>
+    <string name="exifstrip_filename_carries_date">The file name contains a date, so the copy will be renamed.</string>
+
+    <string name="exifstrip_convert_explanation">%1$s files cannot be cleaned without re-saving the image. Converting produces a JPEG with no metadata, at slightly lower quality than the original.</string>
+    <string name="exifstrip_convert">Convert to a clean JPEG</string>
+
+    <!-- What each removed block was -->
+    <string name="exifstrip_kind_exif">camera and location data</string>
+    <string name="exifstrip_kind_xmp">editing history</string>
+    <string name="exifstrip_kind_iptc">caption and credit data</string>
+    <string name="exifstrip_kind_comment">a comment</string>
+    <string name="exifstrip_kind_icc">the colour profile</string>
+    <string name="exifstrip_kind_timestamp">a timestamp</string>
+    <string name="exifstrip_kind_unknown">an unrecognised block (%1$s)</string>
+
+    <!-- Notices -->
+    <string name="exifstrip_notice_copied">Copied</string>
+    <string name="exifstrip_notice_no_map_app">No map app on this device.</string>
+    <string name="exifstrip_notice_nothing_to_remove">This photo had no metadata to remove.</string>
+
+    <!-- Failures -->
+    <string name="exifstrip_error_unreadable">That photo could not be opened.</string>
+    <string name="exifstrip_error_too_large">That file is too large for this tool to work on.</string>
+    <string name="exifstrip_error_not_an_image">That file is not an image this tool can read.</string>
+    <!--
+      Deliberately blunt, and the file is not offered. The whole value of the operation was the claim
+      that it worked, so a partial success is a failure.
+    -->
+    <string name="exifstrip_error_verification">Something survived the clean-up, so the copy was not offered. This file has an unusual structure — please do not treat it as stripped.</string>
+    <string name="exifstrip_error_write">The clean copy could not be written. There may not be enough free space.</string>
+
+    <!-- Settings -->
+    <string name="exifstrip_settings_title">What is removed</string>
+    <string name="exifstrip_settings_profile_title">Keep the colour profile</string>
+    <string name="exifstrip_settings_profile_body">A colour profile describes how colours in the file should be interpreted. It says nothing about you, your camera or where you were. Removing it makes the file marginally smaller and can make photos look washed out or oversaturated in some apps, so it is kept by default.</string>
+
+    <string name="exifstrip_settings_removed_title">What gets removed</string>
+    <string name="exifstrip_settings_removed_body">Everything except the parts needed to display the image. That means location, dates, camera make and model, serial numbers, editing history, captions, comments, the embedded preview, and any block this tool does not recognise — including manufacturer-specific data, which is where cameras tend to hide serial numbers. Anything stored after the end of the image is removed too; some phones append a short video to every photo.</string>
+
+    <string name="exifstrip_settings_kept_title">What is kept, and why</string>
+    <string name="exifstrip_settings_kept_body">Orientation, and the colour profile if you leave it switched on. Orientation is a single number from 1 to 8 that tells an app which way up to show the photo. Without it, pictures taken in portrait come out sideways. It reveals nothing about you.\n\nThe image itself is copied across byte for byte. Nothing is re-saved or recompressed, so the clean copy is exactly as sharp as the original — the file is simply smaller.</string>
+
+    <string name="exifstrip_settings_limits_title">What this cannot do</string>
+    <string name="exifstrip_settings_limits_body">This removes information stored alongside the image. It cannot remove anything hidden inside the picture itself — a visible or invisible watermark, or a pattern deliberately encoded into the pixels — because that is part of the image, and removing it would mean changing what the photo looks like.\n\nIt also cannot control what happens after you share. Some services add their own metadata, and some keep a copy of what you upload.\n\nHEIC files, which many phones now use by default, can be inspected but not cleaned without re-saving them.</string>
+</resources>

@@ -3,24 +3,28 @@
 
     <application>
         <!--
-          Hands the cleaned copy to a share target without exposing the cache directory. The
-          authority is feature-prefixed because two library modules each claiming
-          "${applicationId}.fileprovider" collide at manifest merge, and that failure surfaces as a
-          build error with no obvious cause — the same note :feature:qrcreate carries.
+          Hands the cleaned copy to a share target without exposing the cache directory.
+
+          The provider is a subclass rather than androidx's FileProvider directly, because the
+          manifest merger keys <provider> on android:name and not on android:authorities — so two
+          library modules both declaring androidx.core.content.FileProvider collide even with
+          different authorities. The failure reports a conflict on the authority attribute and
+          suggests tools:replace, which points at the symptom and would silently make one feature's
+          provider serve the other's paths. See ExifStripFileProvider.
+
+          The authority is still feature-prefixed, so the two providers are also distinguishable at
+          runtime. The paths resource is passed to the superclass constructor, which is why there is
+          no FILE_PROVIDER_PATHS meta-data element here.
 
           There is deliberately no MediaStore write and no storage permission. The clean copy never
           enters the photo library, so it cannot be indexed, backed up to a cloud gallery, or end up
           sitting next to the original where the two can be confused.
         -->
         <provider
-            android:name="androidx.core.content.FileProvider"
+            android:name="com.minion.scaffold.feature.exifstrip.data.ExifStripFileProvider"
             android:authorities="${applicationId}.exifstrip.fileprovider"
             android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/exifstrip_file_paths" />
-        </provider>
+            android:grantUriPermissions="true" />
     </application>
 
 </manifest>

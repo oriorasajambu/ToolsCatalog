@@ -19,6 +19,15 @@ data class PhotoMetadata(
      * a cropped or redacted image can carry a small copy of what it was before.
      */
     val thumbnail: EmbeddedThumbnail?,
+
+    /**
+     * The position, in decimal degrees, when one was recorded.
+     *
+     * Typed rather than left to be fished back out of the [bands] by matching a label string. The
+     * map action needs these two numbers specifically, and a rename of a display label should not be
+     * able to silently disconnect a button.
+     */
+    val coordinates: Coordinates?,
 ) {
 
     val hasAnything: Boolean get() = bands.isNotEmpty() || other.isNotEmpty() || thumbnail != null
@@ -29,6 +38,9 @@ data class PhotoMetadata(
 }
 
 data class MetadataBand(val category: MetadataCategory, val entries: List<MetadataEntry>)
+
+/** Decimal degrees, as the only form worth showing or handing to a map. */
+data class Coordinates(val latitude: Double, val longitude: Double)
 
 data class MetadataEntry(val label: String, val value: String)
 

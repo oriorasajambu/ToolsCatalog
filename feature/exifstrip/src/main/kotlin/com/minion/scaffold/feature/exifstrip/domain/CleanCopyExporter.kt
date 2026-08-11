@@ -8,6 +8,15 @@ import com.minion.scaffold.core.exif.model.TrailingData
 /** Writes the cleaned copy and hands back something shareable. */
 internal interface CleanCopyExporter {
 
+    /**
+     * Whether this file can be stripped at all, without writing anything.
+     *
+     * Answered while the user is still reading what was found, so an unstrippable container is
+     * reported there rather than after they press a button that then declines to do anything.
+     * Returns `null` when the file is fine.
+     */
+    suspend fun probe(photo: InspectedPhoto, keepIcc: Boolean): StripFailure?
+
     suspend fun export(photo: InspectedPhoto, keepIcc: Boolean): ExportResult
 
     /**

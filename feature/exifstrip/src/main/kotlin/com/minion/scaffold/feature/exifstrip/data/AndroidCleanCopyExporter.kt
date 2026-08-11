@@ -8,6 +8,7 @@ import androidx.core.content.FileProvider
 import com.minion.scaffold.core.common.dispatcher.IoDispatcher
 import com.minion.scaffold.core.exif.model.ImageContainer
 import com.minion.scaffold.core.exif.model.PlanResult
+import com.minion.scaffold.core.exif.model.StripFailure
 import com.minion.scaffold.core.exif.usecase.ExecuteStripUseCase
 import com.minion.scaffold.core.exif.usecase.PlanStripUseCase
 import com.minion.scaffold.core.exif.usecase.VerificationResult
@@ -51,6 +52,14 @@ internal class AndroidCleanCopyExporter @Inject constructor(
     private val executeStrip: ExecuteStripUseCase,
     private val verifyStrip: VerifyStripUseCase,
 ) : CleanCopyExporter {
+
+    override suspend fun probe(photo: InspectedPhoto, keepIcc: Boolean): StripFailure? =
+        withContext(ioDispatcher) {
+            when (val planned = planStrip(photo.bytes, photo.orientation, keepIcc)) {
+                is PlanResult.Failure -> planned.failure
+                is PlanResult.Success -> null
+            }
+        }
 
     override suspend fun export(photo: InspectedPhoto, keepIcc: Boolean): ExportResult =
         withContext(ioDispatcher) {

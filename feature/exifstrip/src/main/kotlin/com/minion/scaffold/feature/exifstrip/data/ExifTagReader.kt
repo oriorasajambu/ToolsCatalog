@@ -1,6 +1,7 @@
 package com.minion.scaffold.feature.exifstrip.data
 
 import androidx.exifinterface.media.ExifInterface
+import com.minion.scaffold.core.exif.model.Coordinates
 import com.minion.scaffold.core.exif.model.EmbeddedThumbnail
 import com.minion.scaffold.core.exif.model.MetadataBand
 import com.minion.scaffold.core.exif.model.MetadataCategory
@@ -28,8 +29,19 @@ import javax.inject.Inject
 internal class ExifTagReader @Inject constructor() {
 
     fun read(exif: ExifInterface): PhotoMetadata {
+        val coordinates = coordinatesOf(exif)
+
         val bands = CATEGORISED_TAGS.mapNotNull { (category, tags) ->
-            val entries = tags.mapNotNull { tag -> entryFor(exif, tag) }
+            val entries = buildList {
+                // Decimal degrees rather than the stored form. Exif keeps position as three
+                // rationals — "3/1,35/1,42876/1000" — which is correct, unreadable, and impossible
+                // to compare against anything. The tool exists to make this legible.
+                if (category == MetadataCategory.Location && coordinates != null) {
+                    add(MetadataEntry("Latitude", formatDegrees(coordinates.latitude)))
+                    add(MetadataEntry("Longitude", formatDegrees(coordinates.longitude)))
+                }
+                addAll(tags.mapNotNull { tag -> entryFor(exif, tag) })
+            }
             if (entries.isEmpty()) null else MetadataBand(category, entries)
         }
 
@@ -42,8 +54,23 @@ internal class ExifTagReader @Inject constructor() {
             bands = bands,
             other = other,
             thumbnail = thumbnailOf(exif),
+            coordinates = coordinates,
         )
     }
+
+    /**
+     * The position in decimal degrees, or null when the photo carries none.
+     *
+     * `getLatLong` does the sign work that the raw tags leave to the caller: latitude and longitude
+     * are stored as unsigned magnitudes with a separate N/S and E/W reference, so reading the
+     * magnitudes alone puts every southern-hemisphere photo in the wrong half of the world.
+     */
+    private fun coordinatesOf(exif: ExifInterface): Coordinates? {
+        val position = exif.latLong ?: return null
+        return Coordinates(latitude = position[0], longitude = position[1])
+    }
+
+    private fun formatDegrees(value: Double) = "%.6f".format(value)
 
     /**
      * The orientation, or 1 when absent or unreadable.
@@ -98,8 +125,7 @@ internal class ExifTagReader @Inject constructor() {
          */
         val CATEGORISED_TAGS: Map<MetadataCategory, List<TagLabel>> = linkedMapOf(
             MetadataCategory.Location to listOf(
-                TagLabel(ExifInterface.TAG_GPS_LATITUDE, "Latitude"),
-                TagLabel(ExifInterface.TAG_GPS_LONGITUDE, "Longitude"),
+                // Latitude and longitude are added separately, in decimal degrees — see `read`.
                 TagLabel(ExifInterface.TAG_GPS_ALTITUDE, "Altitude"),
                 TagLabel(ExifInterface.TAG_GPS_DATESTAMP, "GPS date"),
                 TagLabel(ExifInterface.TAG_GPS_TIMESTAMP, "GPS time"),

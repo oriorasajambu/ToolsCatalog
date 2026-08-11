@@ -127,6 +127,7 @@ internal class AndroidPhotoInspector @Inject constructor(
             bands = emptyList(),
             other = emptyList(),
             thumbnail = null,
+            coordinates = null,
         )
     }
 }
