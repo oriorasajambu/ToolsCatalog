@@ -41,6 +41,8 @@ data object ToolsRoute : AppRoute
  * [purpose] is an argument rather than a second route because both purposes are the same screen,
  * behaving identically right up to the moment a payload decodes. Two routes would mean two
  * registrations of one composable and a ViewModel that could not tell which one it was serving.
+ *
+ * @property purpose Why the scanner was opened — inspect a payload, or edit it.
  */
 @Serializable
 data class QrScanRoute(val purpose: ScanPurpose = ScanPurpose.Inspect) : AppRoute {
@@ -97,6 +99,8 @@ enum class ScanPurpose {
  * [payload] pre-fills the form, which is what turns this screen into the editor. A few hundred
  * characters of a primitive is exactly what a route argument is for, and putting it here rather
  * than in a shared holder means it survives process death with the rest of the back stack.
+ *
+ * @property payload An EMV payload to pre-fill the form with, or `null` to start blank.
  */
 @Serializable
 data class QrCreateRoute(val payload: String? = null) : AppRoute {
@@ -113,6 +117,8 @@ data class QrCreateRoute(val payload: String? = null) : AppRoute {
  * A separate route from [QrCreateRoute] rather than a format argument on it, because the two
  * screens share no fields — one form serving both would have every field asking which format is
  * active.
+ *
+ * @property payload A `WIFI:` payload to pre-fill the form with, or `null` to start blank.
  */
 @Serializable
 data class WifiCreateRoute(val payload: String? = null) : AppRoute {
@@ -123,7 +129,11 @@ data class WifiCreateRoute(val payload: String? = null) : AppRoute {
     }
 }
 
-/** The web link authoring tool. */
+/**
+ * The web link authoring tool.
+ *
+ * @property payload A URL to pre-fill the form with, or `null` to start blank.
+ */
 @Serializable
 data class UrlCreateRoute(val payload: String? = null) : AppRoute {
 
@@ -133,7 +143,11 @@ data class UrlCreateRoute(val payload: String? = null) : AppRoute {
     }
 }
 
-/** The contact card authoring tool — vCard 3.0. */
+/**
+ * The contact card authoring tool — vCard 3.0.
+ *
+ * @property payload A vCard payload to pre-fill the form with, or `null` to start blank.
+ */
 @Serializable
 data class VCardCreateRoute(val payload: String? = null) : AppRoute {
 
@@ -148,6 +162,8 @@ data class VCardCreateRoute(val payload: String? = null) : AppRoute {
  *
  * [text] pre-fills the input, which is what lets the OCR tool hand its extraction straight here
  * instead of making the user copy and paste. Capped by the caller — see [MAX_TEXT_LENGTH].
+ *
+ * @property text Text to pre-fill the input with, or `null` to start blank.
  */
 @Serializable
 data class TextToolsRoute(val text: String? = null) : AppRoute {
@@ -245,6 +261,8 @@ data object WeatherRoute : AppRoute
  * [locationId] is `"current"` for the pinned GPS card or a saved location's id — the same key the
  * forecast cache is keyed by (`:feature:weather`'s `forecast_cache` table), so the detail screen
  * can look up coordinates from what was already fetched rather than needing them passed in too.
+ *
+ * @property locationId The cache key of the location to show — `"current"` or a saved location's id.
  */
 @Serializable
 data class WeatherDetailRoute(val locationId: String) : AppRoute {
