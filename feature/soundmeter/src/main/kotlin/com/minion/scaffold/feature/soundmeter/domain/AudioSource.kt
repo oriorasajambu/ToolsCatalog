@@ -18,6 +18,8 @@ internal interface AudioSource {
      * holds the microphone while the screen is away — which here is a privacy property rather than
      * a battery one, and is why the ViewModel gates collection on visibility rather than collecting
      * for its own lifetime.
+     *
+     * @return A cold [Flow] of capture events that holds the microphone only while collected.
      */
     fun capture(): Flow<CaptureEvent>
 }
@@ -32,9 +34,19 @@ internal interface AudioSource {
  */
 internal sealed interface CaptureEvent {
 
-    /** The recorder opened. Carries what the negotiation actually settled on. */
+    /**
+     * The recorder opened. Carries what the negotiation actually settled on.
+     *
+     * @property quality    How the input was opened, and so how much to trust the reading.
+     * @property sampleRate The sample rate the recorder settled on, in Hz.
+     */
     data class Started(val quality: CaptureQuality, val sampleRate: Int) : CaptureEvent
 
+    /**
+     * A block of audio was captured.
+     *
+     * @property block The captured buffer.
+     */
     data class Captured(val block: AudioBlock) : CaptureEvent
 
     /**
@@ -44,10 +56,16 @@ internal sealed interface CaptureEvent {
      * succeed, and every sample is zero. Without this the meter would confidently report the noise
      * floor. Reported as a toggle rather than a failure because it resolves on its own when the
      * other app finishes.
+     *
+     * @property silenced Whether the input is currently being fed silence.
      */
     data class Silenced(val silenced: Boolean) : CaptureEvent
 
-    /** The capture could not start, or could not continue. */
+    /**
+     * The capture could not start, or could not continue.
+     *
+     * @property reason Why the capture failed.
+     */
     data class Failed(val reason: CaptureFailure) : CaptureEvent
 }
 
@@ -67,6 +85,10 @@ internal enum class CaptureFailure {
  * second of allocation, which is not worth the contract it would impose: any buffering anywhere
  * downstream — a `buffer()`, a slow collector, a test that collects into a list — would silently
  * alias every block to the same array and produce readings that were plausible and wrong.
+ *
+ * @property samples    The captured 16-bit PCM samples; a fresh array per block.
+ * @property count      How many samples of [samples] are valid.
+ * @property sampleRate The capture sample rate, in Hz.
  */
 internal class AudioBlock(
     val samples: ShortArray,

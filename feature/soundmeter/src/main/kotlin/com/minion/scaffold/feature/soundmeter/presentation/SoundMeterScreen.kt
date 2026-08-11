@@ -61,6 +61,14 @@ import com.minion.scaffold.feature.soundmeter.presentation.component.SessionPane
 import com.minion.scaffold.feature.soundmeter.presentation.component.SoundGauge
 import kotlinx.coroutines.launch
 
+/**
+ * The sound-level meter screen: a live gauge, status, and a session panel.
+ *
+ * @param onNavigateBack       Called when the user leaves the meter.
+ * @param onNavigateToSettings Called when the user opens the meter's settings.
+ * @param modifier             The [Modifier] for the screen.
+ * @param viewModel            The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun SoundMeterScreen(
     onNavigateBack: () -> Unit,

@@ -22,6 +22,9 @@ internal abstract class SoundMeterModule {
      * would make it possible for two collections to hold the input at once, and "how many things
      * have the microphone open" is a question this feature should never have more than one answer
      * to.
+     *
+     * @param impl The `AudioRecord`-backed implementation.
+     * @return The [AudioSource] binding.
      */
     @Binds
     @Singleton
@@ -30,6 +33,9 @@ internal abstract class SoundMeterModule {
     /**
      * `@Singleton` matters beyond the usual reasons: DataStore throws if a second instance is
      * created for the same file within one process.
+     *
+     * @param impl The DataStore-backed implementation.
+     * @return The [SoundMeterPreferencesRepository] binding.
      */
     @Binds
     @Singleton

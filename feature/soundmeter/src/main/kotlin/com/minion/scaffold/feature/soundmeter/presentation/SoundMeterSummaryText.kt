@@ -19,6 +19,10 @@ import com.minion.scaffold.feature.soundmeter.domain.CaptureQuality
  * uncalibrated phone microphone unless the text says so. So the weighting, the offset in use, the
  * capture quality, the time out of range and both disclaimers are part of the summary rather than
  * decoration around it — a bare "LAeq 71.2 dB" is a more confident claim than this app can make.
+ *
+ * @receiver The meter state to summarise.
+ * @param resources The resources to resolve labels and disclaimers from.
+ * @return The multi-line summary text, caveats included.
  */
 internal fun SoundMeterState.toSummaryText(resources: Resources): String = buildString {
     appendLine(resources.getString(R.string.soundmeter_summary_title))
