@@ -25,6 +25,9 @@ import org.junit.runner.Description
  *     @get:Rule val mainDispatcherRule = MainDispatcherRule()
  * }
  * ```
+ *
+ * @property testDispatcher The dispatcher installed as `Dispatchers.Main`; drive it with
+ *   `advanceUntilIdle()`.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainDispatcherRule(
