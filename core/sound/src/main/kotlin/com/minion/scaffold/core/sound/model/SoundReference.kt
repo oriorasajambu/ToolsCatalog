@@ -64,6 +64,9 @@ object SoundReference {
      * Clamped here rather than in the UI so that a value restored from a store written by an older
      * build, or by a slider whose range later changes, cannot silently exceed what the screen would
      * have allowed.
+     *
+     * @param userOffsetDb The user's calibration offset in dB; clamped to ±[MAX_USER_OFFSET_DB].
+     * @return The full-scale dB SPL reference shifted by the clamped offset.
      */
     fun offsetDb(userOffsetDb: Double): Double =
         FULL_SCALE_DB_SPL + userOffsetDb.coerceIn(-MAX_USER_OFFSET_DB, MAX_USER_OFFSET_DB)

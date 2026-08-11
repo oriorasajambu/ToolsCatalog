@@ -40,8 +40,13 @@ data class TimeWeightingState(val meanSquare: Double? = null) {
 class ApplyTimeWeightingUseCase @Inject constructor() {
 
     /**
-     * @param blockDbSpl the block's own level, from [ComputeBlockLevelUseCase].
-     * @param blockSeconds how much time the block covers — `samples / sampleRate`.
+     * Folds one block's level into the exponential average.
+     *
+     * @param state         The accumulated smoothing state from the previous call.
+     * @param blockDbSpl    The block's own level, from [ComputeBlockLevelUseCase].
+     * @param timeWeighting Fast or Slow — the time constant to apply.
+     * @param blockSeconds  How much time the block covers — `samples / sampleRate`.
+     * @return The updated state whose [TimeWeightingState.levelDbSpl] is the smoothed reading.
      */
     operator fun invoke(
         state: TimeWeightingState,

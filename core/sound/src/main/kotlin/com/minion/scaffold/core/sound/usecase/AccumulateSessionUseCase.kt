@@ -28,8 +28,13 @@ import kotlin.math.pow
 class AccumulateSessionUseCase @Inject constructor() {
 
     /**
-     * @param displayedDbSpl the time-weighted level, or `null` before the smoothing has seeded.
-     * @param blockSeconds how much time this block covers.
+     * Folds one block into the running session totals.
+     *
+     * @param state          The accumulated session state from the previous call.
+     * @param block          The block's own level, or the reason it has none.
+     * @param displayedDbSpl The time-weighted level, or `null` before the smoothing has seeded.
+     * @param blockSeconds   How much time this block covers.
+     * @return The updated [SessionState].
      */
     operator fun invoke(
         state: SessionState,

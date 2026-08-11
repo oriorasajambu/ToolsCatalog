@@ -21,10 +21,14 @@ import kotlin.math.log10
 class ComputeBlockLevelUseCase @Inject constructor() {
 
     /**
-     * @param raw the block as captured, 16-bit PCM.
-     * @param weighted the same block after [WeightingFilter.process], normalised to ±1.0.
-     * @param count how many samples of each are valid.
-     * @param offsetDb from [SoundReference.offsetDb] — the unknowable part, in one place.
+     * Reduces one block of audio to a level, or to a reason it has none.
+     *
+     * @param raw      The block as captured, 16-bit PCM.
+     * @param weighted The same block after [WeightingFilter.process], normalised to ±1.0.
+     * @param count    How many samples of each are valid.
+     * @param offsetDb From [SoundReference.offsetDb] — the unknowable part, in one place.
+     * @return [BlockLevel.Measured] with the level, or [BlockLevel.Clipped] / [BlockLevel.BelowFloor]
+     *         when the raw signal is out of range.
      */
     operator fun invoke(
         raw: ShortArray,

@@ -34,6 +34,7 @@ data class SessionStats(
     val unmeasurableSeconds: Double,
 ) {
 
+    /** Whether the session measured anything, i.e. it has an [leqDbSpl]. */
     val hasMeasurement: Boolean get() = leqDbSpl != null
 
     companion object {
@@ -60,12 +61,19 @@ data class SessionStats(
  * one — which is the difference between a feature that works and one that has to cap its duration.
  */
 data class SessionState(
+    /** Running sum of energy × time over measurable blocks — the numerator of Leq. */
     val energySeconds: Double = 0.0,
+    /** Total time of measurable blocks — the denominator of Leq. */
     val measuredSeconds: Double = 0.0,
+    /** Wall time since the session started, measurable or not. */
     val durationSeconds: Double = 0.0,
+    /** Lowest time-weighted level seen so far, or `null` before any measurement. */
     val minDbSpl: Double? = null,
+    /** Highest time-weighted level seen so far, or `null` before any measurement. */
     val maxDbSpl: Double? = null,
+    /** Total time at or above [SoundReference.EXPOSURE_THRESHOLD_DB]. */
     val secondsAboveThreshold: Double = 0.0,
+    /** Total time the input was clipped or below the noise floor. */
     val unmeasurableSeconds: Double = 0.0,
 ) {
 
@@ -84,6 +92,11 @@ data class SessionState(
             null
         }
 
+    /**
+     * A render-ready snapshot of these accumulators.
+     *
+     * @return The [SessionStats] the screen displays.
+     */
     fun toStats(): SessionStats = SessionStats(
         minDbSpl = minDbSpl,
         maxDbSpl = maxDbSpl,
