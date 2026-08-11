@@ -22,6 +22,11 @@ import kotlin.coroutines.cancellation.CancellationException
  *     }
  * }
  * ```
+ *
+ * @param T     The success type [block] produces.
+ * @param block The suspending work to run inside the exception boundary.
+ * @return [AppResult.Success] with [block]'s result, or [AppResult.Failure] with the mapped
+ *         [com.minion.scaffold.core.common.error.DomainError]. Rethrows [CancellationException].
  */
 suspend fun <T> safeCall(block: suspend () -> T): AppResult<T> =
     try {
