@@ -56,6 +56,13 @@ import com.minion.scaffold.feature.qrcreate.presentation.form.TipMode
 import com.minion.scaffold.feature.qrcreate.presentation.preview.HandleQrExportEffects
 import com.minion.scaffold.feature.qrcreate.presentation.preview.QrResultSection
 
+/**
+ * The EMV QR authoring screen: fill in a merchant's details, generate a scannable payload.
+ *
+ * @param onNavigateBack Called when the user leaves the screen.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun QrCreateScreen(
     onNavigateBack: () -> Unit,

@@ -13,6 +13,10 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 internal abstract class QrCreateModule {
 
+    /**
+     * @param exporter The MediaStore-backed implementation.
+     * @return The [QrImageExporter] binding.
+     */
     @Binds
     @Singleton
     abstract fun bindQrImageExporter(exporter: AndroidQrImageExporter): QrImageExporter

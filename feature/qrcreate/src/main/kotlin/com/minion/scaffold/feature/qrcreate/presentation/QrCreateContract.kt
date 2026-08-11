@@ -20,9 +20,13 @@ import com.minion.scaffold.feature.qrcreate.presentation.form.TipMode
  * ones they are reading.
  */
 internal data class QrCreateState(
+    /** The form's raw contents. */
     val form: EmvFormState = EmvFormState(),
+    /** The current validation failures, empty when valid. */
     val violations: List<FieldViolation> = emptyList(),
+    /** The generated payload, or `null` before Generate or after an edit. */
     val payload: String? = null,
+    /** Whether an export is in progress. */
     val exporting: Boolean = false,
     /** Opened with a payload to change, rather than to write one from nothing. */
     val editing: Boolean = false,
@@ -60,25 +64,53 @@ internal sealed interface QrCreateIntent : UiIntent {
         val value: String,
     ) : QrCreateIntent
 
+    /**
+     * The point-of-initiation method changed (static vs dynamic).
+     *
+     * @property method The newly selected method.
+     */
     data class InitiationMethodChanged(val method: PointOfInitiationMethod) : QrCreateIntent
 
+    /**
+     * A currency was selected.
+     *
+     * @property currency The selected currency.
+     */
     data class CurrencySelected(val currency: Currency) : QrCreateIntent
 
+    /**
+     * A merchant category was selected.
+     *
+     * @property category The selected category.
+     */
     data class CategorySelected(val category: MerchantCategory) : QrCreateIntent
 
+    /**
+     * The tip mode changed.
+     *
+     * @property mode The newly selected tip mode.
+     */
     data class TipModeChanged(val mode: TipMode) : QrCreateIntent
 
     /** Add the national switch template alongside the acquirer's. */
     data object AccountAdded : QrCreateIntent
 
+    /**
+     * Remove a merchant account template.
+     *
+     * @property index The index of the account to remove.
+     */
     data class AccountRemoved(val index: Int) : QrCreateIntent
 
     /** Validate the whole form and, if it passes, write the payload. */
     data object GenerateRequested : QrCreateIntent
 
+    /** Copy the generated payload. */
     data object CopyPayloadRequested : QrCreateIntent
 
+    /** Share the generated QR image. */
     data object ShareImageRequested : QrCreateIntent
 
+    /** Save the generated QR image to the gallery. */
     data object SaveImageRequested : QrCreateIntent
 }
