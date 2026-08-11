@@ -44,7 +44,13 @@ import com.minion.scaffold.core.designsystem.R
  * threshold the core logic modules were extracted at.
  */
 
-/** A titled card grouping related fields. Every authoring screen is a stack of these. */
+/**
+ * A titled card grouping related fields. Every authoring screen is a stack of these.
+ *
+ * @param title    The section heading.
+ * @param modifier The [Modifier] for the card.
+ * @param content  The fields inside the section.
+ */
 @Composable
 fun FormSection(
     title: String,
@@ -72,6 +78,14 @@ fun FormSection(
  * `supportingText` rather than a separate error row, so the message is attached to the field by the
  * component's own semantics — a screen reader announces the two together. The message is a finished
  * `String`, not a typed reason, so each feature maps its own violations before the widget sees them.
+ *
+ * @param value         The current field text.
+ * @param onValueChange Called with the new text on every edit.
+ * @param label         The field label.
+ * @param errorMessage  The validation message to show under the field, or `null` when valid.
+ * @param modifier      The [Modifier] for the field.
+ * @param enabled       Whether the field is editable.
+ * @param keyboardType  The soft-keyboard type to request.
  */
 @Composable
 fun FormField(
@@ -102,6 +116,12 @@ fun FormField(
  * Masked by default because a password is usually entered somewhere other people can see the
  * screen, and revealable because it is also often copied off a label and worth checking before it
  * is committed.
+ *
+ * @param value         The current field text.
+ * @param onValueChange Called with the new text on every edit.
+ * @param label         The field label.
+ * @param errorMessage  The validation message to show under the field, or `null` when valid.
+ * @param modifier      The [Modifier] for the field.
  */
 @Composable
 fun PasswordField(
@@ -145,6 +165,15 @@ fun PasswordField(
  *
  * Generic over the option type: the currency picker, the merchant-category picker and the
  * text-operation picker differ only in what they render, and all three feed it a plain list.
+ *
+ * @param T             The option type.
+ * @param label         The field label.
+ * @param selectedLabel The label of the current selection, or `null` when nothing is selected.
+ * @param options       The options to choose from.
+ * @param optionLabel   Maps an option to its display label, used for rendering and filtering.
+ * @param onSelect      Called with the chosen option.
+ * @param errorMessage  The validation message to show under the field, or `null` when valid.
+ * @param modifier      The [Modifier] for the field.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

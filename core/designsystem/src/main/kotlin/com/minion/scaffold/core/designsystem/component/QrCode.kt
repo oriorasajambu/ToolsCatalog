@@ -29,6 +29,10 @@ import kotlinx.coroutines.withContext
  * [contentDescription] is a parameter rather than a module string: a design-system widget takes
  * its copy from the caller, the same way [AppButton] takes its label, so the wording can suit the
  * screen using it.
+ *
+ * @param payload            The text to encode as a QR code.
+ * @param contentDescription The accessibility description, or `null` when purely decorative.
+ * @param modifier           The [Modifier] for the image.
  */
 @Composable
 fun QrCodeImage(
@@ -62,6 +66,10 @@ fun QrCodeImage(
  * Public alongside [QrCodeImage] because exporting a QR — sharing it, saving it to the gallery —
  * needs the bitmap itself, at a higher resolution than the one on screen. Blocking work: call it
  * off the main thread.
+ *
+ * @param payload The text to encode.
+ * @param sizePx  The side length of the square output bitmap, in pixels.
+ * @return The encoded bitmap, or `null` when the payload is empty or too large for any QR version.
  */
 fun encodeQrBitmap(payload: String, sizePx: Int = DISPLAY_SIZE_PX): Bitmap? = try {
     val matrix = MultiFormatWriter().encode(
