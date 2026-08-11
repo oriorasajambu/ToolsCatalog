@@ -24,8 +24,14 @@ class VerifyStripUseCase @Inject constructor(
 ) {
 
     /**
-     * @param keepIcc must match what the export used, or a deliberately retained colour profile
+     * Re-reads a produced file and reports what metadata is left in it.
+     *
+     * @param bytes   The output file to inspect.
+     * @param keepIcc Must match what the export used, or a deliberately retained colour profile
      *   would be reported as a survivor.
+     * @return [VerificationResult.Clean] when nothing identifying remains,
+     *   [VerificationResult.Dirty] when something survived, or [VerificationResult.Unreadable]
+     *   when the output cannot be parsed.
      */
     operator fun invoke(bytes: ByteArray, keepIcc: Boolean): VerificationResult {
         // Planning a strip of the output *is* the inspection: anything the planner would still want
@@ -64,6 +70,9 @@ sealed interface VerificationResult {
      *
      * A blocking failure rather than a warning: the export must not be offered for sharing, because
      * the entire value of the operation was the claim that it worked.
+     *
+     * @property remaining     The metadata blocks that survived the strip.
+     * @property trailingBytes How many bytes of trailing data remain after the image, or 0.
      */
     data class Dirty(val remaining: List<SegmentSummary>, val trailingBytes: Int) :
         VerificationResult

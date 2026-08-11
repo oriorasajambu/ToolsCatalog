@@ -19,6 +19,13 @@ import java.io.OutputStream
  */
 class ExecuteStripUseCase @Inject constructor() {
 
+    /**
+     * Writes the clean file described by [plan] to [destination].
+     *
+     * @param source      The original file the plan's copy ranges refer into.
+     * @param plan        The plan to carry out.
+     * @param destination The stream the clean file is written to; flushed, not closed.
+     */
     operator fun invoke(source: ByteArray, plan: StripPlan, destination: OutputStream) {
         for (operation in plan.operations) {
             when (operation) {
@@ -31,7 +38,13 @@ class ExecuteStripUseCase @Inject constructor() {
         destination.flush()
     }
 
-    /** For tests and verification, where holding the result in memory is the point. */
+    /**
+     * As [invoke], but collects the result in memory — for tests and verification.
+     *
+     * @param source The original file the plan's copy ranges refer into.
+     * @param plan   The plan to carry out.
+     * @return The clean file's bytes.
+     */
     fun toByteArray(source: ByteArray, plan: StripPlan): ByteArray {
         val output = java.io.ByteArrayOutputStream(plan.outputSize)
         invoke(source, plan, output)

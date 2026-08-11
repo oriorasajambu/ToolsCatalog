@@ -22,6 +22,9 @@ enum class ImageContainer(val mimeType: String, val extension: String) {
          * From the content, never from the file name or the `Uri`'s reported MIME type. A picker can
          * hand over a `.jpg` that is really a HEIC, and a stripper that trusted the label would walk
          * a JPEG parser over it and produce something between a corrupt file and a confident lie.
+         *
+         * @param bytes The file's leading bytes.
+         * @return The recognised container, or `null` when the magic bytes match none.
          */
         fun detect(bytes: ByteArray): ImageContainer? = when {
             bytes.startsWith(JPEG_MAGIC) -> Jpeg
@@ -36,6 +39,9 @@ enum class ImageContainer(val mimeType: String, val extension: String) {
          * Naming the format is the difference between a dead end and an explanation — HEIC in
          * particular is what modern phones shoot, so a user meeting it deserves better than
          * "unsupported file".
+         *
+         * @param bytes The file's leading bytes.
+         * @return A short human-readable name for the format, or `"unknown"`.
          */
         fun describeUnsupported(bytes: ByteArray): String = when {
             bytes.size >= FTYP_END && bytes.startsWith(FTYP_MARKER, offset = FTYP_OFFSET) ->
@@ -64,7 +70,14 @@ enum class ImageContainer(val mimeType: String, val extension: String) {
     }
 }
 
-/** Whether [this] contains [prefix] starting at [offset]. Bounds-checked, never throws. */
+/**
+ * Whether [this] contains [prefix] starting at [offset]. Bounds-checked, never throws.
+ *
+ * @receiver The bytes to test.
+ * @param prefix The byte sequence to look for.
+ * @param offset Where in the receiver to start matching.
+ * @return `true` when [prefix] appears at [offset] in full.
+ */
 internal fun ByteArray.startsWith(prefix: ByteArray, offset: Int = 0): Boolean {
     if (offset < 0 || offset + prefix.size > size) return false
     for (index in prefix.indices) {

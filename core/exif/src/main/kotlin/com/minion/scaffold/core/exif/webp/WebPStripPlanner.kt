@@ -32,6 +32,12 @@ import com.minion.scaffold.core.exif.model.StripPlan
  */
 internal object WebPStripPlanner {
 
+    /**
+     * Plans a metadata strip for a WebP.
+     *
+     * @param bytes The whole WebP file.
+     * @return [PlanResult.Success] with the plan, or [PlanResult.Failure] when the chunk walk fails.
+     */
     fun plan(bytes: ByteArray): PlanResult {
         if (bytes.size < HEADER_LENGTH) {
             return failure(0, StripFailure.Defect.Truncated)

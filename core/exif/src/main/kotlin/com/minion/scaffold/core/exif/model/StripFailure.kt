@@ -47,6 +47,18 @@ sealed interface StripFailure {
 
 /** The outcome of planning. */
 sealed interface PlanResult {
+
+    /**
+     * A plan was produced.
+     *
+     * @property plan How to write the clean copy.
+     */
     data class Success(val plan: StripPlan) : PlanResult
+
+    /**
+     * The file could not be planned.
+     *
+     * @property failure Why planning failed.
+     */
     data class Failure(val failure: StripFailure) : PlanResult
 }

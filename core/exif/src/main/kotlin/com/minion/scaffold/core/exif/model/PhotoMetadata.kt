@@ -8,6 +8,7 @@ package com.minion.scaffold.core.exif.model
  * and a judgement that silently changed would quietly alter what the tool warns people about.
  */
 data class PhotoMetadata(
+    /** The metadata grouped into exposure bands, worst first. */
     val bands: List<MetadataBand>,
     /** Tags that exist but do not fall into a band. Shown collapsed, never hidden. */
     val other: List<MetadataEntry>,
@@ -30,6 +31,7 @@ data class PhotoMetadata(
     val coordinates: Coordinates?,
 ) {
 
+    /** Whether the photo carries any metadata at all. */
     val hasAnything: Boolean get() = bands.isNotEmpty() || other.isNotEmpty() || thumbnail != null
 
     /** The most exposing band present, for the one-line verdict at the top of the screen. */
@@ -37,13 +39,37 @@ data class PhotoMetadata(
         get() = bands.minByOrNull { it.category.exposure.ordinal }?.category?.exposure
 }
 
+/**
+ * One category of metadata and the entries found in it.
+ *
+ * @property category The category these entries belong to.
+ * @property entries  The individual tags found in this category.
+ */
 data class MetadataBand(val category: MetadataCategory, val entries: List<MetadataEntry>)
 
-/** Decimal degrees, as the only form worth showing or handing to a map. */
+/**
+ * Decimal degrees, as the only form worth showing or handing to a map.
+ *
+ * @property latitude  Latitude in decimal degrees.
+ * @property longitude Longitude in decimal degrees.
+ */
 data class Coordinates(val latitude: Double, val longitude: Double)
 
+/**
+ * One metadata tag, as it will be shown.
+ *
+ * @property label The human-readable tag name.
+ * @property value The tag's value, formatted for display.
+ */
 data class MetadataEntry(val label: String, val value: String)
 
+/**
+ * A preview image embedded in the photo.
+ *
+ * @property byteCount The thumbnail's size in bytes.
+ * @property width     The thumbnail's width in pixels.
+ * @property height    The thumbnail's height in pixels.
+ */
 data class EmbeddedThumbnail(val byteCount: Int, val width: Int, val height: Int)
 
 /**

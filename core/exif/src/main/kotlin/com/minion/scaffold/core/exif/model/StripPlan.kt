@@ -80,9 +80,11 @@ enum class MetadataKind {
 
 /** One block, as it will be described to the user. */
 data class SegmentSummary(
+    /** What kind of metadata this block is. */
     val kind: MetadataKind,
     /** The raw marker or chunk name — `APP7`, `tEXt`. Shown for [MetadataKind.Unknown]. */
     val name: String,
+    /** The block's size in bytes. */
     val byteCount: Int,
 )
 
@@ -93,6 +95,12 @@ data class SegmentSummary(
  * photos append a whole MP4 here** — several seconds of video and audio from around the moment of
  * the shot. Stripping the GPS tag and shipping that would be the largest hole this tool could leave,
  * inside a file it had just declared clean.
+ */
+/**
+ * A run of bytes after the end of the image.
+ *
+ * @property byteCount How many trailing bytes there are.
+ * @property kind      What the trailing data appears to be.
  */
 data class TrailingData(val byteCount: Int, val kind: TrailingKind)
 
@@ -113,13 +121,19 @@ enum class TrailingKind {
  * things we happened to think of".
  */
 data class StripPlan(
+    /** The container the output will be written in. */
     val container: ImageContainer,
+    /** The copy/insert steps that rebuild the file, in order. */
     val operations: List<StripOperation>,
+    /** The metadata blocks that will be dropped. */
     val removed: List<SegmentSummary>,
+    /** The metadata blocks kept on purpose, e.g. orientation or a colour profile. */
     val retained: List<SegmentSummary>,
+    /** Trailing data found after the image, or `null` when there is none. */
     val trailing: TrailingData?,
 ) {
 
+    /** The size of the file this plan would write, in bytes. */
     val outputSize: Int
         get() = operations.sumOf { operation ->
             when (operation) {
