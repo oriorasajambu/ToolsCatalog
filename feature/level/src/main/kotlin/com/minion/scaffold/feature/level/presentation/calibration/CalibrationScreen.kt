@@ -34,6 +34,13 @@ import com.minion.scaffold.core.level.usecase.CalibrationRejection
 import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
 import com.minion.scaffold.feature.level.R
 
+/**
+ * The guided two-point calibration screen.
+ *
+ * @param onNavigateBack Called when the user leaves the calibration flow.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun CalibrationScreen(
     onNavigateBack: () -> Unit,

@@ -16,6 +16,7 @@ import com.minion.scaffold.core.level.usecase.CalibrationRejection
  */
 @Immutable
 internal data class CalibrationState(
+    /** Which step of the guided flip is active. */
     val step: Step = Step.First,
 
     /** True while a capture is averaging samples. */
@@ -24,8 +25,10 @@ internal data class CalibrationState(
     /** Whether the phone is currently still enough to capture from. */
     val steady: Boolean = false,
 
+    /** The solved calibration once the flip completes, or `null`. */
     val result: Calibration? = null,
 
+    /** Why the flip was rejected, or `null` when it has not been rejected. */
     val rejection: CalibrationRejection? = null,
 ) : UiState {
 
@@ -42,20 +45,26 @@ internal data class CalibrationState(
     }
 }
 
+/** Everything the user (or the system) can do during calibration. */
 internal sealed interface CalibrationIntent : UiIntent {
 
     /** Sensor registration follows the screen — see `LevelIntent.ScreenResumed`. */
     data object ScreenResumed : CalibrationIntent
 
+    /** The screen stopped being visible. */
     data object ScreenPaused : CalibrationIntent
 
+    /** Capture the current reading for this step. */
     data object CaptureRequested : CalibrationIntent
 
+    /** Save the solved calibration. */
     data object SaveRequested : CalibrationIntent
 
+    /** Discard progress and start the flip again. */
     data object Restarted : CalibrationIntent
 }
 
+/** One-shot events from the calibration screen. */
 internal sealed interface CalibrationEffect : UiEffect {
 
     /** Saved; the caller should go back to the level. */

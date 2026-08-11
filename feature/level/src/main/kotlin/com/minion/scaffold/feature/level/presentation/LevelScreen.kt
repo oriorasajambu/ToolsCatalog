@@ -54,6 +54,14 @@ import com.minion.scaffold.feature.level.presentation.component.LevelStatus
 import com.minion.scaffold.feature.level.presentation.component.LevelTone
 import kotlinx.coroutines.launch
 
+/**
+ * The bubble level and clinometer screen.
+ *
+ * @param onNavigateBack          Called when the user leaves the level.
+ * @param onNavigateToCalibration Called when the user starts the guided calibration.
+ * @param modifier                The [Modifier] for the screen.
+ * @param viewModel               The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun LevelScreen(
     onNavigateBack: () -> Unit,
