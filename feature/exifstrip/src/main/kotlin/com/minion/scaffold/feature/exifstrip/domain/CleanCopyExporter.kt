@@ -9,13 +9,17 @@ import com.minion.scaffold.core.exif.model.TrailingData
 internal interface CleanCopyExporter {
 
     /**
-     * Whether this file can be stripped at all, without writing anything.
+     * What the container holds, and whether it can be stripped, without writing anything.
      *
-     * Answered while the user is still reading what was found, so an unstrippable container is
-     * reported there rather than after they press a button that then declines to do anything.
-     * Returns `null` when the file is fine.
+     * Runs at inspection time for two reasons. An unstrippable container is reported while the user
+     * is still reading what was found, rather than after they press a button that declines to do
+     * anything. And — the more important one — **`ExifInterface` cannot see everything a file
+     * carries.** It reads Exif; it does not report a PNG text chunk, a JPEG comment, an XMP packet
+     * or a vendor block. Relying on it alone told a user "no metadata found in this photo" about a
+     * screenshot whose comment chunk read "taken at home" followed by coordinates. Found on a
+     * device, and the worst failure this tool has: a false reassurance is worse than no tool.
      */
-    suspend fun probe(photo: InspectedPhoto, keepIcc: Boolean): StripFailure?
+    suspend fun probe(photo: InspectedPhoto, keepIcc: Boolean): ProbeResult
 
     suspend fun export(photo: InspectedPhoto, keepIcc: Boolean): ExportResult
 
@@ -28,6 +32,14 @@ internal interface CleanCopyExporter {
      */
     suspend fun convertToCleanJpeg(photo: InspectedPhoto): ExportResult
 }
+
+/** What a dry run found. */
+internal data class ProbeResult(
+    val failure: StripFailure?,
+    /** Blocks the strip would remove — the container's own account of what is in it. */
+    val removable: List<SegmentSummary>,
+    val trailing: TrailingData?,
+)
 
 internal sealed interface ExportResult {
 

@@ -73,9 +73,15 @@ internal fun ExportPanel(
                 else -> ExportResultBlock(export = state.export, onShare = onShare)
             }
 
-            if (loaded.fileNameCarriesDate && state.export == null) {
+            // Stated unconditionally rather than only when the name looks like a date. The first
+            // version guessed, using a regex over the display name — and guessed wrong, because the
+            // system picker often reports a synthesised name rather than the one the user knows the
+            // file by. Since the export renames every time, saying so plainly is both simpler and
+            // always true, and it removes a whole class of confident-but-wrong line from a screen
+            // whose entire job is being trustworthy.
+            if (state.export == null) {
                 Text(
-                    text = stringResource(R.string.exifstrip_filename_carries_date),
+                    text = stringResource(R.string.exifstrip_renames),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -116,12 +122,8 @@ private fun ExportResultBlock(
     modifier: Modifier = Modifier,
 ) {
     val resources = LocalResources.current
-    val removedText = remember(export.removed) {
-        export.removed.joinToString { it.describe(resources) }
-    }
-    val retainedText = remember(export.retained) {
-        export.retained.joinToString { it.describe(resources) }
-    }
+    val removedText = remember(export.removed) { describeBlocks(resources, export.removed) }
+    val retainedText = remember(export.retained) { describeBlocks(resources, export.retained) }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -222,6 +224,23 @@ private fun ExportResultBlock(
 }
 
 /**
+ * A readable list of what a set of blocks contains, grouped by kind.
+ *
+ * Grouped because a file with two text chunks otherwise reads "a comment, a comment", which looks
+ * like a bug in the sentence rather than a fact about the file.
+ */
+internal fun describeBlocks(
+    resources: android.content.res.Resources,
+    blocks: List<SegmentSummary>,
+): String = blocks
+    .groupBy { it.kind }
+    .map { (_, group) ->
+        val label = group.first().describe(resources)
+        if (group.size == 1) label else "$label ${'×'}${group.size}"
+    }
+    .joinToString()
+
+/**
  * Takes a `Resources` rather than being `@Composable`, so it can be called from inside a
  * `joinToString` lambda — and for the reason `EmvLabels.kt` documents: one mapping, used everywhere,
  * cannot drift from itself.
@@ -230,6 +249,7 @@ private fun SegmentSummary.describe(resources: android.content.res.Resources): S
     resources.getString(
         when (kind) {
             MetadataKind.Exif -> R.string.exifstrip_kind_exif
+            MetadataKind.Orientation -> R.string.exifstrip_kind_orientation
             MetadataKind.Xmp -> R.string.exifstrip_kind_xmp
             MetadataKind.Iptc -> R.string.exifstrip_kind_iptc
             MetadataKind.Comment -> R.string.exifstrip_kind_comment

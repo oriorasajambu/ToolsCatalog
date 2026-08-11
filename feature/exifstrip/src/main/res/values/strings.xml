@@ -19,6 +19,12 @@
     <string name="exifstrip_verdict_identifying">This photo records details that identify your device.</string>
     <string name="exifstrip_verdict_some">This photo carries some metadata, none of it locating.</string>
     <string name="exifstrip_verdict_clean">No metadata found in this photo.</string>
+    <!--
+      For a file whose only metadata is in the container rather than in Exif — a screenshot with a
+      text chunk, say. Without this the screen said "no metadata found" about a file that plainly had
+      some, which is the one error this tool must never make.
+    -->
+    <string name="exifstrip_verdict_container_only">This photo carries data outside the standard camera tags.</string>
 
     <!-- Bands -->
     <string name="exifstrip_band_location">Location</string>
@@ -33,6 +39,12 @@
     <string name="exifstrip_band_capture_body">Exposure and lens details. Describes the shot rather than you.</string>
 
     <string name="exifstrip_open_in_maps">Open in a map app</string>
+
+    <!-- What the container holds that the standard Exif tags do not cover. -->
+    <string name="exifstrip_container_title">Other data in the file</string>
+    <string name="exifstrip_container_body">Blocks stored alongside the image that are not standard camera tags. Their contents are not shown here, but all of them are removed.</string>
+    <string name="exifstrip_container_video">An embedded video of about %1$d kB. Some phones record a few seconds of motion with every photo.</string>
+    <string name="exifstrip_container_trailing">%1$d kB of data stored after the end of the image.</string>
 
     <!--
       Worded to make the point rather than to name a format. This is the least understood item on the
@@ -60,13 +72,21 @@
     <string name="exifstrip_pixels_identical">The image itself is untouched — not re-saved, not recompressed.</string>
     <string name="exifstrip_recompressed">This copy was re-saved, so the image quality is slightly lower than the original.</string>
     <string name="exifstrip_renamed">Renamed to %1$s.</string>
-    <string name="exifstrip_filename_carries_date">The file name contains a date, so the copy will be renamed.</string>
+    <!--
+      Unconditional. File names routinely carry a date — IMG_20240115_143022.jpg — and removing the
+      date from the metadata while shipping it in the name would be a bit pointless, so the copy is
+      always renamed. Stating it plainly beats detecting it: the system picker often reports a
+      synthesised name rather than the one the user knows, so any heuristic here would be confidently
+      wrong on a screen whose whole job is being trustworthy.
+    -->
+    <string name="exifstrip_renames">The copy is renamed, so the original file name — which often contains a date — travels no further.</string>
 
     <string name="exifstrip_convert_explanation">%1$s files cannot be cleaned without re-saving the image. Converting produces a JPEG with no metadata, at slightly lower quality than the original.</string>
     <string name="exifstrip_convert">Convert to a clean JPEG</string>
 
     <!-- What each removed block was -->
     <string name="exifstrip_kind_exif">camera and location data</string>
+    <string name="exifstrip_kind_orientation">the orientation tag</string>
     <string name="exifstrip_kind_xmp">editing history</string>
     <string name="exifstrip_kind_iptc">caption and credit data</string>
     <string name="exifstrip_kind_comment">a comment</string>
@@ -88,7 +108,10 @@
       that it worked, so a partial success is a failure.
     -->
     <string name="exifstrip_error_verification">Something survived the clean-up, so the copy was not offered. This file has an unusual structure — please do not treat it as stripped.</string>
-    <string name="exifstrip_error_write">The clean copy could not be written. There may not be enough free space.</string>
+    <!-- Deliberately does not name a cause. The write can fail for want of space, for a revoked
+         permission, or for a provider misconfiguration, and guessing wrong sends someone to check
+         the one thing that was fine. -->
+    <string name="exifstrip_error_write">The clean copy could not be written.</string>
 
     <!-- Settings -->
     <string name="exifstrip_settings_title">What is removed</string>

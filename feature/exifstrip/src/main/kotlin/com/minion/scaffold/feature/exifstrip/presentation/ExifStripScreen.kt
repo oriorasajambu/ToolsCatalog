@@ -48,6 +48,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.minion.scaffold.core.exif.model.Exposure
+import com.minion.scaffold.core.exif.model.TrailingKind
+import com.minion.scaffold.feature.exifstrip.presentation.component.describeBlocks
 import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
 import com.minion.scaffold.feature.exifstrip.R
 import com.minion.scaffold.feature.exifstrip.presentation.component.ExportPanel
@@ -194,6 +196,8 @@ private fun ExifStripContent(
 
                     Verdict(content)
 
+                    ContainerBlocks(content = content)
+
                     MetadataSections(
                         metadata = content.metadata,
                         onCopy = { label, value ->
@@ -265,11 +269,14 @@ private fun Verdict(content: ExifStripState.Content.Loaded, modifier: Modifier =
     val metadata = content.metadata
     val worst = metadata.worstExposure
 
+    // Keyed on `carriesAnything`, not on the Exif reader alone: a PNG whose only metadata is a text
+    // chunk has no Exif at all, and saying "no metadata found" about it would be a false
+    // reassurance — the one error this tool must never make.
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = when {
-                !metadata.hasAnything -> MaterialTheme.colorScheme.secondaryContainer
+                !content.carriesAnything -> MaterialTheme.colorScheme.secondaryContainer
                 worst == Exposure.Identifying -> MaterialTheme.colorScheme.errorContainer
                 else -> MaterialTheme.colorScheme.tertiaryContainer
             },
@@ -278,15 +285,78 @@ private fun Verdict(content: ExifStripState.Content.Loaded, modifier: Modifier =
         Text(
             text = stringResource(
                 when {
-                    !metadata.hasAnything -> R.string.exifstrip_verdict_clean
+                    !content.carriesAnything -> R.string.exifstrip_verdict_clean
                     metadata.coordinates != null -> R.string.exifstrip_verdict_location
                     worst == Exposure.Identifying -> R.string.exifstrip_verdict_identifying
+                    !metadata.hasAnything -> R.string.exifstrip_verdict_container_only
                     else -> R.string.exifstrip_verdict_some
                 },
             ),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(dimensionResource(R.dimen.exifstrip_spacing)),
         )
+    }
+}
+
+/**
+ * What the container carries that the Exif reader cannot see.
+ *
+ * Text chunks, comments, XMP packets, vendor blocks, and anything appended past the end of the
+ * image. Shown by kind and size rather than by content: the tool reports that a comment is present
+ * and removes it, but printing an arbitrary blob into the UI is a different feature with its own
+ * hazards.
+ */
+@Composable
+private fun ContainerBlocks(
+    content: ExifStripState.Content.Loaded,
+    modifier: Modifier = Modifier,
+) {
+    if (content.containerBlocks.isEmpty() && content.trailing == null) return
+
+    val resources = LocalResources.current
+    val spacing = dimensionResource(R.dimen.exifstrip_spacing)
+    val summary = remember(content.containerBlocks) {
+        describeBlocks(resources, content.containerBlocks)
+    }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(spacing),
+            verticalArrangement = Arrangement.spacedBy(
+                dimensionResource(R.dimen.exifstrip_spacing_tight),
+            ),
+        ) {
+            Text(
+                text = stringResource(R.string.exifstrip_container_title),
+                style = MaterialTheme.typography.titleSmall,
+            )
+            Text(
+                text = stringResource(R.string.exifstrip_container_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (summary.isNotEmpty()) {
+                Text(text = summary, style = MaterialTheme.typography.bodyMedium)
+            }
+            content.trailing?.let { trailing ->
+                Text(
+                    text = stringResource(
+                        if (trailing.kind == TrailingKind.EmbeddedVideo) {
+                            R.string.exifstrip_container_video
+                        } else {
+                            R.string.exifstrip_container_trailing
+                        },
+                        trailing.byteCount / 1024,
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
     }
 }
 

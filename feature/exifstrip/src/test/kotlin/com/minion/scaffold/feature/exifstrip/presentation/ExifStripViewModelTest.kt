@@ -13,6 +13,7 @@ import com.minion.scaffold.feature.exifstrip.domain.InspectedPhoto
 import com.minion.scaffold.feature.exifstrip.domain.InspectionResult
 import com.minion.scaffold.feature.exifstrip.domain.ObserveKeepColourProfileUseCase
 import com.minion.scaffold.feature.exifstrip.domain.PhotoInspector
+import com.minion.scaffold.feature.exifstrip.domain.ProbeResult
 import com.minion.scaffold.feature.exifstrip.domain.SetKeepColourProfileUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -51,15 +52,39 @@ internal class ExifStripViewModelTest {
     @Test
     fun `a photo with no metadata loads and says so`() = runTest {
         givenInspection(metadata(bands = emptyList()))
-        givenProbe(null)
+        givenProbe()
 
         val viewModel = viewModel()
         viewModel.onIntent(ExifStripIntent.PhotoPicked(uri))
         advanceUntilIdle()
 
         val content = viewModel.state.value.content as ExifStripState.Content.Loaded
-        assertFalse(content.metadata.hasAnything)
+        assertFalse(content.carriesAnything)
         assertTrue(viewModel.state.value.canExport)
+    }
+
+    /**
+     * **The false-reassurance test.**
+     *
+     * `ExifInterface` reads Exif and nothing else, so a PNG whose only metadata is a text chunk has
+     * no Exif at all. Judging the verdict on the reader alone told a real user "no metadata found"
+     * about a screenshot carrying a comment that read "taken at home" and a pair of coordinates.
+     * Found on a device, and the worst error this tool can make: someone would trust it and never
+     * export.
+     */
+    @Test
+    fun `a file whose only metadata is a container block does not read as clean`() = runTest {
+        givenInspection(metadata(bands = emptyList()))
+        givenProbe(removable = listOf(SegmentSummary(MetadataKind.Comment, "tEXt", 64)))
+
+        val viewModel = viewModel()
+        viewModel.onIntent(ExifStripIntent.PhotoPicked(uri))
+        advanceUntilIdle()
+
+        val content = viewModel.state.value.content as ExifStripState.Content.Loaded
+        assertFalse("the Exif reader sees nothing here", content.metadata.hasAnything)
+        assertTrue("but the file is not clean", content.carriesAnything)
+        assertEquals(1, content.containerBlocks.size)
     }
 
     /**
@@ -71,7 +96,7 @@ internal class ExifStripViewModelTest {
     @Test
     fun `an unsupported container offers conversion instead of a lossless export`() = runTest {
         givenInspection(metadata())
-        givenProbe(StripFailure.UnsupportedContainer("heic"))
+        givenProbe(failure = StripFailure.UnsupportedContainer("heic"))
 
         val viewModel = viewModel()
         viewModel.onIntent(ExifStripIntent.PhotoPicked(uri))
@@ -86,7 +111,7 @@ internal class ExifStripViewModelTest {
     @Test
     fun `something that is not an image fails rather than loading`() = runTest {
         givenInspection(metadata())
-        givenProbe(StripFailure.NotAnImage("unknown"))
+        givenProbe(failure = StripFailure.NotAnImage("unknown"))
 
         val viewModel = viewModel()
         viewModel.onIntent(ExifStripIntent.PhotoPicked(uri))
@@ -119,7 +144,7 @@ internal class ExifStripViewModelTest {
     @Test
     fun `a failed verification blocks the export entirely`() = runTest {
         givenInspection(metadata())
-        givenProbe(null)
+        givenProbe()
         coEvery { exporter.export(any(), any()) } returns
             ExportResult.VerificationFailed(
                 listOf(SegmentSummary(MetadataKind.Exif, "APP1", 400)),
@@ -139,7 +164,7 @@ internal class ExifStripViewModelTest {
     @Test
     fun `a successful export carries what was removed and kept`() = runTest {
         givenInspection(metadata())
-        givenProbe(null)
+        givenProbe()
         coEvery { exporter.export(any(), any()) } returns ExportResult.Success(
             uri = uri,
             fileName = "photo.jpg",
@@ -173,7 +198,7 @@ internal class ExifStripViewModelTest {
     @Test
     fun `picking another photo clears the previous export`() = runTest {
         givenInspection(metadata())
-        givenProbe(null)
+        givenProbe()
         coEvery { exporter.export(any(), any()) } returns ExportResult.Success(
             uri = uri,
             fileName = "photo.jpg",
@@ -201,7 +226,7 @@ internal class ExifStripViewModelTest {
     @Test
     fun `clearing drops both the photo and the export`() = runTest {
         givenInspection(metadata())
-        givenProbe(null)
+        givenProbe()
 
         val viewModel = viewModel()
         viewModel.onIntent(ExifStripIntent.PhotoPicked(uri))
@@ -212,33 +237,6 @@ internal class ExifStripViewModelTest {
 
         assertEquals(ExifStripState.Content.Empty, viewModel.state.value.content)
         assertNull(viewModel.state.value.export)
-    }
-
-    /** A filename containing a date is flagged, because the export renames and should say why. */
-    @Test
-    fun `a dated filename is detected`() = runTest {
-        givenInspection(metadata(), displayName = "IMG_20240115_143022.jpg")
-        givenProbe(null)
-
-        val viewModel = viewModel()
-        viewModel.onIntent(ExifStripIntent.PhotoPicked(uri))
-        advanceUntilIdle()
-
-        val content = viewModel.state.value.content as ExifStripState.Content.Loaded
-        assertTrue(content.fileNameCarriesDate)
-    }
-
-    @Test
-    fun `a plain filename is not flagged`() = runTest {
-        givenInspection(metadata(), displayName = "holiday.jpg")
-        givenProbe(null)
-
-        val viewModel = viewModel()
-        viewModel.onIntent(ExifStripIntent.PhotoPicked(uri))
-        advanceUntilIdle()
-
-        val content = viewModel.state.value.content as ExifStripState.Content.Loaded
-        assertFalse(content.fileNameCarriesDate)
     }
 
     // region Helpers
@@ -255,8 +253,12 @@ internal class ExifStripViewModelTest {
         )
     }
 
-    private fun givenProbe(failure: StripFailure?) {
-        coEvery { exporter.probe(any(), any()) } returns failure
+    private fun givenProbe(
+        failure: StripFailure? = null,
+        removable: List<SegmentSummary> = emptyList(),
+    ) {
+        coEvery { exporter.probe(any(), any()) } returns
+            ProbeResult(failure = failure, removable = removable, trailing = null)
     }
 
     private fun metadata(bands: List<com.minion.scaffold.core.exif.model.MetadataBand> = emptyList()) =

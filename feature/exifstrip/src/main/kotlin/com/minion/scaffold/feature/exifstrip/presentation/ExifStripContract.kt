@@ -41,16 +41,23 @@ internal data class ExifStripState(
              * shoot, so someone meeting this deserves better than "unsupported file".
              */
             val convertibleFormat: String? = null,
-        ) : Content {
 
             /**
-             * Whether the filename itself leaks something.
+             * Blocks the container carries that `ExifInterface` does not report.
              *
-             * `IMG_20240115_143022.jpg` is a date in plain text. Worth saying, because the export
-             * renames and the reason is not otherwise obvious.
+             * PNG text chunks, JPEG comments, XMP packets, vendor blocks. Without these the screen
+             * once told someone "no metadata found" about a screenshot carrying a comment that read
+             * "taken at home" and a pair of coordinates — the reader sees Exif and nothing else, so
+             * the container's own account has to be shown alongside it.
              */
-            val fileNameCarriesDate: Boolean
-                get() = displayName?.let { DATE_IN_NAME.containsMatchIn(it) } == true
+            val containerBlocks: List<SegmentSummary> = emptyList(),
+
+            val trailing: TrailingData? = null,
+        ) : Content {
+
+            /** Whether anything at all was found, by either route. */
+            val carriesAnything: Boolean
+                get() = metadata.hasAnything || containerBlocks.isNotEmpty() || trailing != null
         }
 
         data class Failed(val reason: FailureReason) : Content
@@ -89,15 +96,6 @@ internal data class ExifStripState(
     val canConvert: Boolean
         get() = content is Content.Loaded && content.convertibleFormat != null && !exporting
 
-    companion object {
-        /**
-         * Eight consecutive digits, which is what a camera date looks like in a filename.
-         *
-         * Deliberately loose. A false positive costs one extra line of explanation; a false negative
-         * means quietly shipping the date the tool just removed from the metadata.
-         */
-        private val DATE_IN_NAME = Regex("\\d{8}")
-    }
 }
 
 internal sealed interface ExifStripIntent : UiIntent {

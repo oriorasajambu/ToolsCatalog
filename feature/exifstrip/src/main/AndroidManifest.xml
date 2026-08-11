@@ -13,8 +13,14 @@
           provider serve the other's paths. See ExifStripFileProvider.
 
           The authority is still feature-prefixed, so the two providers are also distinguishable at
-          runtime. The paths resource is passed to the superclass constructor, which is why there is
-          no FILE_PROVIDER_PATHS meta-data element here.
+          runtime.
+
+          The FILE_PROVIDER_PATHS meta-data is required even though the subclass also passes the
+          resource to its superclass constructor. The constructor configures the provider instance;
+          the static FileProvider.getUriForFile resolves the paths separately, by reading this
+          meta-data off the registered ProviderInfo. Omitting it registers a perfectly valid
+          provider that then throws the moment anything asks it for a Uri — found on a device, where
+          it surfaced as an export failure with no logged cause.
 
           There is deliberately no MediaStore write and no storage permission. The clean copy never
           enters the photo library, so it cannot be indexed, backed up to a cloud gallery, or end up
@@ -24,7 +30,11 @@
             android:name="com.minion.scaffold.feature.exifstrip.data.ExifStripFileProvider"
             android:authorities="${applicationId}.exifstrip.fileprovider"
             android:exported="false"
-            android:grantUriPermissions="true" />
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/exifstrip_file_paths" />
+        </provider>
     </application>
 
 </manifest>

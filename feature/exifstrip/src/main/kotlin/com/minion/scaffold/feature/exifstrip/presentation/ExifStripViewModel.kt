@@ -111,18 +111,36 @@ internal class ExifStripViewModel @Inject constructor(
      */
     private suspend fun probeContainer() {
         val current = photo ?: return
-        val failure = exporter.probe(current, currentState.keepColourProfile) ?: return
+        val probe = exporter.probe(current, currentState.keepColourProfile)
 
-        val format = (failure as? StripFailure.UnsupportedContainer)?.describedAs
-        if (format == null) {
-            fail(ExifStripState.FailureReason.NotAnImage)
+        if (probe.failure != null) {
+            val format = (probe.failure as? StripFailure.UnsupportedContainer)?.describedAs
+            if (format == null) {
+                fail(ExifStripState.FailureReason.NotAnImage)
+                return
+            }
+
+            reduce {
+                copy(
+                    content = when (val existing = content) {
+                        is ExifStripState.Content.Loaded -> existing.copy(convertibleFormat = format)
+                        else -> existing
+                    },
+                )
+            }
             return
         }
 
+        // The container's own account of what it holds, merged in beside the Exif reader's. See
+        // Content.Loaded.containerBlocks for why this is not optional.
         reduce {
             copy(
                 content = when (val existing = content) {
-                    is ExifStripState.Content.Loaded -> existing.copy(convertibleFormat = format)
+                    is ExifStripState.Content.Loaded -> existing.copy(
+                        containerBlocks = probe.removable,
+                        trailing = probe.trailing,
+                    )
+
                     else -> existing
                 },
             )

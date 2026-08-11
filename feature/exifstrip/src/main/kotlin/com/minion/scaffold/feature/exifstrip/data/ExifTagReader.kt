@@ -84,9 +84,21 @@ internal class ExifTagReader @Inject constructor() {
         ExifInterface.ORIENTATION_NORMAL,
     )
 
+    /**
+     * One row, or `null` when the tag is not really there.
+     *
+     * `ExifInterface` reports some absent tags as the string `"0"` rather than as null. For a
+     * dimension, an orientation or a colour space that is not a value, it is the absence of one — and
+     * showing it made a screenshot with no metadata at all report "this photo carries some metadata"
+     * above a list of three zeros, which is precisely the claim this tool must not get wrong. Found
+     * on a device.
+     *
+     * Not applied to every tag: `Flash = 0` means "did not fire", which is a real reading.
+     */
     private fun entryFor(exif: ExifInterface, tag: TagLabel): MetadataEntry? {
         val raw = exif.getAttribute(tag.tag)?.trim().orEmpty()
         if (raw.isEmpty()) return null
+        if (tag.zeroIsAbsent && raw.toDoubleOrNull() == 0.0) return null
 
         return MetadataEntry(tag.label, raw)
     }
@@ -112,7 +124,12 @@ internal class ExifTagReader @Inject constructor() {
         ).takeIf { dimensions != null || bytes.isNotEmpty() }
     }
 
-    private data class TagLabel(val tag: String, val label: String)
+    private data class TagLabel(
+        val tag: String,
+        val label: String,
+        /** Whether a value of zero means the tag is absent rather than genuinely zero. */
+        val zeroIsAbsent: Boolean = false,
+    )
 
     private companion object {
 
@@ -170,19 +187,19 @@ internal class ExifTagReader @Inject constructor() {
 
         /** Everything else worth listing, shown collapsed beneath the ranked bands. */
         val OTHER_TAGS: List<TagLabel> = listOf(
-            TagLabel(ExifInterface.TAG_IMAGE_WIDTH, "Width"),
-            TagLabel(ExifInterface.TAG_IMAGE_LENGTH, "Height"),
-            TagLabel(ExifInterface.TAG_ORIENTATION, "Orientation"),
-            TagLabel(ExifInterface.TAG_X_RESOLUTION, "X resolution"),
-            TagLabel(ExifInterface.TAG_Y_RESOLUTION, "Y resolution"),
-            TagLabel(ExifInterface.TAG_RESOLUTION_UNIT, "Resolution unit"),
-            TagLabel(ExifInterface.TAG_COLOR_SPACE, "Colour space"),
+            TagLabel(ExifInterface.TAG_IMAGE_WIDTH, "Width", zeroIsAbsent = true),
+            TagLabel(ExifInterface.TAG_IMAGE_LENGTH, "Height", zeroIsAbsent = true),
+            TagLabel(ExifInterface.TAG_ORIENTATION, "Orientation", zeroIsAbsent = true),
+            TagLabel(ExifInterface.TAG_X_RESOLUTION, "X resolution", zeroIsAbsent = true),
+            TagLabel(ExifInterface.TAG_Y_RESOLUTION, "Y resolution", zeroIsAbsent = true),
+            TagLabel(ExifInterface.TAG_RESOLUTION_UNIT, "Resolution unit", zeroIsAbsent = true),
+            TagLabel(ExifInterface.TAG_COLOR_SPACE, "Colour space", zeroIsAbsent = true),
             TagLabel(ExifInterface.TAG_EXIF_VERSION, "Exif version"),
             TagLabel(ExifInterface.TAG_SCENE_CAPTURE_TYPE, "Scene type"),
             TagLabel(ExifInterface.TAG_METERING_MODE, "Metering"),
             TagLabel(ExifInterface.TAG_EXPOSURE_MODE, "Exposure mode"),
-            TagLabel(ExifInterface.TAG_DIGITAL_ZOOM_RATIO, "Digital zoom"),
-            TagLabel(ExifInterface.TAG_SUBJECT_DISTANCE, "Subject distance"),
+            TagLabel(ExifInterface.TAG_DIGITAL_ZOOM_RATIO, "Digital zoom", zeroIsAbsent = true),
+            TagLabel(ExifInterface.TAG_SUBJECT_DISTANCE, "Subject distance", zeroIsAbsent = true),
         )
     }
 }

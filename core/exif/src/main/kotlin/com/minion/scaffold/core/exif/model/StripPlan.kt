@@ -45,6 +45,15 @@ enum class MetadataKind {
     /** Camera, exposure, timestamps, GPS. The reason this tool exists. */
     Exif,
 
+    /**
+     * The minimal block carrying only the orientation tag.
+     *
+     * Its own kind rather than [Exif], because the UI names what it kept and describing this as
+     * "camera and location data" is the exact opposite of the truth — alarming in a privacy tool,
+     * and found on a device saying precisely that.
+     */
+    Orientation,
+
     /** Adobe's XML metadata. Carries edit history, and sometimes a duplicate of the GPS. */
     Xmp,
 

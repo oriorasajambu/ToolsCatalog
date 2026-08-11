@@ -16,6 +16,7 @@ import com.minion.scaffold.core.exif.usecase.VerifyStripUseCase
 import com.minion.scaffold.feature.exifstrip.domain.CleanCopyExporter
 import com.minion.scaffold.feature.exifstrip.domain.ExportResult
 import com.minion.scaffold.feature.exifstrip.domain.InspectedPhoto
+import com.minion.scaffold.feature.exifstrip.domain.ProbeResult
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -53,11 +54,15 @@ internal class AndroidCleanCopyExporter @Inject constructor(
     private val verifyStrip: VerifyStripUseCase,
 ) : CleanCopyExporter {
 
-    override suspend fun probe(photo: InspectedPhoto, keepIcc: Boolean): StripFailure? =
+    override suspend fun probe(photo: InspectedPhoto, keepIcc: Boolean): ProbeResult =
         withContext(ioDispatcher) {
             when (val planned = planStrip(photo.bytes, photo.orientation, keepIcc)) {
-                is PlanResult.Failure -> planned.failure
-                is PlanResult.Success -> null
+                is PlanResult.Failure -> ProbeResult(planned.failure, emptyList(), null)
+                is PlanResult.Success -> ProbeResult(
+                    failure = null,
+                    removable = planned.plan.removed,
+                    trailing = planned.plan.trailing,
+                )
             }
         }
 

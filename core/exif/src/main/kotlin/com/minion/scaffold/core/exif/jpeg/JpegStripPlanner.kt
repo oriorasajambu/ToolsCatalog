@@ -51,7 +51,7 @@ internal object JpegStripPlanner {
             val decision = when (segment) {
                 alreadyMinimal -> Decision.Keep(
                     SegmentSummary(
-                        MetadataKind.Exif,
+                        MetadataKind.Orientation,
                         ORIENTATION_LABEL,
                         segment.endExclusive - segment.start,
                     ),
@@ -74,7 +74,7 @@ internal object JpegStripPlanner {
             if (segment.marker == JpegMarkers.SOI && alreadyMinimal == null) {
                 MinimalExif.segmentFor(orientation)?.let { block ->
                     operations += StripOperation.Insert(block)
-                    retained += SegmentSummary(MetadataKind.Exif, ORIENTATION_LABEL, block.size)
+                    retained += SegmentSummary(MetadataKind.Orientation, ORIENTATION_LABEL, block.size)
                 }
             }
         }
