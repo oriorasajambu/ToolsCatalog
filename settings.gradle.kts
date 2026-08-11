@@ -117,4 +117,5 @@ include(":feature:ocr")
 include(":feature:level")
 include(":feature:soundmeter")
 include(":feature:exifstrip")
+include(":feature:speedometer")
 

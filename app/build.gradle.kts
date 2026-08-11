@@ -158,6 +158,7 @@ dependencies {
     implementation(project(":feature:level"))
     implementation(project(":feature:soundmeter"))
     implementation(project(":feature:exifstrip"))
+    implementation(project(":feature:speedometer"))
 
     implementation(libs.androidx.splashscreen)
 
