@@ -19,6 +19,11 @@ import java.util.Random
 @InstallIn(SingletonComponent::class)
 internal object TextToolsModule {
 
+    /**
+     * The random source for the generator.
+     *
+     * @return A cryptographically strong [SecureRandom].
+     */
     @Provides
     fun provideRandom(): Random = SecureRandom()
 }

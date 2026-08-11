@@ -41,6 +41,13 @@ import com.minion.scaffold.feature.texttools.presentation.label
 import com.minion.scaffold.feature.texttools.presentation.describe
 import com.minion.scaffold.feature.texttools.presentation.rememberClipboardCopy
 
+/**
+ * The text transform screen: an input, an operation picker, and a live output.
+ *
+ * @param onNavigateBack Called when the user leaves the screen.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun TextToolsScreen(
     onNavigateBack: () -> Unit,

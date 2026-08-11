@@ -11,6 +11,10 @@ import com.minion.scaffold.feature.texttools.R
  * `:core:text` carries no user-facing text — every operation is an enum constant and every failure
  * a typed reason, mapped to a `@StringRes` here, the same way every feature in this app turns a
  * domain enum into words.
+ *
+ * @receiver The operation to name.
+ * @param resources The resources to resolve the label string from.
+ * @return The operation's localized label.
  */
 internal fun TextOperation.label(resources: Resources): String = resources.getString(
     when (this) {
@@ -35,6 +39,13 @@ internal fun TextOperation.label(resources: Resources): String = resources.getSt
     },
 )
 
+/**
+ * The user-facing message for a decode failure.
+ *
+ * @receiver The failure to describe.
+ * @param resources The resources to resolve the message string from.
+ * @return The failure's localized message.
+ */
 internal fun TextError.describe(resources: Resources): String = resources.getString(
     when (this) {
         TextError.NOT_VALID_BASE64 -> R.string.texttools_error_base64

@@ -7,7 +7,12 @@ import com.minion.scaffold.core.navigation.TextToolsRoute
 import com.minion.scaffold.feature.texttools.presentation.generate.GenerateScreen
 import com.minion.scaffold.feature.texttools.presentation.transform.TextToolsScreen
 
-/** The transform half of this module's public surface. */
+/**
+ * The transform half of this module's public surface.
+ *
+ * @receiver The nav graph builder to register the destination on.
+ * @param onNavigateBack Called when the user leaves the screen.
+ */
 fun NavGraphBuilder.textToolsScreen(
     onNavigateBack: () -> Unit,
 ) {
@@ -16,7 +21,12 @@ fun NavGraphBuilder.textToolsScreen(
     }
 }
 
-/** The generator half. */
+/**
+ * The generator half.
+ *
+ * @receiver The nav graph builder to register the destination on.
+ * @param onNavigateBack Called when the user leaves the screen.
+ */
 fun NavGraphBuilder.generateScreen(
     onNavigateBack: () -> Unit,
 ) {
