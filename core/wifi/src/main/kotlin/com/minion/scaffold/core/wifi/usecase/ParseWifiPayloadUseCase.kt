@@ -19,6 +19,13 @@ import javax.inject.Inject
  */
 class ParseWifiPayloadUseCase @Inject constructor() {
 
+    /**
+     * Reads [payload] into credentials, or returns null when it is not a Wi-Fi payload.
+     *
+     * @param payload The scanned or pasted payload, whitespace and all.
+     * @return The parsed [WifiCredentials], or `null` if [payload] is not a `WIFI:` code or names
+     *         a security type this tool cannot represent.
+     */
     operator fun invoke(payload: String): WifiCredentials? {
         val trimmed = payload.trim()
         if (!trimmed.startsWith(WifiPayloadFormat.PREFIX, ignoreCase = true)) return null

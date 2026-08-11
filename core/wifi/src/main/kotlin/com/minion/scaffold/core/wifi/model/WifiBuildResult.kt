@@ -3,21 +3,46 @@ package com.minion.scaffold.core.wifi.model
 /** Mirrors `EmvBuildResult`: every violation at once, so a form can mark all its bad fields. */
 sealed interface WifiBuildResult {
 
+    /**
+     * The credentials were valid and produced a payload.
+     *
+     * @property payload The complete `WIFI:` payload string.
+     */
     data class Success(val payload: String) : WifiBuildResult
 
+    /**
+     * The credentials were rejected. Carries every violation so a form can mark all bad fields.
+     *
+     * @property violations One entry per rejected field. Never empty — an empty list is [Success].
+     */
     data class Invalid(val violations: List<WifiViolation>) : WifiBuildResult
 }
 
-/** Carries no user-facing text; the presentation layer maps it to a `@StringRes`. */
+/**
+ * One rejected field. Carries no user-facing text; the presentation layer maps it to a `@StringRes`.
+ *
+ * @property field  The input that was rejected.
+ * @property reason Why [field] was rejected.
+ */
 data class WifiViolation(
     val field: WifiField,
     val reason: WifiViolationReason,
 )
 
-enum class WifiField { SSID, PASSWORD }
+/** The inputs a set of credentials can be wrong about. */
+enum class WifiField {
 
+    /** The network name. */
+    SSID,
+
+    /** The passphrase or key. */
+    PASSWORD,
+}
+
+/** Why a field was rejected. */
 enum class WifiViolationReason {
 
+    /** Left blank when the security type requires a value. */
     REQUIRED,
 
     /** An SSID over 32 characters, or a WPA passphrase over 63. */

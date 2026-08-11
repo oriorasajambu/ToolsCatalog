@@ -20,6 +20,13 @@ import javax.inject.Inject
  */
 class BuildWifiPayloadUseCase @Inject constructor() {
 
+    /**
+     * Validates [credentials] and, if they are sound, writes the payload.
+     *
+     * @param credentials The network details to validate and write.
+     * @return [WifiBuildResult.Success] with the payload, or [WifiBuildResult.Invalid] listing
+     *         every field that failed validation.
+     */
     operator fun invoke(credentials: WifiCredentials): WifiBuildResult {
         val violations = credentials.validate()
 
