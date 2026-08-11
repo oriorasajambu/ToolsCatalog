@@ -22,6 +22,14 @@ import javax.inject.Inject
  */
 class TransformTextUseCase @Inject constructor() {
 
+    /**
+     * Runs [operation] over [input].
+     *
+     * @param operation The transform to apply.
+     * @param input     The text to transform.
+     * @return [TextResult.Success] with the output, or [TextResult.Failure] with a typed
+     *         [TextError] for the decoders that can reject their input.
+     */
     operator fun invoke(operation: TextOperation, input: String): TextResult = when (operation) {
         TextOperation.BASE64_ENCODE -> success(Base64Codec.encode(input))
         TextOperation.BASE64_DECODE -> Base64Codec.decode(input).orError(TextError.NOT_VALID_BASE64)

@@ -7,17 +7,30 @@ package com.minion.scaffold.core.text.model
  * than the number of classes cannot honour "one of each" — both are rejected rather than fudged.
  */
 data class PasswordSpec(
+    /** How many characters the password should have. */
     val length: Int,
+    /** The character classes to draw from. At least one; each is guaranteed present in the output. */
     val classes: Set<CharacterClass>,
 )
 
+/** A group of characters a password can draw from. */
 enum class CharacterClass { LOWERCASE, UPPERCASE, DIGITS, SYMBOLS }
 
 /** The outcome of generating a password. */
 sealed interface GenerateResult {
 
+    /**
+     * A password was generated.
+     *
+     * @property value The generated password.
+     */
     data class Success(val value: String) : GenerateResult
 
+    /**
+     * The spec could not produce a password.
+     *
+     * @property reason Why the spec was rejected.
+     */
     data class Invalid(val reason: PasswordProblem) : GenerateResult
 }
 

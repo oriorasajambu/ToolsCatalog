@@ -13,6 +13,12 @@ import java.util.Locale
  */
 internal object CaseConverter {
 
+    /**
+     * [input] as `camelCase`.
+     *
+     * @param input Any identifier or phrase; separators and camelCase boundaries are both honoured.
+     * @return The camelCase form, or an empty string when [input] has no words.
+     */
     fun toCamel(input: String): String {
         val words = tokenise(input)
         if (words.isEmpty()) return ""
@@ -21,10 +27,22 @@ internal object CaseConverter {
             words.drop(1).joinToString(separator = "") { it.capitaliseAscii() }
     }
 
+    /**
+     * [input] as `snake_case`.
+     *
+     * @param input Any identifier or phrase.
+     * @return The snake_case form.
+     */
     fun toSnake(input: String): String = tokenise(input).joinToString(separator = "_") {
         it.lowercase(Locale.ROOT)
     }
 
+    /**
+     * [input] as `kebab-case`.
+     *
+     * @param input Any identifier or phrase.
+     * @return The kebab-case form.
+     */
     fun toKebab(input: String): String = tokenise(input).joinToString(separator = "-") {
         it.lowercase(Locale.ROOT)
     }

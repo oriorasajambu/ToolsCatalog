@@ -13,10 +13,21 @@ import java.util.Base64
  */
 internal object Base64Codec {
 
+    /**
+     * The standard, padded Base64 encoding of [input]'s UTF-8 bytes.
+     *
+     * @param input The text to encode.
+     * @return The Base64 string.
+     */
     fun encode(input: String): String =
         Base64.getEncoder().encodeToString(input.toByteArray(Charsets.UTF_8))
 
-    /** The decoded text, or null when the input is not Base64 in any accepted form. */
+    /**
+     * The decoded text, or null when the input is not Base64 in any accepted form.
+     *
+     * @param input A Base64 string, standard or URL-safe, padded or not.
+     * @return The decoded UTF-8 text, or `null` when [input] is not Base64.
+     */
     fun decode(input: String): String? {
         val normalised = input
             .trim()
