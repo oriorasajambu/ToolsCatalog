@@ -26,12 +26,17 @@ import kotlin.math.sqrt
  * compared against a wall clock.
  */
 data class GravitySample(
+    /** The device `+x` (right) component, in m/s². */
     val x: Double,
+    /** The device `+y` (up the screen) component, in m/s². */
     val y: Double,
+    /** The device `+z` (out of the screen) component, in m/s². */
     val z: Double,
+    /** `SensorEvent.timestamp`, used only for differences, never against a wall clock. */
     val timestampNanos: Long,
 ) {
 
+    /** The vector's length in m/s² — near 9.81 for a device at rest. */
     val magnitude: Double get() = sqrt(x * x + y * y + z * z)
 
     /**
@@ -43,7 +48,11 @@ data class GravitySample(
      */
     val isPlausible: Boolean get() = magnitude in MIN_PLAUSIBLE..MAX_PLAUSIBLE
 
-    /** Unit-length, or `null` when the vector has no direction to speak of. */
+    /**
+     * Unit-length, or `null` when the vector has no direction to speak of.
+     *
+     * @return The normalised [UpVector], or `null` when the magnitude is zero.
+     */
     fun normalizedOrNull(): UpVector? {
         val m = magnitude
         return if (m > 0.0) UpVector(x / m, y / m, z / m) else null
@@ -63,12 +72,20 @@ data class GravitySample(
  * each call site.
  */
 data class UpVector(
+    /** The device `+x` (right) component, unit-length. */
     val x: Double,
+    /** The device `+y` (up the screen) component, unit-length. */
     val y: Double,
+    /** The device `+z` (out of the screen) component, unit-length. */
     val z: Double,
 ) {
 
-    /** How far this is from [other], as the angle between them in radians. Always non-negative. */
+    /**
+     * How far this is from [other], as the angle between them in radians. Always non-negative.
+     *
+     * @param other The vector to measure against.
+     * @return The angle between the two vectors in radians.
+     */
     fun angleTo(other: UpVector): Double {
         val cx = y * other.z - z * other.y
         val cy = z * other.x - x * other.z
@@ -94,6 +111,9 @@ data class UpVector(
      * passes the offset in here, so the correction is a plain 2D rotation rather than a call to
      * `SensorManager.remapCoordinateSystem` — which is overkill for an in-plane turn and far harder
      * to test.
+     *
+     * @param degrees The in-plane rotation to apply, in degrees.
+     * @return The rotated vector; the same instance when [degrees] is zero.
      */
     fun rotatedInPlane(degrees: Double): UpVector {
         if (degrees == 0.0) return this

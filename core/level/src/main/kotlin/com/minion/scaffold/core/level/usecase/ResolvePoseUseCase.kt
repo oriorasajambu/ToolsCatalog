@@ -31,6 +31,14 @@ import kotlin.math.roundToInt
  */
 class ResolvePoseUseCase @Inject constructor() {
 
+    /**
+     * Folds one reading into the pose machine.
+     *
+     * @param previous       The accumulated pose state from the previous call.
+     * @param up             The current up-vector.
+     * @param timestampNanos The current sample's timestamp in nanoseconds, for the dwell.
+     * @return The updated [PoseState], committing a new pose only once it has held for the dwell.
+     */
     operator fun invoke(previous: PoseState, up: UpVector, timestampNanos: Long): PoseState {
         val quadrant = resolveQuadrant(previous.quadrant, up)
         val observed = observedPose(previous.pose, up, quadrant)

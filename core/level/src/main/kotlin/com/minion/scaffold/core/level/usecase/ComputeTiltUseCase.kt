@@ -35,6 +35,12 @@ import kotlin.math.sign
  */
 class ComputeTiltUseCase @Inject constructor() {
 
+    /**
+     * Derives every displayed angle from the direction of gravity.
+     *
+     * @param up The corrected, unit-length up-vector.
+     * @return The [Tilt] holding all axis, inclination, bearing and edge readings in degrees.
+     */
     operator fun invoke(up: UpVector): Tilt {
         val (x, y, z) = up
 
