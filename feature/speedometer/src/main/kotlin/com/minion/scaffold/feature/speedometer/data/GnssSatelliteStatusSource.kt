@@ -4,8 +4,9 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.GnssStatus
 import android.location.LocationManager
+import androidx.core.location.GnssStatusCompat
+import androidx.core.location.LocationManagerCompat
 import androidx.core.content.ContextCompat
 import com.minion.scaffold.feature.speedometer.domain.Constellation
 import com.minion.scaffold.feature.speedometer.domain.SatelliteStatus
@@ -48,8 +49,8 @@ internal class GnssSatelliteStatusSource @Inject constructor(
             return@callbackFlow
         }
 
-        val callback = object : GnssStatus.Callback() {
-            override fun onSatelliteStatusChanged(status: GnssStatus) {
+        val callback = object : GnssStatusCompat.Callback() {
+            override fun onSatelliteStatusChanged(status: GnssStatusCompat) {
                 trySend(status.toSatelliteStatus())
             }
 
@@ -58,8 +59,11 @@ internal class GnssSatelliteStatusSource @Inject constructor(
             }
         }
 
+        // Through the compat wrapper rather than the platform call directly: the Executor overload
+        // is API 30 and this module is 29, and LocationManagerCompat already does that split
+        // internally. The same reason :feature:weather routes getCurrentLocation through it.
         val registered = runCatching {
-            manager.registerGnssStatusCallback(context.mainExecutor, callback)
+            LocationManagerCompat.registerGnssStatusCallback(manager, context.mainExecutor, callback)
         }.getOrDefault(false)
 
         if (!registered) {
@@ -68,7 +72,7 @@ internal class GnssSatelliteStatusSource @Inject constructor(
             return@callbackFlow
         }
 
-        awaitClose { manager.unregisterGnssStatusCallback(callback) }
+        awaitClose { LocationManagerCompat.unregisterGnssStatusCallback(manager, callback) }
     }
         .buffer(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -78,7 +82,7 @@ internal class GnssSatelliteStatusSource @Inject constructor(
     ) == PackageManager.PERMISSION_GRANTED
 }
 
-private fun GnssStatus.toSatelliteStatus(): SatelliteStatus {
+private fun GnssStatusCompat.toSatelliteStatus(): SatelliteStatus {
     val strengths = mutableListOf<Float>()
     val constellations = mutableSetOf<Constellation>()
     var used = 0
@@ -98,12 +102,12 @@ private fun GnssStatus.toSatelliteStatus(): SatelliteStatus {
 }
 
 private fun constellationOf(type: Int): Constellation = when (type) {
-    GnssStatus.CONSTELLATION_GPS -> Constellation.Gps
-    GnssStatus.CONSTELLATION_GLONASS -> Constellation.Glonass
-    GnssStatus.CONSTELLATION_GALILEO -> Constellation.Galileo
-    GnssStatus.CONSTELLATION_BEIDOU -> Constellation.BeiDou
-    GnssStatus.CONSTELLATION_QZSS -> Constellation.Qzss
-    GnssStatus.CONSTELLATION_IRNSS -> Constellation.Irnss
-    GnssStatus.CONSTELLATION_SBAS -> Constellation.Sbas
+    GnssStatusCompat.CONSTELLATION_GPS -> Constellation.Gps
+    GnssStatusCompat.CONSTELLATION_GLONASS -> Constellation.Glonass
+    GnssStatusCompat.CONSTELLATION_GALILEO -> Constellation.Galileo
+    GnssStatusCompat.CONSTELLATION_BEIDOU -> Constellation.BeiDou
+    GnssStatusCompat.CONSTELLATION_QZSS -> Constellation.Qzss
+    GnssStatusCompat.CONSTELLATION_IRNSS -> Constellation.Irnss
+    GnssStatusCompat.CONSTELLATION_SBAS -> Constellation.Sbas
     else -> Constellation.Unknown
 }

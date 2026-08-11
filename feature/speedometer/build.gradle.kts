@@ -19,6 +19,11 @@ android {
 dependencies {
     implementation(project(":core:gnss"))
 
+    // LocationManagerCompat.registerGnssStatusCallback — the Executor overload is API 30 and this
+    // module is 29. Added explicitly for the same reason :feature:level and :feature:weather do: the
+    // feature convention does not put androidx-core on every classpath for the sake of one consumer.
+    implementation(libs.androidx.core)
+
     // Stores the unit choices and the coordinate format. Feature-local rather than :core:data — only
     // this feature reads it, and the repo promotes on the second consumer.
     implementation(libs.data.store)

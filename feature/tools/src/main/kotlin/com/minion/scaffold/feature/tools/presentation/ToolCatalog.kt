@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.HideImage
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -23,6 +24,7 @@ import com.minion.scaffold.core.navigation.LevelRoute
 import com.minion.scaffold.core.navigation.OcrRoute
 import com.minion.scaffold.core.navigation.QrCreateRoute
 import com.minion.scaffold.core.navigation.QrScanRoute
+import com.minion.scaffold.core.navigation.SpeedometerRoute
 import com.minion.scaffold.core.navigation.SoundMeterRoute
 import com.minion.scaffold.core.navigation.ScanPurpose
 import com.minion.scaffold.core.navigation.TextToolsRoute
@@ -151,6 +153,14 @@ internal object ToolCatalog {
             descriptionRes = R.string.tools_sound_meter_description,
             icon = Icons.Filled.GraphicEq,
             route = SoundMeterRoute,
+            category = ToolCategory.Utility,
+        ),
+        Tool(
+            id = "speedometer",
+            titleRes = R.string.tools_speedometer_title,
+            descriptionRes = R.string.tools_speedometer_description,
+            icon = Icons.Filled.Speed,
+            route = SpeedometerRoute,
             category = ToolCategory.Utility,
         ),
         Tool(

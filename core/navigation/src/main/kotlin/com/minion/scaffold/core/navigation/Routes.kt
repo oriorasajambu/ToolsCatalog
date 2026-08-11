@@ -201,6 +201,20 @@ data object LevelRoute : AppRoute
 @Serializable
 data object LevelCalibrationRoute : AppRoute
 
+/** The GPS speedometer and altimeter: how fast, how high, and where — with no network. */
+@Serializable
+data object SpeedometerRoute : AppRoute
+
+/**
+ * The speedometer's own settings — units, coordinate format, and what the numbers mean.
+ *
+ * A destination rather than controls on the main screen: three selectors on a display meant to be
+ * read at a glance from a car mount is three too many, and the accuracy explanations need somewhere
+ * to live that is not the speedometer.
+ */
+@Serializable
+data object SpeedometerSettingsRoute : AppRoute
+
 /** The metadata stripper: what a photo reveals, and a copy without it. */
 @Serializable
 data object ExifStripRoute : AppRoute
