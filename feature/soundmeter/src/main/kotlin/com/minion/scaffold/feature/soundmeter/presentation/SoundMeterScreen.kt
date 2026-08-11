@@ -31,7 +31,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.Clipboard
@@ -49,7 +52,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
-import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.feature.soundmeter.R
 import com.minion.scaffold.feature.soundmeter.presentation.component.HistoryChart
 import com.minion.scaffold.feature.soundmeter.presentation.component.MeterControls
@@ -94,6 +96,19 @@ internal fun SoundMeterScreen(
         )
     }
 
+    /**
+     * Whether this screen has already put the dialog up.
+     *
+     * Tracked here rather than inferred from the state, which is what the first version did — and it
+     * asked twice on a real device. The `ActivityResultLauncher` callback is not guaranteed to run
+     * before `ON_RESUME`, so on the way back from a dismissed dialog the state could still read
+     * `Unknown`, and the check would fire a second request at someone who had just declined. A local
+     * latch cannot race because nothing else writes it.
+     *
+     * `rememberSaveable` so a configuration change does not re-ask either.
+     */
+    var requested by rememberSaveable { mutableStateOf(false) }
+
     // Re-checked on every resume, not once on first composition. The "open settings" path leaves the
     // app and comes back with the permission changed; without this the screen would still be showing
     // the blocked message over a microphone it is now allowed to use.
@@ -109,8 +124,10 @@ internal fun SoundMeterScreen(
             )
             // Ask once, on arrival. Re-asking on every resume would trap someone who declined in a
             // dialog they cannot get past.
-            state.value.permission == PermissionState.Unknown ->
+            !requested -> {
+                requested = true
                 permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
         }
 
         viewModel.onIntent(SoundMeterIntent.ScreenResumed)
@@ -157,7 +174,10 @@ internal fun SoundMeterScreen(
         onIntent = viewModel::onIntent,
         onNavigateBack = onNavigateBack,
         onNavigateToSettings = onNavigateToSettings,
-        onRequestPermission = { permissionLauncher.launch(Manifest.permission.RECORD_AUDIO) },
+        onRequestPermission = {
+            requested = true
+            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        },
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
@@ -247,7 +267,11 @@ private fun SoundMeterContent(
 
             HistoryChart(history = history)
 
-            SessionPanel(stats = chrome.stats, measuring = chrome.measuring)
+            SessionPanel(
+                stats = chrome.stats,
+                measuring = chrome.measuring,
+                weighting = chrome.weighting,
+            )
 
             MeterControls(
                 weighting = chrome.weighting,

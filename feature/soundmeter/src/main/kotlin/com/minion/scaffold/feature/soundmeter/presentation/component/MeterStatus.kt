@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.minion.scaffold.feature.soundmeter.R
+import com.minion.scaffold.feature.soundmeter.domain.CaptureFailure
 import com.minion.scaffold.feature.soundmeter.domain.CaptureQuality
 import com.minion.scaffold.feature.soundmeter.presentation.MeterChrome
 
@@ -41,8 +42,15 @@ internal fun MeterStatus(
         ),
     ) {
         when {
-            chrome.failed -> StatusLine(
-                textRes = R.string.soundmeter_status_failed,
+            // Two failures, two messages. "Stopped responding" is accurate for a recorder that
+            // died mid-session and misleading for a device that has no usable input at all.
+            chrome.failure == CaptureFailure.Interrupted -> StatusLine(
+                textRes = R.string.soundmeter_status_interrupted,
+                color = MaterialTheme.colorScheme.error,
+            )
+
+            chrome.failure == CaptureFailure.Unavailable -> StatusLine(
+                textRes = R.string.soundmeter_status_unavailable,
                 color = MaterialTheme.colorScheme.error,
             )
 

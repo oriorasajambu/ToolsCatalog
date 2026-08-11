@@ -58,6 +58,9 @@ internal class SoundMeterViewModelTest {
     @Test
     fun `no capture until the screen resumes`() = runTest {
         val viewModel = viewModel()
+        viewModel.onIntent(
+            SoundMeterIntent.PermissionResult(granted = true, shouldShowRationale = false),
+        )
         advanceUntilIdle()
 
         assertEquals(0, audioSource.collections)
@@ -73,6 +76,9 @@ internal class SoundMeterViewModelTest {
     @Test
     fun `pausing releases the capture`() = runTest {
         val viewModel = viewModel()
+        viewModel.onIntent(
+            SoundMeterIntent.PermissionResult(granted = true, shouldShowRationale = false),
+        )
         viewModel.onIntent(SoundMeterIntent.ScreenResumed)
         advanceUntilIdle()
 
@@ -246,10 +252,69 @@ internal class SoundMeterViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.state.value
-        assertTrue(state.failed)
+        assertEquals(CaptureFailure.Interrupted, state.failure)
         assertFalse(state.capturing)
         assertFalse(state.canMeasure)
-        assertEquals(SoundMeterState.Reading.Waiting, state.reading)
+        assertEquals(SoundMeterState.Reading.Idle, state.reading)
+    }
+
+    /**
+     * Without permission the microphone is never opened at all.
+     *
+     * Found on a device: the capture was attempted anyway, failed for want of permission, and the
+     * status line rendered that as "the microphone stopped responding" — directly beneath the card
+     * explaining that access had been denied. Two contradictory accounts of one situation, and the
+     * more prominent one was wrong. Not opening it is also the honest behaviour: there is nothing to
+     * try.
+     */
+    @Test
+    fun `a denied permission never opens the microphone`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onIntent(
+            SoundMeterIntent.PermissionResult(granted = false, shouldShowRationale = true),
+        )
+        viewModel.onIntent(SoundMeterIntent.ScreenResumed)
+        advanceUntilIdle()
+
+        assertEquals(0, audioSource.collections)
+        assertNull(viewModel.state.value.failure)
+    }
+
+    /**
+     * And the gauge does not claim to be listening while it is not.
+     *
+     * "Listening…" under a refused-permission card is a small lie, and the sort that costs the tool
+     * credibility on every other number it shows.
+     */
+    @Test
+    fun `a denied permission leaves the readout idle, not listening`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onIntent(SoundMeterIntent.ScreenResumed)
+        viewModel.onIntent(
+            SoundMeterIntent.PermissionResult(granted = false, shouldShowRationale = true),
+        )
+        advanceUntilIdle()
+
+        assertEquals(SoundMeterState.Reading.Idle, viewModel.state.value.reading)
+    }
+
+    /** Granting after a refusal opens the microphone without needing the screen to be revisited. */
+    @Test
+    fun `granting after a refusal opens the microphone`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onIntent(
+            SoundMeterIntent.PermissionResult(granted = false, shouldShowRationale = true),
+        )
+        viewModel.onIntent(SoundMeterIntent.ScreenResumed)
+        advanceUntilIdle()
+        assertEquals(0, audioSource.collections)
+
+        viewModel.onIntent(
+            SoundMeterIntent.PermissionResult(granted = true, shouldShowRationale = false),
+        )
+        advanceUntilIdle()
+
+        assertEquals(1, audioSource.collections)
     }
 
     @Test

@@ -11,6 +11,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.minion.scaffold.core.designsystem.theme.AppTheme
 import com.minion.scaffold.core.sound.model.SessionStats
+import com.minion.scaffold.core.sound.model.Weighting
 import com.minion.scaffold.feature.soundmeter.R
 import com.minion.scaffold.feature.soundmeter.presentation.component.HistoryChart
 import com.minion.scaffold.feature.soundmeter.presentation.component.SessionPanel
@@ -92,6 +93,7 @@ internal fun SessionPanelPreview() {
                     unmeasurableSeconds = 6.0,
                 ),
                 measuring = true,
+                weighting = Weighting.A,
             )
         }
     }

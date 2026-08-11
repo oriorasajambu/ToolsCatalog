@@ -9,6 +9,7 @@ import com.minion.scaffold.core.sound.model.SoundReference
 import com.minion.scaffold.core.sound.model.TimeWeighting
 import com.minion.scaffold.core.sound.model.Weighting
 import com.minion.scaffold.core.ui.permission.PermissionState
+import com.minion.scaffold.feature.soundmeter.domain.CaptureFailure
 import com.minion.scaffold.feature.soundmeter.domain.CaptureQuality
 
 /**
@@ -35,8 +36,15 @@ internal data class SoundMeterState(
     /** Another app holds the microphone and this one is being fed silence. */
     val silenced: Boolean = false,
 
-    /** The capture failed and will not recover on its own. */
-    val failed: Boolean = false,
+    /**
+     * Why the capture is not running, or null when nothing has gone wrong.
+     *
+     * The reason is carried rather than a bare `failed` flag because the two failures need different
+     * words. "The microphone stopped responding" is accurate for a recorder that died mid-session
+     * and actively misleading for a device with no usable input — and pointing someone at the wrong
+     * cause is worse than saying nothing.
+     */
+    val failure: CaptureFailure? = null,
 
     /** What the big number shows, or why it shows nothing. */
     val reading: Reading = Reading.Waiting,
@@ -69,9 +77,9 @@ internal data class SoundMeterState(
 ) : UiState {
 
     /** Whether the microphone is producing anything the screen can show. */
-    val isLive: Boolean get() = capturing && !silenced && !failed
+    val isLive: Boolean get() = capturing && !silenced && failure == null
 
-    val canMeasure: Boolean get() = permission == PermissionState.Granted && !failed
+    val canMeasure: Boolean get() = permission == PermissionState.Granted && failure == null
 
     /** Whether the session has anything worth copying or sharing. */
     val hasSummary: Boolean get() = stats.hasMeasurement
@@ -100,8 +108,17 @@ internal data class SoundMeterState(
 
         data object TooQuiet : Reading
 
-        /** Nothing captured yet. */
+        /** The microphone is open and nothing has arrived yet. */
         data object Waiting : Reading
+
+        /**
+         * Not listening, and not about to be — no permission, or no usable input.
+         *
+         * Distinct from [Waiting] because "Listening…" under a screen that has just been refused
+         * microphone access is a straightforward lie, and the sort that erodes trust in every other
+         * number the tool shows.
+         */
+        data object Idle : Reading
     }
 
     companion object {
@@ -132,7 +149,7 @@ internal data class MeterChrome(
     val permission: PermissionState,
     val quality: CaptureQuality,
     val silenced: Boolean,
-    val failed: Boolean,
+    val failure: CaptureFailure?,
     val weighting: Weighting,
     val timeWeighting: TimeWeighting,
     val measuring: Boolean,
@@ -145,7 +162,7 @@ internal fun SoundMeterState.toChrome(): MeterChrome = MeterChrome(
     permission = permission,
     quality = quality,
     silenced = silenced,
-    failed = failed,
+    failure = failure,
     weighting = weighting,
     timeWeighting = timeWeighting,
     measuring = measuring,

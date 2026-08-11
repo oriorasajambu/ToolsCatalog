@@ -7,6 +7,9 @@
     <!-- Readout -->
     <string name="soundmeter_level_value">%1$.1f dB</string>
     <string name="soundmeter_waiting">Listening…</string>
+    <!-- Not "Listening…": saying so under a card explaining that access was denied is simply
+         untrue, and the sort of small lie that undermines every other number on the screen. -->
+    <string name="soundmeter_idle">Not measuring</string>
 
     <!--
       These replace the number rather than sitting beside it. A badge next to a plausible value gets
@@ -46,9 +49,18 @@
     <string name="soundmeter_session_held">Held</string>
 
     <string name="soundmeter_stat_min">Min</string>
-    <!-- Named LAeq rather than "Average". An arithmetic mean of decibels is not a quantity, so
-         calling the energy average "Avg" would invite the reader to assume it is one. -->
-    <string name="soundmeter_stat_leq">LAeq</string>
+    <!--
+      Named Leq rather than "Average". An arithmetic mean of decibels is not a quantity, so calling
+      the energy average "Avg" would invite the reader to assume it is one.
+
+      One label per weighting, because the subscript is not decoration: LAeq means the A-weighted
+      equivalent level specifically. Showing "LAeq" while the meter is set to C or Z — which is what
+      the first version did, caught by reading the copied summary back on a device — mislabels the
+      figure in exactly the way this naming was meant to avoid.
+    -->
+    <string name="soundmeter_stat_leq_a">LAeq</string>
+    <string name="soundmeter_stat_leq_c">LCeq</string>
+    <string name="soundmeter_stat_leq_z">LZeq</string>
     <string name="soundmeter_stat_max">Max</string>
     <string name="soundmeter_stat_empty">—</string>
 
@@ -64,7 +76,8 @@
       Persistent conditions, not snackbars. A message that dismisses itself cannot represent a state
       the user is still in — see MeterStatus.kt.
     -->
-    <string name="soundmeter_status_failed">The microphone stopped responding. Leave the screen and come back to try again.</string>
+    <string name="soundmeter_status_interrupted">The microphone stopped responding. Leave the screen and come back to try again.</string>
+    <string name="soundmeter_status_unavailable">No usable microphone input on this device.</string>
     <string name="soundmeter_status_silenced">Another app is using the microphone, so there is nothing to measure.</string>
     <string name="soundmeter_status_processed">Using a processed microphone input on this device — automatic gain control may be flattening loud sounds.</string>
     <string name="soundmeter_status_voice_recognition">Using the speech input on this device, which is usually unprocessed but not guaranteed to be.</string>

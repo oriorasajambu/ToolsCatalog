@@ -26,6 +26,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
@@ -61,6 +62,17 @@ internal class SoundMeterViewModel @Inject constructor(
 
     /** Whether the screen is on show. The microphone follows this, not the ViewModel's lifetime. */
     private val screenVisible = MutableStateFlow(false)
+
+    /**
+     * Whether the microphone may be opened at all.
+     *
+     * Kept beside [screenVisible] and combined with it, rather than letting the capture be attempted
+     * and report back that it could not open. Found on device: opening without permission produced a
+     * `Failed` event, which the status line rendered as "the microphone stopped responding" —
+     * directly underneath the card explaining that access had been denied. Two contradictory
+     * explanations of one situation, and the more prominent one was wrong.
+     */
+    private val permissionGranted = MutableStateFlow(false)
 
     private var filter: WeightingFilter? = null
     private var smoothing = TimeWeightingState()
@@ -117,8 +129,9 @@ internal class SoundMeterViewModel @Inject constructor(
         // so a bare `launchIn` would hold the microphone open with the phone in a pocket.
         // `flatMapLatest` tears the upstream down on pause, which releases the recorder through the
         // flow's own `awaitClose`.
-        screenVisible
-            .flatMapLatest { visible -> if (visible) audioSource.capture() else emptyFlow() }
+        combine(screenVisible, permissionGranted) { visible, granted -> visible && granted }
+            .distinctUntilChanged()
+            .flatMapLatest { canCapture -> if (canCapture) audioSource.capture() else emptyFlow() }
             .onEach(::onCaptureEvent)
             .launchIn(viewModelScope)
     }
@@ -134,18 +147,25 @@ internal class SoundMeterViewModel @Inject constructor(
                     copy(
                         capturing = false,
                         silenced = false,
-                        reading = SoundMeterState.Reading.Waiting,
+                        reading = SoundMeterState.Reading.Idle,
                     )
                 }
             }
 
-            is SoundMeterIntent.PermissionResult -> reduce {
-                copy(
-                    permission = PermissionState.resolve(
-                        granted = intent.granted,
-                        shouldShowRationale = intent.shouldShowRationale,
-                    ),
-                )
+            is SoundMeterIntent.PermissionResult -> {
+                permissionGranted.value = intent.granted
+
+                reduce {
+                    copy(
+                        permission = PermissionState.resolve(
+                            granted = intent.granted,
+                            shouldShowRationale = intent.shouldShowRationale,
+                        ),
+                        // Without this the gauge sits on "Listening…" underneath a card saying
+                        // access was refused, which is simply untrue.
+                        reading = if (intent.granted) reading else SoundMeterState.Reading.Idle,
+                    )
+                }
             }
 
             SoundMeterIntent.AppSettingsRequested -> emit(SoundMeterEffect.OpenAppSettings)
@@ -190,7 +210,14 @@ internal class SoundMeterViewModel @Inject constructor(
         when (event) {
             is CaptureEvent.Started -> {
                 resetSignalState()
-                reduce { copy(capturing = true, failed = false, quality = event.quality) }
+                reduce {
+                    copy(
+                        capturing = true,
+                        failure = null,
+                        quality = event.quality,
+                        reading = SoundMeterState.Reading.Waiting,
+                    )
+                }
 
                 // Once per screen instance rather than once per resume: a warning repeated every
                 // time the user glances away and back is noise rather than information.
@@ -205,15 +232,15 @@ internal class SoundMeterViewModel @Inject constructor(
             is CaptureEvent.Silenced -> reduce {
                 copy(
                     silenced = event.silenced,
-                    reading = if (event.silenced) SoundMeterState.Reading.Waiting else reading,
+                    reading = if (event.silenced) SoundMeterState.Reading.Idle else reading,
                 )
             }
 
             is CaptureEvent.Failed -> reduce {
                 copy(
-                    failed = true,
+                    failure = event.reason,
                     capturing = false,
-                    reading = SoundMeterState.Reading.Waiting,
+                    reading = SoundMeterState.Reading.Idle,
                 )
             }
         }

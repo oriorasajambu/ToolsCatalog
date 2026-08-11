@@ -1,5 +1,6 @@
 package com.minion.scaffold.feature.soundmeter.presentation.component
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,15 +17,21 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.minion.scaffold.core.sound.model.SessionStats
 import com.minion.scaffold.core.sound.model.SoundReference
+import com.minion.scaffold.core.sound.model.Weighting
 import com.minion.scaffold.feature.soundmeter.R
 
 /**
- * What the session came to: Min, LAeq, Max — and the caveats that make them mean something.
+ * What the session came to: Min, Leq, Max — and the caveats that make them mean something.
  *
- * **There is one average and it is called LAeq**, not "Avg". An arithmetic mean of decibel values is
+ * **There is one average and it is called Leq**, not "Avg". An arithmetic mean of decibel values is
  * not a quantity; averaging exponents gives a number that is stable, plausible and meaningless.
  * Naming it properly is what makes the value on screen match the one in every noise regulation, and
  * it is a small enough word to look up.
+ *
+ * The label follows the weighting — LAeq, LCeq, LZeq — because the subscript is part of the name
+ * rather than decoration. The first version hard-coded LAeq, which was caught by reading a copied
+ * summary back off a device while the meter was set to Z: the summary said dB(Z) and the panel said
+ * LAeq, about the same number.
  *
  * The two footnotes appear only when they apply, and both change how the numbers should be read.
  * Time out of range says the Leq is an average over less than the whole session; time above the
@@ -35,6 +42,7 @@ import com.minion.scaffold.feature.soundmeter.R
 internal fun SessionPanel(
     stats: SessionStats,
     measuring: Boolean,
+    weighting: Weighting,
     modifier: Modifier = Modifier,
 ) {
     val spacing = dimensionResource(R.dimen.soundmeter_spacing)
@@ -77,7 +85,7 @@ internal fun SessionPanel(
                     modifier = Modifier.weight(1f),
                 )
                 StatCell(
-                    labelRes = R.string.soundmeter_stat_leq,
+                    labelRes = weighting.leqLabelRes(),
                     value = stats.leqDbSpl,
                     emphasised = true,
                     modifier = Modifier.weight(1f),
@@ -159,6 +167,14 @@ private fun StatCell(
             textAlign = TextAlign.Center,
         )
     }
+}
+
+/** LAeq, LCeq, LZeq — the subscript names the weighting and is not interchangeable. */
+@StringRes
+private fun Weighting.leqLabelRes(): Int = when (this) {
+    Weighting.A -> R.string.soundmeter_stat_leq_a
+    Weighting.C -> R.string.soundmeter_stat_leq_c
+    Weighting.Z -> R.string.soundmeter_stat_leq_z
 }
 
 private const val SECONDS_PER_MINUTE = 60

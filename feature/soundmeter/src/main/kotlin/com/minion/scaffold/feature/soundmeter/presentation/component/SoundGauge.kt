@@ -150,8 +150,16 @@ private fun GaugeReadout(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            SoundMeterState.Reading.Waiting -> Text(
-                text = stringResource(R.string.soundmeter_waiting),
+            SoundMeterState.Reading.Waiting,
+            SoundMeterState.Reading.Idle,
+            -> Text(
+                text = stringResource(
+                    if (display == SoundMeterState.Reading.Idle) {
+                        R.string.soundmeter_idle
+                    } else {
+                        R.string.soundmeter_waiting
+                    },
+                ),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
