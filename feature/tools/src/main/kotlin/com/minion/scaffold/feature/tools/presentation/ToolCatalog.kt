@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.ContactPage
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.HideImage
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.minion.scaffold.core.navigation.AppRoute
+import com.minion.scaffold.core.navigation.ExifStripRoute
 import com.minion.scaffold.core.navigation.GenerateRoute
 import com.minion.scaffold.core.navigation.LevelRoute
 import com.minion.scaffold.core.navigation.OcrRoute
@@ -149,6 +151,14 @@ internal object ToolCatalog {
             descriptionRes = R.string.tools_sound_meter_description,
             icon = Icons.Filled.GraphicEq,
             route = SoundMeterRoute,
+            category = ToolCategory.Utility,
+        ),
+        Tool(
+            id = "exif-strip",
+            titleRes = R.string.tools_exif_strip_title,
+            descriptionRes = R.string.tools_exif_strip_description,
+            icon = Icons.Filled.HideImage,
+            route = ExifStripRoute,
             category = ToolCategory.Utility,
         ),
         Tool(

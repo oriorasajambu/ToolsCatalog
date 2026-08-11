@@ -64,6 +64,12 @@ include(":core:weather")
 // way to know the maths is right is to prove it against synthesised vectors in a JVM test.
 include(":core:level")
 
+// Image container surgery — which bytes of a JPEG, PNG or WebP carry metadata and which carry the
+// picture. Pure Kotlin, and it never touches a file: it returns a plan of byte ranges to copy, which
+// is what makes the "pixels are never re-encoded" guarantee a property of the types rather than of
+// whoever reviews the next change.
+include(":core:exif")
+
 // Sound level metering — the A/C/Z weighting filters, exponential time weighting, and the session
 // accumulator behind Leq. Pure Kotlin for a sharper version of :core:level's reason: a phone cannot
 // know its own microphone sensitivity, so the filters are the only part that can be proved — and
@@ -103,4 +109,5 @@ include(":feature:weather")
 include(":feature:ocr")
 include(":feature:level")
 include(":feature:soundmeter")
+include(":feature:exifstrip")
 

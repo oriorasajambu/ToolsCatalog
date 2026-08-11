@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+          Hands the cleaned copy to a share target without exposing the cache directory.
+
+          The provider is a subclass rather than androidx's FileProvider directly, because the
+          manifest merger keys <provider> on android:name and not on android:authorities — so two
+          library modules both declaring androidx.core.content.FileProvider collide even with
+          different authorities. The failure reports a conflict on the authority attribute and
+          suggests tools:replace, which points at the symptom and would silently make one feature's
+          provider serve the other's paths. See ExifStripFileProvider.
+
+          The authority is still feature-prefixed, so the two providers are also distinguishable at
+          runtime.
+
+          The FILE_PROVIDER_PATHS meta-data is required even though the subclass also passes the
+          resource to its superclass constructor. The constructor configures the provider instance;
+          the static FileProvider.getUriForFile resolves the paths separately, by reading this
+          meta-data off the registered ProviderInfo. Omitting it registers a perfectly valid
+          provider that then throws the moment anything asks it for a Uri — found on a device, where
+          it surfaced as an export failure with no logged cause.
+
+          There is deliberately no MediaStore write and no storage permission. The clean copy never
+          enters the photo library, so it cannot be indexed, backed up to a cloud gallery, or end up
+          sitting next to the original where the two can be confused.
+        -->
+        <provider
+            android:name="com.minion.scaffold.feature.exifstrip.data.ExifStripFileProvider"
+            android:authorities="${applicationId}.exifstrip.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/exifstrip_file_paths" />
+        </provider>
+    </application>
+
+</manifest>

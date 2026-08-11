@@ -4,9 +4,13 @@
     <application>
         <!--
           Shares the generated PNG without exposing the cache directory. The authority is
-          feature-prefixed because two library modules each claiming
-          "${applicationId}.fileprovider" collide at manifest merge, and that failure surfaces as
-          a build error with no obvious cause.
+          feature-prefixed so that two providers are distinguishable at runtime.
+
+          Note that a distinct authority is NOT what keeps the manifest merge working: the merger
+          keys <provider> on android:name, so a second module declaring this same class collides
+          however its authority is spelled. :feature:exifstrip therefore subclasses FileProvider to
+          get a unique name — see ExifStripFileProvider. This declaration stays as it is because it
+          is the only one using the base class; a third would need the same treatment.
 
           Saving to the gallery does not go through here — that writes via MediaStore, which needs
           no provider and no permission.

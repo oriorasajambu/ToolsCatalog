@@ -201,6 +201,20 @@ data object LevelRoute : AppRoute
 @Serializable
 data object LevelCalibrationRoute : AppRoute
 
+/** The metadata stripper: what a photo reveals, and a copy without it. */
+@Serializable
+data object ExifStripRoute : AppRoute
+
+/**
+ * The stripper's own settings — the colour-profile choice, and what the tool cannot promise.
+ *
+ * A destination rather than a panel because the second half needs room. The statement of what is
+ * *not* removed matters more than the toggle, and a privacy tool implying a completeness it lacks is
+ * worse than one that draws its line clearly.
+ */
+@Serializable
+data object ExifStripSettingsRoute : AppRoute
+
 /** The sound meter: how loud is it here, and what was the loudest it got. */
 @Serializable
 data object SoundMeterRoute : AppRoute
