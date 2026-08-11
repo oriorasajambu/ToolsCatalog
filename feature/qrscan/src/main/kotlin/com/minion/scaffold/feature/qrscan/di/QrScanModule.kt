@@ -18,6 +18,10 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 internal abstract class QrScanModule {
 
+    /**
+     * @param decoder The ML Kit-backed implementation.
+     * @return The [ImageBarcodeDecoder] binding.
+     */
     @Binds
     @Singleton
     abstract fun bindImageBarcodeDecoder(

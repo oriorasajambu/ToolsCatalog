@@ -91,6 +91,14 @@ import com.minion.scaffold.feature.qrscan.presentation.report.describeContext
 import com.minion.scaffold.feature.qrscan.presentation.report.toPlainText
 import kotlinx.coroutines.launch
 
+/**
+ * The QR scan screen: camera viewfinder or manual entry, and the decoded report.
+ *
+ * @param onNavigateBack Called when the user leaves the scanner.
+ * @param onEditPayload  Called with the route for a payload the user wants to edit.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun QrScanScreen(
     onNavigateBack: () -> Unit,

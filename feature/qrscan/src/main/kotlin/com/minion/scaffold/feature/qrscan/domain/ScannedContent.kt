@@ -13,22 +13,46 @@ import com.minion.scaffold.core.wifi.model.WifiCredentials
  */
 internal sealed interface ScannedContent {
 
+    /** The original scanned string. */
     val payload: String
 
+    /**
+     * An EMV payment code.
+     *
+     * @property report The decoded inquiry report.
+     */
     data class Payment(val report: QrInquiryReport) : ScannedContent {
         override val payload: String get() = report.payload
     }
 
+    /**
+     * A Wi-Fi credential code.
+     *
+     * @property payload     The original scanned string.
+     * @property credentials The parsed network credentials.
+     */
     data class Wifi(
         override val payload: String,
         val credentials: WifiCredentials,
     ) : ScannedContent
 
+    /**
+     * A web link.
+     *
+     * @property payload The original scanned string.
+     * @property url     The parsed URL.
+     */
     data class Web(
         override val payload: String,
         val url: String,
     ) : ScannedContent
 
+    /**
+     * A contact card.
+     *
+     * @property payload The original scanned string.
+     * @property card    The parsed contact card.
+     */
     data class Contact(
         override val payload: String,
         val card: ContactCard,
@@ -44,6 +68,11 @@ internal sealed interface ScannedContent {
  */
 internal sealed interface ScanResult {
 
+    /**
+     * The code was recognised and decoded.
+     *
+     * @property content What the code turned out to be.
+     */
     data class Recognised(val content: ScannedContent) : ScanResult
 
     /**
@@ -52,6 +81,9 @@ internal sealed interface ScanResult {
      * [payload] is the **trimmed** string the offsets in [error] index. Carried rather than left to
      * the caller because the trim happens here: comparing against the untrimmed original would put
      * every reported position out by however much whitespace a scanner or clipboard added.
+     *
+     * @property error   What is wrong with the payment code.
+     * @property payload The trimmed payload the error's offsets index.
      */
     data class Malformed(val error: QrParseError, val payload: String) : ScanResult
 

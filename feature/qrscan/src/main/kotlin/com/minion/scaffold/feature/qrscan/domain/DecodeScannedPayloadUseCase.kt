@@ -28,6 +28,13 @@ internal class DecodeScannedPayloadUseCase @Inject constructor(
     private val parseEmvPayload: ParseEmvPayloadUseCase,
 ) {
 
+    /**
+     * Identifies the payload's format and decodes it.
+     *
+     * @param payload The scanned string.
+     * @return [ScanResult.Recognised] with the decoded content, [ScanResult.Malformed] for a broken
+     *   payment code, or [ScanResult.Unrecognised] for a format this app does not read.
+     */
     operator fun invoke(payload: String): ScanResult {
         val trimmed = payload.trim()
 
