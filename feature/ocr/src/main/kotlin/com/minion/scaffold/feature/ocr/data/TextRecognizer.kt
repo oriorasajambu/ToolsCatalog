@@ -20,6 +20,12 @@ import com.minion.scaffold.core.ocr.model.RecognizedText
  */
 internal interface TextRecognitionEngine {
 
+    /**
+     * Reads text out of [bitmap].
+     *
+     * @param bitmap An already-decoded, already-upright bitmap.
+     * @return [OcrResult.Found] with the text, [OcrResult.NoText], or [OcrResult.Unreadable].
+     */
     suspend fun recognize(bitmap: Bitmap): OcrResult
 }
 
@@ -33,13 +39,24 @@ internal interface TextRecognitionEngine {
  */
 internal interface TextRecognizer {
 
+    /**
+     * Reads text out of [bitmap], reporting which engine actually performed it.
+     *
+     * @param bitmap An already-decoded, already-upright bitmap.
+     * @return The recognition result and the engine that produced it.
+     */
     suspend fun recognize(bitmap: Bitmap): Recognition
 
     /** Drops any engine resources held for the screen. Safe to call more than once. */
     fun release()
 }
 
-/** A recognition, and the engine that actually performed it — not necessarily the one selected. */
+/**
+ * A recognition, and the engine that actually performed it — not necessarily the one selected.
+ *
+ * @property result What was read.
+ * @property engine The engine that produced [result].
+ */
 internal data class Recognition(
     val result: OcrResult,
     val engine: OcrEngine,
@@ -55,6 +72,11 @@ internal data class Recognition(
  */
 internal sealed interface OcrResult {
 
+    /**
+     * Text was recognised.
+     *
+     * @property text The recognised text.
+     */
     data class Found(val text: RecognizedText) : OcrResult
 
     /** The image was fine; the model found nothing in it. */

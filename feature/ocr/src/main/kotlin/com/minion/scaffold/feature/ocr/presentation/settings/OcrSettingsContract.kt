@@ -13,10 +13,18 @@ import com.minion.scaffold.core.ocr.model.OcrEngine
  * failure phase for a sealed hierarchy to make unrepresentable.
  */
 internal data class OcrSettingsState(
+    /** The currently selected recognition engine. */
     val engine: OcrEngine = OcrEngine.DEFAULT,
 ) : UiState
 
+/** Everything the user can do on the engine picker. */
 internal sealed interface OcrSettingsIntent : UiIntent {
+
+    /**
+     * A recognition engine was selected.
+     *
+     * @property engine The newly selected engine.
+     */
     data class EngineSelected(val engine: OcrEngine) : OcrSettingsIntent
 }
 

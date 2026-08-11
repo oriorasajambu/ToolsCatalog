@@ -16,6 +16,11 @@ import com.minion.scaffold.feature.ocr.presentation.settings.OcrSettingsScreen
  *
  * The text arrives already capped — the ViewModel does that, so it can also tell the user when it
  * had to shorten something rather than silently delivering less than they extracted.
+ *
+ * @receiver The nav graph builder to register the destination on.
+ * @param onNavigateBack        Called when the user leaves the OCR screen.
+ * @param onNavigateToTextTools Called with the route carrying extracted text bound for the text tools.
+ * @param onNavigateToSettings  Called when the user opens the engine picker.
  */
 fun NavGraphBuilder.ocrScreen(
     onNavigateBack: () -> Unit,
@@ -37,6 +42,9 @@ fun NavGraphBuilder.ocrScreen(
  * Separate from [ocrScreen] rather than nested inside it so the OCR screen stays on the back stack
  * while settings is open — which is what lets its ViewModel see the engine change and re-recognise
  * the capture it is still holding.
+ *
+ * @receiver The nav graph builder to register the destination on.
+ * @param onNavigateBack Called when the user leaves the engine picker.
  */
 fun NavGraphBuilder.ocrSettingsScreen(
     onNavigateBack: () -> Unit,
