@@ -7,8 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 An opinionated Android scaffold: Kotlin, Jetpack Compose, MVI, Clean Architecture, Hilt, and a
 Gradle multi-module graph whose boundaries are enforced by the build rather than by code review.
 The repo currently carries a worked example app, **ToolBox** (`app_name` in strings.xml) — an
-offline utility app for scanning/building EMV, Wi-Fi, link and vCard QR codes plus text tools.
-Package root is `com.minion.scaffold`.
+offline utility app whose tools cover scanning/building EMV, Wi-Fi, link and vCard QR codes, text
+transforms, a weather lookup, on-device OCR, a bubble level, a sound-level meter and an EXIF
+stripper. Package root is `com.minion.scaffold`.
 
 The full architectural rationale (why each rule exists, not just what it is) lives in
 [README.md](README.md) — read it before making structural changes; this file summarizes what's
@@ -55,7 +56,10 @@ need real values; the repo builds without them (unsigned release, template `BASE
 ├── :core:emv/:wifi/:url/:vcard/:text   Pure-Kotlin domain logic for each QR/text format.
 ├── :core:weather        Pure Kotlin. WMO codes, unit conversion, notable-condition thresholds.
 ├── :core:ocr            Pure Kotlin. Reading-order reconstruction, line→block grouping, OcrEngine.
-└── :feature:*           tools, qrscan, qrcreate, texttools, weather, ocr — one per screen area.
+├── :core:level          Pure Kotlin. Tilt geometry, pose machine, gravity smoothing, flip calibration.
+├── :core:sound          Pure Kotlin. A/C/Z weighting filters, time weighting, the Leq session accumulator.
+├── :core:exif           Pure Kotlin. JPEG/PNG/WebP container surgery — returns byte-range strip plans, never touches a file.
+└── :feature:*           tools, qrscan, qrcreate, texttools, weather, ocr, level, soundmeter, exifstrip — one per screen area.
 ```
 
 Dependency rules (enforced by convention plugins, not review):
