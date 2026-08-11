@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="soundmeter_title">Sound meter</string>
+    <string name="soundmeter_navigate_back">Back</string>
+    <string name="soundmeter_settings">Calibration and accuracy</string>
+
+    <!-- Readout -->
+    <string name="soundmeter_level_value">%1$.1f dB</string>
+    <string name="soundmeter_waiting">Listening…</string>
+
+    <!--
+      These replace the number rather than sitting beside it. A badge next to a plausible value gets
+      read past, and the whole point of detecting clipping is that the figure underneath is not a
+      slightly-wrong version of the truth — it is a different number.
+    -->
+    <string name="soundmeter_too_loud">Too loud to measure</string>
+    <string name="soundmeter_too_loud_detail">The microphone is saturating, so the real level is higher than anything shown here.</string>
+    <string name="soundmeter_too_quiet">Below the noise floor</string>
+    <string name="soundmeter_too_quiet_detail">Quieter than this microphone can distinguish from its own noise.</string>
+
+    <!-- Bands, from published guidance rather than taste. See NoiseBands.kt. -->
+    <string name="soundmeter_band_quiet">Quiet — library, bedroom at night</string>
+    <string name="soundmeter_band_moderate">Moderate — conversation, office</string>
+    <string name="soundmeter_band_loud">Loud — busy street, vacuum cleaner</string>
+    <string name="soundmeter_band_harmful">Above the 85 dB exposure limit</string>
+
+    <!-- Modes -->
+    <string name="soundmeter_weighting_a">dB(A)</string>
+    <string name="soundmeter_weighting_c">dB(C)</string>
+    <string name="soundmeter_weighting_z">dB(Z)</string>
+    <string name="soundmeter_time_fast">Fast</string>
+    <string name="soundmeter_time_slow">Slow</string>
+
+    <!-- Session -->
+    <string name="soundmeter_start">Start measuring</string>
+    <string name="soundmeter_stop">Stop</string>
+    <string name="soundmeter_reset">Reset</string>
+    <string name="soundmeter_copy_summary">Copy summary</string>
+    <string name="soundmeter_clipboard_label">Sound level measurement</string>
+    <string name="soundmeter_summary_copied">Summary copied</string>
+
+    <string name="soundmeter_session_title">This session</string>
+    <string name="soundmeter_session_running">Measuring</string>
+    <!-- "Held", not "Stopped": the live gauge above is still moving, and a label saying stopped
+         would read as the whole screen having frozen. -->
+    <string name="soundmeter_session_held">Held</string>
+
+    <string name="soundmeter_stat_min">Min</string>
+    <!-- Named LAeq rather than "Average". An arithmetic mean of decibels is not a quantity, so
+         calling the energy average "Avg" would invite the reader to assume it is one. -->
+    <string name="soundmeter_stat_leq">LAeq</string>
+    <string name="soundmeter_stat_max">Max</string>
+    <string name="soundmeter_stat_empty">—</string>
+
+    <string name="soundmeter_session_duration">Duration %1$d min %2$02d s</string>
+    <string name="soundmeter_session_above_threshold" tools:ignore="PluralsCandidate">Above %1$d dB for %2$d s</string>
+    <string name="soundmeter_session_unmeasurable" tools:ignore="PluralsCandidate">Out of range for %1$d s — the average covers the rest</string>
+
+    <!-- Chart -->
+    <string name="soundmeter_chart_title">Last 60 seconds</string>
+    <string name="soundmeter_chart_description">A chart of the sound level over the last sixty seconds, with the 85 dB exposure limit marked.</string>
+
+    <!--
+      Persistent conditions, not snackbars. A message that dismisses itself cannot represent a state
+      the user is still in — see MeterStatus.kt.
+    -->
+    <string name="soundmeter_status_failed">The microphone stopped responding. Leave the screen and come back to try again.</string>
+    <string name="soundmeter_status_silenced">Another app is using the microphone, so there is nothing to measure.</string>
+    <string name="soundmeter_status_processed">Using a processed microphone input on this device — automatic gain control may be flattening loud sounds.</string>
+    <string name="soundmeter_status_voice_recognition">Using the speech input on this device, which is usually unprocessed but not guaranteed to be.</string>
+
+    <!--
+      Permanent, and deliberately not conditional on anything. The offset changes the number but
+      cannot establish that it is right, so there is no state in which claiming calibration would be
+      true.
+    -->
+    <string name="soundmeter_disclaimer_approximate">Approximate — a phone microphone is not a calibrated instrument.</string>
+    <string name="soundmeter_disclaimer_not_certified">Not a certified sound level meter. Not for compliance, evidence or workplace assessment.</string>
+
+    <!-- Notices -->
+    <string name="soundmeter_notice_reset">Session cleared</string>
+    <string name="soundmeter_notice_nothing_measured">Nothing measurable in that session</string>
+    <string name="soundmeter_notice_processed_input">This device only offers a processed microphone input</string>
+
+    <!-- Permission -->
+    <string name="soundmeter_permission_rationale">Measuring needs access to the microphone. Nothing is recorded or stored — each fraction of a second of sound is turned into a number and discarded, and no audio leaves the device.</string>
+    <string name="soundmeter_permission_grant">Allow microphone access</string>
+    <string name="soundmeter_permission_blocked">Microphone access is turned off for this app. You can switch it back on in Settings.</string>
+    <string name="soundmeter_permission_open_settings">Open settings</string>
+
+    <!-- Settings -->
+    <string name="soundmeter_settings_title">Calibration and accuracy</string>
+    <string name="soundmeter_settings_offset_title">Calibration offset</string>
+    <string name="soundmeter_settings_offset_body">Shifts every reading by a fixed amount. To set it honestly, measure a steady sound next to a real sound level meter and move this until the two agree. Guessing at it, or adjusting until the number looks right, does not calibrate anything.</string>
+    <string name="soundmeter_settings_offset_value">%1$+.1f dB</string>
+    <string name="soundmeter_settings_offset_reset">Reset to zero</string>
+
+    <string name="soundmeter_settings_accuracy_title">How accurate is this?</string>
+    <string name="soundmeter_settings_accuracy_body">The filters are built to the IEC 61672-1 weighting curves and are checked against the standard\'s published response at every octave. The absolute level is a different matter: converting the microphone\'s digital signal into decibels needs its sensitivity, Android does not expose that, and it varies by 10–20 dB between phone models. So relative changes are trustworthy — if the reading rises by 10 dB, the room really did get about 10 dB louder — while the absolute figure carries an unknown offset until you set one above. Very loud sounds are also beyond the range of the hardware; the meter says so rather than reporting a number it cannot stand behind.</string>
+
+    <string name="soundmeter_settings_privacy_title">What happens to the audio</string>
+    <string name="soundmeter_settings_privacy_body">Nothing is recorded. Sound arrives in fragments of about a fiftieth of a second, each one is reduced to a single level, and the samples are dropped immediately. No audio is written to storage, and none of it leaves the device. The microphone is released the moment you leave this screen — the app does not hold it in the background, and does not ask for the permission that would let it.</string>
+
+    <!-- Summary, for the clipboard and the share sheet -->
+    <string name="soundmeter_summary_title">Sound level measurement</string>
+    <string name="soundmeter_summary_duration">Duration: %1$d min %2$02d s</string>
+    <string name="soundmeter_summary_leq">Equivalent continuous level (Leq): %1$s</string>
+    <string name="soundmeter_summary_min">Minimum: %1$s</string>
+    <string name="soundmeter_summary_max">Maximum: %1$s</string>
+    <string name="soundmeter_summary_above_threshold" tools:ignore="PluralsCandidate">Above %1$d dB for %2$d s</string>
+    <string name="soundmeter_summary_unmeasurable" tools:ignore="PluralsCandidate">Out of range for %1$d s, excluded from the average</string>
+    <string name="soundmeter_summary_settings">Weighting %1$s, %2$s response, offset %3$+.1f dB</string>
+    <string name="soundmeter_summary_input_unprocessed">Input: unprocessed</string>
+    <string name="soundmeter_summary_input_voice_recognition">Input: speech path (usually unprocessed)</string>
+    <string name="soundmeter_summary_input_processed">Input: processed — gain control may have affected the reading</string>
+    <string name="soundmeter_summary_input_unavailable">Input: unavailable</string>
+</resources>

@@ -11,6 +11,7 @@ import com.minion.scaffold.core.designsystem.motion.slideInFromRight
 import com.minion.scaffold.core.designsystem.motion.slideOutToRight
 import com.minion.scaffold.core.navigation.LevelCalibrationRoute
 import com.minion.scaffold.core.navigation.OcrSettingsRoute
+import com.minion.scaffold.core.navigation.SoundMeterSettingsRoute
 import com.minion.scaffold.core.navigation.ToolsRoute
 import com.minion.scaffold.core.navigation.WeatherSearchRoute
 import com.minion.scaffold.core.navigation.WeatherSettingsRoute
@@ -23,6 +24,8 @@ import com.minion.scaffold.feature.level.presentation.levelScreen
 import com.minion.scaffold.feature.ocr.presentation.ocrScreen
 import com.minion.scaffold.feature.ocr.presentation.ocrSettingsScreen
 import com.minion.scaffold.feature.qrscan.presentation.qrScanScreen
+import com.minion.scaffold.feature.soundmeter.presentation.soundMeterScreen
+import com.minion.scaffold.feature.soundmeter.presentation.soundMeterSettingsScreen
 import com.minion.scaffold.feature.texttools.presentation.generateScreen
 import com.minion.scaffold.feature.texttools.presentation.textToolsScreen
 import com.minion.scaffold.feature.tools.presentation.toolsScreen
@@ -102,6 +105,13 @@ fun AppNavHost(
             onNavigateToCalibration = { navController.navigate(LevelCalibrationRoute) },
         )
         levelCalibrationScreen(
+            onNavigateBack = { navController.popBackStack() },
+        )
+        soundMeterScreen(
+            onNavigateBack = { navController.popBackStack() },
+            onNavigateToSettings = { navController.navigate(SoundMeterSettingsRoute) },
+        )
+        soundMeterSettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
         weatherScreen(

@@ -116,6 +116,57 @@ internal data class SoundMeterState(
     }
 }
 
+/**
+ * Everything on the screen that is *not* the live reading.
+ *
+ * The gauge wants every block; the status lines, the buttons and the session figures do not. Pulling
+ * them into one slice lets the whole lower half of the screen sit behind a single `derivedStateOf`
+ * and recompose only when something in it actually changed.
+ *
+ * The statistics are **quantised** on the way in — decibels to a tenth, seconds to whole numbers —
+ * because they otherwise change on every block for reasons the eye cannot resolve. The duration
+ * ticking from 12.34 to 12.36 seconds is not a display update, it is a wasted frame.
+ */
+@Immutable
+internal data class MeterChrome(
+    val permission: PermissionState,
+    val quality: CaptureQuality,
+    val silenced: Boolean,
+    val failed: Boolean,
+    val weighting: Weighting,
+    val timeWeighting: TimeWeighting,
+    val measuring: Boolean,
+    val canMeasure: Boolean,
+    val hasSummary: Boolean,
+    val stats: SessionStats,
+)
+
+internal fun SoundMeterState.toChrome(): MeterChrome = MeterChrome(
+    permission = permission,
+    quality = quality,
+    silenced = silenced,
+    failed = failed,
+    weighting = weighting,
+    timeWeighting = timeWeighting,
+    measuring = measuring,
+    canMeasure = canMeasure,
+    hasSummary = hasSummary,
+    stats = stats.quantised(),
+)
+
+private fun SessionStats.quantised() = copy(
+    minDbSpl = minDbSpl?.toTenth(),
+    maxDbSpl = maxDbSpl?.toTenth(),
+    leqDbSpl = leqDbSpl?.toTenth(),
+    durationSeconds = durationSeconds.toWholeSeconds(),
+    secondsAboveThreshold = secondsAboveThreshold.toWholeSeconds(),
+    unmeasurableSeconds = unmeasurableSeconds.toWholeSeconds(),
+)
+
+private fun Double.toTenth(): Double = kotlin.math.round(this * 10.0) / 10.0
+
+private fun Double.toWholeSeconds(): Double = kotlin.math.floor(this)
+
 internal sealed interface SoundMeterIntent : UiIntent {
 
     /**

@@ -1,6 +1,7 @@
 package com.minion.scaffold.feature.soundmeter.data
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.AudioDeviceInfo
@@ -69,8 +70,24 @@ internal class AudioRecordSource @Inject constructor(
     private val audioManager: AudioManager? =
         context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
 
+    /**
+     * Suppressed at exactly one place, and the check it is standing in for is the first statement
+     * below.
+     *
+     * Lint cannot follow the permission guard across the `callbackFlow` lambda boundary and into the
+     * private helpers, so the alternative would be an inline check it *can* follow — duplicating the
+     * guard into the one function that constructs the recorder, where it would be a second thing to
+     * keep in step with this one. One check, in the place a reader looks for it, beats two.
+     */
+    @SuppressLint("MissingPermission")
     override fun capture(): Flow<CaptureEvent> = callbackFlow {
-        if (!hasPermission()) {
+        // The permission can be revoked while the app is running, so this is a live check on every
+        // collection rather than something resolved once at construction.
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
             send(CaptureEvent.Failed(CaptureFailure.Unavailable))
             close()
             return@callbackFlow
@@ -132,11 +149,6 @@ internal class AudioRecordSource @Inject constructor(
             session.release()
         }
     }
-
-    private fun hasPermission(): Boolean = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.RECORD_AUDIO,
-    ) == PackageManager.PERMISSION_GRANTED
 
     /**
      * Opens the best input this device will give, or null if it will give none.
