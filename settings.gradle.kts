@@ -64,6 +64,13 @@ include(":core:weather")
 // way to know the maths is right is to prove it against synthesised vectors in a JVM test.
 include(":core:level")
 
+// GNSS measurement shaping — the EGM96 geoid conversion that turns a satellite's ellipsoidal height
+// into a height above sea level, the rules that decide when a speed is really zero, and the trip
+// accumulators. Pure Kotlin: the geoid is 508 kB of published values whose correct indexing decides
+// every altitude the app shows, which can be checked at a hundred thousand points in a JVM test and
+// cannot usefully be checked by looking at a phone.
+include(":core:gnss")
+
 // Image container surgery — which bytes of a JPEG, PNG or WebP carry metadata and which carry the
 // picture. Pure Kotlin, and it never touches a file: it returns a plan of byte ranges to copy, which
 // is what makes the "pixels are never re-encoded" guarantee a property of the types rather than of
