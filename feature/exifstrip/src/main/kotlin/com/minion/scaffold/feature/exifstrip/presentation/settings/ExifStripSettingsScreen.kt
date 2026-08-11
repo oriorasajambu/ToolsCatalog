@@ -29,6 +29,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minion.scaffold.feature.exifstrip.R
 
+/**
+ * The stripper's settings: the colour-profile toggle, and the boundary of what the tool promises.
+ *
+ * @param onNavigateBack Called when the user leaves the settings screen.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ExifStripSettingsScreen(

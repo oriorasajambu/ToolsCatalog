@@ -12,6 +12,10 @@ import com.minion.scaffold.feature.exifstrip.presentation.settings.ExifStripSett
  * Navigation arrives as lambdas rather than a `NavHostController`: `:app` is the only module allowed
  * to hold one, so this module knows the route contract exists without knowing which feature serves
  * it.
+ *
+ * @receiver The nav graph builder to register the destination on.
+ * @param onNavigateBack       Called when the user leaves the stripper.
+ * @param onNavigateToSettings Called when the user opens the stripper's settings.
  */
 fun NavGraphBuilder.exifStripScreen(
     onNavigateBack: () -> Unit,
@@ -32,6 +36,9 @@ fun NavGraphBuilder.exifStripScreen(
  * *not* removed — anything hidden in the pixels themselves — matters more than the toggle, and a
  * privacy tool that implies a completeness it does not have is worse than one that draws its line
  * clearly.
+ *
+ * @receiver The nav graph builder to register the destination on.
+ * @param onNavigateBack Called when the user leaves the settings screen.
  */
 fun NavGraphBuilder.exifStripSettingsScreen(
     onNavigateBack: () -> Unit,

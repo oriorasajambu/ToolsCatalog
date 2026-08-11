@@ -17,6 +17,10 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 internal abstract class ExifStripModule {
 
+    /**
+     * @param impl The Android-backed implementation.
+     * @return The [PhotoInspector] binding.
+     */
     @Binds
     abstract fun bindPhotoInspector(impl: AndroidPhotoInspector): PhotoInspector
 
@@ -25,6 +29,9 @@ internal abstract class ExifStripModule {
      *
      * The exporter clears that directory before each write, so two instances racing would be able to
      * delete a file the other had just handed to a share target.
+     *
+     * @param impl The Android-backed implementation.
+     * @return The [CleanCopyExporter] binding.
      */
     @Binds
     @Singleton
@@ -33,6 +40,9 @@ internal abstract class ExifStripModule {
     /**
      * `@Singleton` matters beyond the usual reasons: DataStore throws if a second instance is
      * created for the same file within one process.
+     *
+     * @param impl The DataStore-backed implementation.
+     * @return The [ExifStripPreferencesRepository] binding.
      */
     @Binds
     @Singleton

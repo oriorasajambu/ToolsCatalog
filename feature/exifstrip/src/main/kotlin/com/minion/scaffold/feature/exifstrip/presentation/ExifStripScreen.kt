@@ -56,6 +56,14 @@ import com.minion.scaffold.feature.exifstrip.presentation.component.ExportPanel
 import com.minion.scaffold.feature.exifstrip.presentation.component.MetadataSections
 import kotlinx.coroutines.launch
 
+/**
+ * The metadata stripper screen: pick a photo, see what it reveals, export a clean copy.
+ *
+ * @param onNavigateBack       Called when the user leaves the stripper.
+ * @param onNavigateToSettings Called when the user opens the stripper's settings.
+ * @param modifier             The [Modifier] for the screen.
+ * @param viewModel            The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun ExifStripScreen(
     onNavigateBack: () -> Unit,

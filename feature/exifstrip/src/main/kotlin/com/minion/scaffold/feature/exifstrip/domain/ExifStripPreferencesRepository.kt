@@ -14,18 +14,30 @@ import javax.inject.Inject
  * to this tool is worse than a few hundred bytes of colour description they will never think about.
  */
 internal interface ExifStripPreferencesRepository {
+
+    /** Whether a JPEG's colour profile is kept, `true` by default. */
     val keepColourProfile: Flow<Boolean>
+
+    /**
+     * Sets whether to keep a JPEG's colour profile.
+     *
+     * @param keep Whether to retain the colour profile.
+     */
     suspend fun setKeepColourProfile(keep: Boolean)
 }
 
+/** Observes the keep-colour-profile preference. */
 internal class ObserveKeepColourProfileUseCase @Inject constructor(
     private val repository: ExifStripPreferencesRepository,
 ) {
+    /** @return A [Flow] of the preference, `true` by default. */
     operator fun invoke(): Flow<Boolean> = repository.keepColourProfile
 }
 
+/** Sets the keep-colour-profile preference. */
 internal class SetKeepColourProfileUseCase @Inject constructor(
     private val repository: ExifStripPreferencesRepository,
 ) {
+    /** @param keep Whether to retain a JPEG's colour profile. */
     suspend operator fun invoke(keep: Boolean) = repository.setKeepColourProfile(keep)
 }
