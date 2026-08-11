@@ -131,6 +131,12 @@ internal class AudioRecordSource @Inject constructor(
                     break
                 }
 
+                // `trySend` drops rather than suspends when the channel is full, which is the right
+                // trade for a live readout — an old block is not a measurement of now. Worth being
+                // explicit about the cost, though: session duration and time-above-threshold are
+                // counted from blocks, so sustained drops would under-report both. The consumer
+                // does a few hundred thousand multiply-adds a second against a 64-deep buffer, so
+                // this is a documented assumption rather than an expected condition.
                 trySend(
                     CaptureEvent.Captured(
                         AudioBlock(

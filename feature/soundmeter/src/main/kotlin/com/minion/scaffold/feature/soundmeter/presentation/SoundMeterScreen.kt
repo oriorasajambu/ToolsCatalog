@@ -120,7 +120,7 @@ internal fun SoundMeterScreen(
         viewModel.onIntent(SoundMeterIntent.ScreenPaused)
     }
 
-    KeepScreenOnWhileMeasuring()
+    KeepScreenOn()
 
     ObserveAsEvents(viewModel.effect) { effect ->
         when (effect) {
@@ -172,7 +172,7 @@ internal fun SoundMeterScreen(
  * this reading depends on which way up the device is.
  */
 @Composable
-private fun KeepScreenOnWhileMeasuring() {
+private fun KeepScreenOn() {
     val view = LocalView.current
 
     DisposableEffect(view) {
