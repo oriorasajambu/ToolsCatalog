@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+          Hands the cleaned copy to a share target without exposing the cache directory. The
+          authority is feature-prefixed because two library modules each claiming
+          "${applicationId}.fileprovider" collide at manifest merge, and that failure surfaces as a
+          build error with no obvious cause — the same note :feature:qrcreate carries.
+
+          There is deliberately no MediaStore write and no storage permission. The clean copy never
+          enters the photo library, so it cannot be indexed, backed up to a cloud gallery, or end up
+          sitting next to the original where the two can be confused.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.exifstrip.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/exifstrip_file_paths" />
+        </provider>
+    </application>
+
+</manifest>

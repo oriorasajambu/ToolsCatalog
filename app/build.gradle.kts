@@ -157,6 +157,7 @@ dependencies {
     implementation(project(":feature:ocr"))
     implementation(project(":feature:level"))
     implementation(project(":feature:soundmeter"))
+    implementation(project(":feature:exifstrip"))
 
     implementation(libs.androidx.splashscreen)
 
