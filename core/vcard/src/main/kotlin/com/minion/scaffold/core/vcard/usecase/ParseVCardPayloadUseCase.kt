@@ -18,6 +18,13 @@ import javax.inject.Inject
  */
 class ParseVCardPayloadUseCase @Inject constructor() {
 
+    /**
+     * Reads [payload] into a contact card, or returns null when it is not a vCard.
+     *
+     * @param payload The scanned or pasted payload, whitespace and all.
+     * @return The parsed [ContactCard], or `null` when [payload] is not a vCard 3.0 card or is
+     *         missing its mandatory `FN`.
+     */
     operator fun invoke(payload: String): ContactCard? {
         val lines = VCardValueCodec.unfold(payload.trim())
             .split(VCardFormat.LINE_BREAK, "\n")

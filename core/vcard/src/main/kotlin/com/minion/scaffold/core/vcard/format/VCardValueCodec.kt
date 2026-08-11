@@ -23,6 +23,12 @@ internal object VCardValueCodec {
     /** Removes a line break followed by one space or tab — the spec's folding. */
     private val FOLD = Regex("\\r?\\n[ \\t]")
 
+    /**
+     * A value with the special characters and newlines escaped, ready to place after a property name.
+     *
+     * @param value The raw value to escape.
+     * @return The escaped value.
+     */
     fun encode(value: String): String = buildString {
         for (character in value) {
             when {
@@ -36,6 +42,12 @@ internal object VCardValueCodec {
         }
     }
 
+    /**
+     * The inverse of [encode]: resolves escape sequences back to their characters.
+     *
+     * @param value An escaped value from a payload.
+     * @return The decoded value.
+     */
     fun decode(value: String): String = buildString {
         var escaped = false
 
@@ -61,6 +73,10 @@ internal object VCardValueCodec {
      *
      * `String.split` cannot do this, which is the whole reason this exists: it would cut a family
      * name in half at its first escaped semicolon.
+     *
+     * @param value     The string to split, escapes intact.
+     * @param delimiter The character to split on when it is not escaped.
+     * @return The parts between unescaped delimiters, escapes still in place.
      */
     fun splitUnescaped(value: String, delimiter: Char): List<String> {
         val parts = mutableListOf<String>()
@@ -89,6 +105,11 @@ internal object VCardValueCodec {
         return parts
     }
 
-    /** Joins folded continuation lines back onto the line they belong to. */
+    /**
+     * Joins folded continuation lines back onto the line they belong to.
+     *
+     * @param text The raw payload text, possibly containing folded lines.
+     * @return The text with the spec's line folding removed.
+     */
     fun unfold(text: String): String = text.replace(FOLD, "")
 }

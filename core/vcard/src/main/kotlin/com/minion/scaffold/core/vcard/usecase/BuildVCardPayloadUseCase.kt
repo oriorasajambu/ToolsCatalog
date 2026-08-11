@@ -25,6 +25,13 @@ import javax.inject.Inject
  */
 class BuildVCardPayloadUseCase @Inject constructor() {
 
+    /**
+     * Validates [card] and, if it is sound, writes the payload.
+     *
+     * @param card The contact details to validate and write.
+     * @return [VCardBuildResult.Success] with the payload, or [VCardBuildResult.Invalid] listing
+     *         every field that failed validation.
+     */
     operator fun invoke(card: ContactCard): VCardBuildResult {
         val violations = card.validate()
 

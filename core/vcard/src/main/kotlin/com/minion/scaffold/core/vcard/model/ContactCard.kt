@@ -8,12 +8,19 @@ package com.minion.scaffold.core.vcard.model
  * components of `N` that a business card actually carries.
  */
 data class ContactCard(
+    /** `FN` — the display name vCard 3.0 requires. */
     val formattedName: String,
+    /** The given-name component of `N`. */
     val givenName: String = "",
+    /** The family-name component of `N`. */
     val familyName: String = "",
+    /** `ORG` — the organisation name. */
     val organization: String = "",
+    /** `TITLE` — the job title. */
     val title: String = "",
+    /** `TEL` — a single phone number. */
     val phone: String = "",
+    /** `EMAIL` — a single email address. */
     val email: String = "",
     /**
      * Properties no field above represents, re-emitted verbatim.
