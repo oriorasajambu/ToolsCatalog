@@ -201,6 +201,20 @@ data object LevelRoute : AppRoute
 @Serializable
 data object LevelCalibrationRoute : AppRoute
 
+/** The sound meter: how loud is it here, and what was the loudest it got. */
+@Serializable
+data object SoundMeterRoute : AppRoute
+
+/**
+ * The sound meter's own settings — the calibration offset, and what the tool does not claim.
+ *
+ * A destination rather than a panel on the meter. The offset is set once and then left alone, and a
+ * slider beside a live reading invites adjusting it until the number looks agreeable — which feels
+ * like calibrating and is the opposite of it.
+ */
+@Serializable
+data object SoundMeterSettingsRoute : AppRoute
+
 /**
  * The weather home screen: location permission gate plus the pinned current-location card.
  *

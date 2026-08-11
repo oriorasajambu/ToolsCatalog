@@ -156,6 +156,7 @@ dependencies {
     implementation(project(":feature:weather"))
     implementation(project(":feature:ocr"))
     implementation(project(":feature:level"))
+    implementation(project(":feature:soundmeter"))
 
     implementation(libs.androidx.splashscreen)
 

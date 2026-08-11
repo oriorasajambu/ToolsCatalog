@@ -41,4 +41,7 @@
     <string name="tools_ocr_description">Pull the text out of a photo, on the device</string>
     <string name="tools_level_title">Level</string>
     <string name="tools_level_description">Check whether a surface is level, and measure its slope</string>
+
+    <string name="tools_sound_meter_title">Sound meter</string>
+    <string name="tools_sound_meter_description">Measure ambient noise in decibels, with min, max and average</string>
 </resources>

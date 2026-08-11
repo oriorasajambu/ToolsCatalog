@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!--
+      Not required, for the same reason the scanner's camera is not: a device without a microphone
+      should still install the app and get every other tool. This one explains itself instead of
+      showing a gauge that cannot move.
+
+      Note what is deliberately absent: no FOREGROUND_SERVICE_MICROPHONE. The meter measures only
+      while its screen is on show, so it never needs to hold the microphone in the background — and
+      not asking for the permission is a stronger guarantee of that than any amount of UI copy.
+    -->
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
+
+</manifest>

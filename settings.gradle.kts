@@ -64,6 +64,12 @@ include(":core:weather")
 // way to know the maths is right is to prove it against synthesised vectors in a JVM test.
 include(":core:level")
 
+// Sound level metering — the A/C/Z weighting filters, exponential time weighting, and the session
+// accumulator behind Leq. Pure Kotlin for a sharper version of :core:level's reason: a phone cannot
+// know its own microphone sensitivity, so the filters are the only part that can be proved — and
+// IEC 61672-1 tabulates exactly what they should do.
+include(":core:sound")
+
 // Text-recognition shaping — reading-order reconstruction and block assembly. Pure Kotlin; the
 // ML Kit types it maps from stay in :feature:ocr, so the ordering algorithm is unit-testable
 // without an emulator.
@@ -96,4 +102,5 @@ include(":feature:texttools")
 include(":feature:weather")
 include(":feature:ocr")
 include(":feature:level")
+include(":feature:soundmeter")
 
