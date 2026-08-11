@@ -8,14 +8,25 @@ package com.minion.scaffold.core.url.model
  */
 sealed interface UrlBuildResult {
 
+    /**
+     * The input was a usable link and produced a payload.
+     *
+     * @property payload The normalised URL, with a scheme guaranteed present.
+     */
     data class Success(val payload: String) : UrlBuildResult
 
+    /**
+     * The input was rejected.
+     *
+     * @property reason Why the input could not be written as a link.
+     */
     data class Invalid(val reason: UrlViolationReason) : UrlBuildResult
 }
 
-/** Carries no user-facing text; the presentation layer maps it to a `@StringRes`. */
+/** Why a link input was rejected. Carries no user-facing text; mapped to a `@StringRes`. */
 enum class UrlViolationReason {
 
+    /** Left blank. */
     REQUIRED,
 
     /** No host, or whitespace inside — nothing will open it. */

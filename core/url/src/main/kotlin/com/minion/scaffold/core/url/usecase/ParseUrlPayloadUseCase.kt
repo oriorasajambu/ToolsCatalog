@@ -15,6 +15,12 @@ import javax.inject.Inject
  */
 class ParseUrlPayloadUseCase @Inject constructor() {
 
+    /**
+     * Reads [payload] as a link, or returns null when it is not one.
+     *
+     * @param payload The scanned or pasted payload, whitespace and all.
+     * @return The trimmed URL, or `null` when [payload] has no supported scheme or no host.
+     */
     operator fun invoke(payload: String): String? {
         val trimmed = payload.trim()
 
