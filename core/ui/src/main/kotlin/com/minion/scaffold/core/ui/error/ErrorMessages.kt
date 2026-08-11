@@ -15,6 +15,9 @@ import com.minion.scaffold.core.ui.R
  * compile error rather than a silently generic message.
  *
  * Resolve it in the composable — `stringResource(error.toMessageRes())` — not in the ViewModel.
+ *
+ * @receiver The error to describe.
+ * @return The string resource id for the user-facing message.
  */
 @StringRes
 fun DomainError.toMessageRes(): Int = when (this) {
