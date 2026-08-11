@@ -102,4 +102,5 @@ include(":feature:texttools")
 include(":feature:weather")
 include(":feature:ocr")
 include(":feature:level")
+include(":feature:soundmeter")
 
