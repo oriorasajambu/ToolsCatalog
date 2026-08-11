@@ -27,25 +27,42 @@ import kotlinx.coroutines.Dispatchers
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
+    /**
+     * The API base URL for this build's flavor.
+     *
+     * @return The `BuildConfig.BASE_URL` value, exposed under the [BaseUrl] qualifier.
+     */
     @Provides
     @BaseUrl
     fun provideBaseUrl(): String = BuildConfig.BASE_URL
 
     /**
-     * The dispatchers, injected rather than referenced directly.
+     * The I/O dispatcher, injected rather than referenced directly.
      *
      * A repository that calls `Dispatchers.IO` itself cannot be tested deterministically — the
      * work escapes onto a real thread pool and `runTest` has nothing to advance. Injected, a test
      * substitutes a `TestDispatcher` and controls it.
+     *
+     * @return [Dispatchers.IO], under the [IoDispatcher] qualifier.
      */
     @Provides
     @IoDispatcher
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 
+    /**
+     * The default (CPU-bound) dispatcher.
+     *
+     * @return [Dispatchers.Default], under the [DefaultDispatcher] qualifier.
+     */
     @Provides
     @DefaultDispatcher
     fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
 
+    /**
+     * The main-thread dispatcher.
+     *
+     * @return [Dispatchers.Main.immediate], under the [MainDispatcher] qualifier.
+     */
     @Provides
     @MainDispatcher
     fun provideMainDispatcher(): CoroutineDispatcher = Dispatchers.Main.immediate

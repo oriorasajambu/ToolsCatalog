@@ -44,6 +44,9 @@ import com.minion.scaffold.feature.weather.presentation.weatherScreen
  * Navigation lambdas are passed *down* into the feature, never a [NavHostController]. Handing a
  * feature the controller lets it navigate anywhere, which is the same as letting it know about
  * every other feature.
+ *
+ * @param modifier      The [Modifier] for the [NavHost].
+ * @param navController The controller for the graph; defaults to a remembered one.
  */
 @Composable
 fun AppNavHost(
