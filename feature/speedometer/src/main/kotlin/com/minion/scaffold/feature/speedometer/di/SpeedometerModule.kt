@@ -24,20 +24,36 @@ internal abstract class SpeedometerModule {
      *
      * The flows are cold, so scoping does not by itself keep anything alive — but at 1 Hz, "how many
      * things have GNSS running" should never have more than one answer.
+     *
+     * @param impl The `LocationManager`-backed implementation.
+     * @return The [LocationSource] binding.
      */
     @Binds
     @Singleton
     abstract fun bindLocationSource(impl: GnssLocationSource): LocationSource
 
+    /**
+     * @param impl The GNSS status-callback-backed implementation.
+     * @return The [SatelliteStatusSource] binding.
+     */
     @Binds
     @Singleton
     abstract fun bindSatelliteStatusSource(impl: GnssSatelliteStatusSource): SatelliteStatusSource
 
+    /**
+     * @param impl The pressure-sensor-backed implementation.
+     * @return The [RateOfClimbSource] binding.
+     */
     @Binds
     @Singleton
     abstract fun bindRateOfClimbSource(impl: BarometricRateOfClimbSource): RateOfClimbSource
 
-    /** `@Singleton` matters beyond the usual reasons: DataStore throws on a second instance. */
+    /**
+     * `@Singleton` matters beyond the usual reasons: DataStore throws on a second instance.
+     *
+     * @param impl The DataStore-backed implementation.
+     * @return The [SpeedometerPreferencesRepository] binding.
+     */
     @Binds
     @Singleton
     abstract fun bindSpeedometerPreferencesRepository(

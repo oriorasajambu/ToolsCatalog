@@ -12,6 +12,10 @@ import com.minion.scaffold.feature.speedometer.presentation.settings.Speedometer
  * Navigation arrives as lambdas rather than a `NavHostController`: `:app` is the only module allowed
  * to hold one, so this module knows the route contract exists without knowing which feature serves
  * it.
+ *
+ * @receiver The nav graph builder to register the destination on.
+ * @param onNavigateBack       Called when the user leaves the speedometer.
+ * @param onNavigateToSettings Called when the user opens the speedometer's settings.
  */
 fun NavGraphBuilder.speedometerScreen(
     onNavigateBack: () -> Unit,
@@ -31,6 +35,9 @@ fun NavGraphBuilder.speedometerScreen(
  * A destination rather than controls on the main screen: three selectors on a display meant to be
  * read at a glance from a car mount is three too many, and the accuracy explanations — particularly
  * why this disagrees with a car dashboard — need somewhere to live that is not the speedometer.
+ *
+ * @receiver The nav graph builder to register the destination on.
+ * @param onNavigateBack Called when the user leaves the settings screen.
  */
 fun NavGraphBuilder.speedometerSettingsScreen(
     onNavigateBack: () -> Unit,

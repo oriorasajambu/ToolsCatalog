@@ -33,6 +33,13 @@ import com.minion.scaffold.core.gnss.model.SpeedUnit
 import com.minion.scaffold.feature.speedometer.R
 import com.minion.scaffold.feature.speedometer.presentation.component.labelRes
 
+/**
+ * The speedometer's settings: unit and coordinate-format selectors, and the accuracy notes.
+ *
+ * @param onNavigateBack Called when the user leaves the settings screen.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SpeedometerSettingsScreen(

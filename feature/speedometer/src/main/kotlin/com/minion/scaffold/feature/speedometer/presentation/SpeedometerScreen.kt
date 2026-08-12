@@ -64,6 +64,14 @@ import com.minion.scaffold.feature.speedometer.presentation.component.SpeedReado
 import com.minion.scaffold.feature.speedometer.presentation.component.TripPanel
 import kotlinx.coroutines.launch
 
+/**
+ * The GPS speedometer screen: a large speed readout, altitude, coordinates, satellites and a trip.
+ *
+ * @param onNavigateBack       Called when the user leaves the speedometer.
+ * @param onNavigateToSettings Called when the user opens the speedometer's settings.
+ * @param modifier             The [Modifier] for the screen.
+ * @param viewModel            The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun SpeedometerScreen(
     onNavigateBack: () -> Unit,

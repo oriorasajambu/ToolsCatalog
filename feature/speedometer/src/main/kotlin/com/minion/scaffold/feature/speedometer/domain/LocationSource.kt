@@ -18,12 +18,20 @@ internal interface LocationSource {
      * Cold. Updates are requested when collection starts and removed when it stops, so the receiver
      * is not powered while the screen is away — which at 1 Hz is a real battery cost rather than a
      * theoretical one.
+     *
+     * @return A cold [Flow] of location events that holds the receiver open only while collected.
      */
     fun fixes(): Flow<LocationEvent>
 }
 
+/** An event from the location receiver. */
 internal sealed interface LocationEvent {
 
+    /**
+     * A new position fix arrived.
+     *
+     * @property fix The fix.
+     */
     data class Fix(val fix: GnssFix) : LocationEvent
 
     /**
@@ -35,6 +43,7 @@ internal sealed interface LocationEvent {
      */
     data object ProviderDisabled : LocationEvent
 
+    /** The GPS provider was switched back on. */
     data object ProviderEnabled : LocationEvent
 }
 
@@ -49,15 +58,20 @@ internal sealed interface LocationEvent {
  * It is also the most direct demonstration that the tool needs no network at all.
  */
 internal data class SatelliteStatus(
+    /** How many satellites are currently visible. */
     val visible: Int,
+    /** How many of the visible satellites are used in the current fix. */
     val usedInFix: Int,
     /** Carrier-to-noise density for each visible satellite, dB-Hz. Roughly 20 (weak) to 50 (strong). */
     val signalStrengths: List<Float>,
+    /** Which constellations are contributing. */
     val constellations: Set<Constellation>,
 ) {
+    /** Whether any satellite is visible at all. */
     val hasAny: Boolean get() = visible > 0
 
     companion object {
+        /** Nothing visible — the cold-start starting point. */
         val NONE = SatelliteStatus(0, 0, emptyList(), emptySet())
     }
 }
@@ -70,7 +84,13 @@ internal data class SatelliteStatus(
  */
 internal enum class Constellation { Gps, Glonass, Galileo, BeiDou, Qzss, Irnss, Sbas, Unknown }
 
+/** Where satellite visibility comes from. */
 internal interface SatelliteStatusSource {
+    /**
+     * Satellite status, for as long as this is collected.
+     *
+     * @return A cold [Flow] of [SatelliteStatus] that registers the status callback while collected.
+     */
     fun status(): Flow<SatelliteStatus>
 }
 
@@ -85,5 +105,10 @@ internal interface SatelliteStatusSource {
  * Absent on many devices, in which case the flow simply never emits and the row does not appear.
  */
 internal interface RateOfClimbSource {
+    /**
+     * Rate of climb, for as long as this is collected.
+     *
+     * @return A cold [Flow] of metres per minute; never emits on a device without a barometer.
+     */
     fun ratePerMinute(): Flow<Double>
 }
