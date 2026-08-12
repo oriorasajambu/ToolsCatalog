@@ -18,6 +18,13 @@ import kotlin.math.sin
  */
 class ApplyCalibrationUseCase @Inject constructor() {
 
+    /**
+     * Corrects [up] by removing the stored device bias.
+     *
+     * @param up          The raw up-vector to correct.
+     * @param calibration The device bias to remove; [Calibration.NONE] is a no-op.
+     * @return The corrected up-vector, or [up] unchanged when the bias is negligible.
+     */
     operator fun invoke(up: UpVector, calibration: Calibration): UpVector {
         val angle = calibration.angleRadians
         if (angle < MIN_ANGLE_RADIANS) return up

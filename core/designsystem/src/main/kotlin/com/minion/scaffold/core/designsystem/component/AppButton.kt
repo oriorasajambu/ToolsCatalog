@@ -18,6 +18,11 @@ import com.minion.scaffold.core.designsystem.theme.AppTheme
  *
  * The first of the design system's atoms, and the pattern the rest follow: a thin wrapper, a
  * `Modifier` parameter, no business logic, and a `@Preview` so it appears in the Showkase catalog.
+ *
+ * @param text     The button label.
+ * @param onClick  Called when the button is pressed.
+ * @param modifier The [Modifier] for the button.
+ * @param enabled  Whether the button is interactive.
  */
 @Composable
 fun AppButton(
@@ -31,7 +36,14 @@ fun AppButton(
     }
 }
 
-/** The secondary action alongside an [AppButton]. */
+/**
+ * The secondary action alongside an [AppButton].
+ *
+ * @param text     The button label.
+ * @param onClick  Called when the button is pressed.
+ * @param modifier The [Modifier] for the button.
+ * @param enabled  Whether the button is interactive.
+ */
 @Composable
 fun AppOutlinedButton(
     text: String,

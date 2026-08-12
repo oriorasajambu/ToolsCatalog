@@ -13,8 +13,11 @@ import kotlin.math.sqrt
  * reading.
  */
 data class SmoothingState(
+    /** The smoothed sample, or `null` before the filter is seeded. */
     val value: GravitySample? = null,
+    /** The filtered per-axis derivative, or `null` before the filter is seeded. */
     val derivative: Triple<Double, Double, Double>? = null,
+    /** The previous sample's timestamp in nanoseconds, or `null` before the filter is seeded. */
     val lastTimestampNanos: Long? = null,
 )
 
@@ -41,6 +44,13 @@ data class SmoothingState(
  */
 class SmoothGravityUseCase @Inject constructor() {
 
+    /**
+     * Folds one raw sample into the smoothing filter.
+     *
+     * @param state  The accumulated filter state from the previous call.
+     * @param sample The raw gravity sample.
+     * @return The updated state whose [SmoothingState.value] is the steadied reading.
+     */
     operator fun invoke(state: SmoothingState, sample: GravitySample): SmoothingState {
         val previous = state.value
         val previousTimestamp = state.lastTimestampNanos

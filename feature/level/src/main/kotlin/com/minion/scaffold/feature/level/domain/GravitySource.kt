@@ -26,6 +26,8 @@ internal interface GravitySource {
      *
      * Cold: the sensor is registered when collection starts and unregistered when it stops, so
      * nothing is powered while the screen is away.
+     *
+     * @return A cold [Flow] of gravity samples that registers the sensor while collected.
      */
     fun samples(): Flow<GravitySample>
 }

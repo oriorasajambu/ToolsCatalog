@@ -16,6 +16,11 @@ import kotlin.coroutines.resumeWithException
  * Lives in `:core:camera` because both ML Kit consumers need it — it started file-private in
  * `:feature:qrscan`'s barcode decoder, and a second copy in the OCR recognizer is exactly the
  * duplication the module rules exist to prevent.
+ *
+ * @param T The task's result type.
+ * @receiver The Play Services task to await.
+ * @return The task's result on success.
+ * @throws Exception rethrown from the task's failure listener; cancels on the task being cancelled.
  */
 suspend fun <T> Task<T>.await(): T = suspendCancellableCoroutine { continuation ->
     addOnSuccessListener { result -> continuation.resume(result) }

@@ -14,9 +14,19 @@ import android.net.Uri
  */
 internal interface QrImageExporter {
 
-    /** A file the share sheet can hand to another app, or null if it could not be written. */
+    /**
+     * Writes the QR for [payload] to a shareable location.
+     *
+     * @param payload The payload to encode.
+     * @return A file the share sheet can hand to another app, or `null` if it could not be written.
+     */
     suspend fun writeShareableImage(payload: String): Uri?
 
-    /** Puts the QR in the device's photo library. Returns whether it landed. */
+    /**
+     * Saves the QR for [payload] to the device's photo library.
+     *
+     * @param payload The payload to encode.
+     * @return `true` if the image was saved.
+     */
     suspend fun saveToGallery(payload: String): Boolean
 }

@@ -15,7 +15,9 @@ import com.minion.scaffold.core.ui.permission.PermissionState
  * because they are one continuous act and backing out of any of them means "go back to aiming".
  */
 internal data class OcrState(
+    /** The camera permission state. */
     val permission: PermissionState = PermissionState.Unknown,
+    /** Which phase of the aim → choose → edit flow is active. */
     val stage: Stage = Stage.Capture,
 
     /**
@@ -67,6 +69,7 @@ internal data class OcrState(
     /** The capture being selected from, or null outside [Stage.Selection]. */
     val currentCapture: CaptureUi? get() = captures.lastOrNull()
 
+    /** Whether at least one capture has been taken. */
     val hasCaptures: Boolean get() = captures.isNotEmpty()
 }
 
@@ -77,6 +80,11 @@ internal data class OcrState(
  * letters, and the app's photo picker was chosen precisely to minimise storage access. The cost is
  * that a process death loses the image; the *text* survives, because that is where the user's work
  * actually is.
+ *
+ * @property id               A stable identifier for the capture.
+ * @property bitmap           The captured image, held in memory only.
+ * @property text             What was recognised in it.
+ * @property selectedBlockIds The ids of the blocks the user kept.
  */
 internal data class CaptureUi(
     val id: String,
@@ -87,8 +95,14 @@ internal data class CaptureUi(
 
 /** A short, self-clearing message shown over the current stage. */
 internal enum class OcrNotice {
+
+    /** The image was read and holds no text. */
     NoTextFound,
+
+    /** The picked image could not be opened. */
     ImageUnreadable,
+
+    /** The camera capture failed. */
     CaptureFailed,
 
     /** The handover to Text tools was shortened to fit the navigation argument. */
@@ -98,19 +112,44 @@ internal enum class OcrNotice {
     EngineUnavailable,
 }
 
+/** Everything the user (or the system) can do on the OCR screen. */
 internal sealed interface OcrIntent : UiIntent {
 
-    /** See `PermissionState.resolve` for why `shouldShowRationale` is read at the call site. */
+    /**
+     * The camera permission request returned.
+     *
+     * See `PermissionState.resolve` for why `shouldShowRationale` is read at the call site.
+     *
+     * @property granted             Whether the permission is granted.
+     * @property shouldShowRationale The system's rationale flag.
+     */
     data class PermissionResult(val granted: Boolean, val shouldShowRationale: Boolean) : OcrIntent
 
+    /** Open the app's system settings, to grant a permanently denied permission. */
     data object AppSettingsRequested : OcrIntent
 
+    /**
+     * An image was picked from the gallery.
+     *
+     * @property uri The picked image.
+     */
     data class ImagePicked(val uri: Uri) : OcrIntent
 
+    /**
+     * The live viewfinder's detected text boxes changed.
+     *
+     * @property boxes The text boxes in view pixels.
+     */
     data class HintBoxesChanged(val boxes: List<Rect>) : OcrIntent
 
+    /**
+     * A recognised block was selected or deselected.
+     *
+     * @property blockId The id of the block toggled.
+     */
     data class BlockToggled(val blockId: String) : OcrIntent
 
+    /** Select or deselect every block. */
     data object SelectAllToggled : OcrIntent
 
     /**
@@ -128,28 +167,54 @@ internal sealed interface OcrIntent : UiIntent {
     /** Accept the selection and move to the editable result. */
     data object SelectionConfirmed : OcrIntent
 
+    /**
+     * A capture was removed from the set.
+     *
+     * @property captureId The id of the capture to remove.
+     */
     data class CaptureRemoved(val captureId: String) : OcrIntent
 
+    /**
+     * The result text was edited.
+     *
+     * @property text The new text.
+     */
     data class ResultEdited(val text: String) : OcrIntent
 
+    /** Copy the result text. */
     data object CopyRequested : OcrIntent
 
+    /** Share the result text. */
     data object ShareRequested : OcrIntent
 
+    /** Hand the result text to the text tools. */
     data object SendToTextToolsRequested : OcrIntent
 
     /** Discard everything and start over. */
     data object Restarted : OcrIntent
 
+    /** Dismiss the current inline notice. */
     data object NoticeDismissed : OcrIntent
 }
 
+/** One-shot events from the OCR screen. */
 internal sealed interface OcrEffect : UiEffect {
 
+    /** Open the app's system settings. */
     data object OpenAppSettings : OcrEffect
 
+    /**
+     * Put the result text on the clipboard.
+     *
+     * @property text The text to copy.
+     */
     data class CopyText(val text: String) : OcrEffect
 
+    /**
+     * Share the result text.
+     *
+     * @property text The text to share.
+     */
     data class ShareText(val text: String) : OcrEffect
 
     /**

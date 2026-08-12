@@ -16,8 +16,20 @@ internal object JsonFormatter {
     private val pretty = Json { prettyPrint = true }
     private val compact = Json
 
+    /**
+     * [input] reformatted with indentation, or null when it is not valid JSON.
+     *
+     * @param input The JSON text to prettify.
+     * @return The indented JSON, or `null` when [input] does not parse.
+     */
     fun prettify(input: String): String? = reformat(input, pretty)
 
+    /**
+     * [input] reformatted onto a single compact line, or null when it is not valid JSON.
+     *
+     * @param input The JSON text to minify.
+     * @return The compact JSON, or `null` when [input] does not parse.
+     */
     fun minify(input: String): String? = reformat(input, compact)
 
     private fun reformat(input: String, json: Json): String? = try {

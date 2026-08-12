@@ -26,6 +26,13 @@ class EmvDraftFromPayloadUseCase @Inject constructor(
     private val parseEmvPayload: ParseEmvPayloadUseCase,
 ) {
 
+    /**
+     * Parses [payload] and maps the resulting report back into an editable draft.
+     *
+     * @param payload The scanned or pasted payload to read into a draft.
+     * @return [EmvParseResult.Success] with the [EmvPayloadDraft], or [EmvParseResult.Failure]
+     *         propagated unchanged from [ParseEmvPayloadUseCase].
+     */
     operator fun invoke(payload: String): EmvParseResult<EmvPayloadDraft> =
         when (val parsed = parseEmvPayload(payload)) {
             is EmvParseResult.Failure -> parsed

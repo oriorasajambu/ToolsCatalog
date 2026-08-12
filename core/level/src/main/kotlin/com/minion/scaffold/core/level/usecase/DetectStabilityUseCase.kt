@@ -20,9 +20,13 @@ enum class Steadiness {
 
 /** Accumulated stability state, threaded by the caller. */
 data class StabilityState(
+    /** The current stability verdict. */
     val steadiness: Steadiness = Steadiness.Settling,
+    /** The smoothed angular rate of the up-vector, in radians per second. */
     val smoothedRate: Double = 0.0,
+    /** The previous up-vector, or `null` before the first sample. */
     val previousUp: UpVector? = null,
+    /** The previous sample's timestamp in nanoseconds, or `null` before the first sample. */
     val lastTimestampNanos: Long? = null,
 
     /** How long the rate has been below the steady threshold, in nanoseconds. */
@@ -58,6 +62,14 @@ data class StabilityState(
  */
 class DetectStabilityUseCase @Inject constructor() {
 
+    /**
+     * Folds one reading into the stability state.
+     *
+     * @param state          The accumulated state from the previous call.
+     * @param up             The current up-vector.
+     * @param timestampNanos The current sample's timestamp in nanoseconds.
+     * @return The updated state, carrying the new [Steadiness] verdict.
+     */
     operator fun invoke(
         state: StabilityState,
         up: UpVector,

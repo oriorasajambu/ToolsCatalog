@@ -34,10 +34,20 @@ object NetworkModule {
 
     private const val TIMEOUT_SECONDS = 30L
 
+    /**
+     * The shared Gson instance for JSON (de)serialisation.
+     *
+     * @return The application-wide [Gson].
+     */
     @Provides
     @Singleton
     fun provideGson(): Gson = GsonBuilder().create()
 
+    /**
+     * The HTTP logging interceptor, at BODY level in debug and NONE in release.
+     *
+     * @return The configured [HttpLoggingInterceptor].
+     */
     @Provides
     @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor =
@@ -59,6 +69,10 @@ object NetworkModule {
      *
      * `chucker-noop` replaces the real library in release builds and exposes the same API, so
      * this line compiles and does nothing there — no debug/release source-set split needed.
+     *
+     * @param context           The application context, for the Chucker interceptor.
+     * @param loggingInterceptor The logging interceptor from [provideLoggingInterceptor].
+     * @return The application-wide [OkHttpClient].
      */
     @Provides
     @Singleton
@@ -73,6 +87,14 @@ object NetworkModule {
         .addInterceptor(loggingInterceptor)
         .build()
 
+    /**
+     * The shared Retrofit instance features call `create<TheirApi>()` on.
+     *
+     * @param baseUrl The API base URL, injected via [BaseUrl] from `:app`.
+     * @param client  The shared [OkHttpClient].
+     * @param gson    The shared [Gson] for the converter factory.
+     * @return The application-wide [Retrofit].
+     */
     @Provides
     @Singleton
     fun provideRetrofit(

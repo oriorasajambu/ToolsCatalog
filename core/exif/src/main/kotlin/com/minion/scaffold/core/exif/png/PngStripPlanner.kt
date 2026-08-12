@@ -25,6 +25,12 @@ import com.minion.scaffold.core.exif.model.StripPlan
  */
 internal object PngStripPlanner {
 
+    /**
+     * Plans a metadata strip for a PNG.
+     *
+     * @param bytes The whole PNG file.
+     * @return [PlanResult.Success] with the plan, or [PlanResult.Failure] when the chunk walk fails.
+     */
     fun plan(bytes: ByteArray): PlanResult {
         if (bytes.size < SIGNATURE_LENGTH) {
             return failure(0, StripFailure.Defect.Truncated)

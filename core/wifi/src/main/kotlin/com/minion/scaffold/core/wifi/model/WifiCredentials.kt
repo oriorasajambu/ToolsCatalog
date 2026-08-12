@@ -5,6 +5,11 @@ package com.minion.scaffold.core.wifi.model
  *
  * [password] is empty for an open network rather than null — there is exactly one way to say "no
  * password", and a nullable field would allow two.
+ *
+ * @property ssid     The network name.
+ * @property security The security type the network uses.
+ * @property password The passphrase or key, empty for an open network.
+ * @property hidden   Whether the network suppresses its SSID broadcast.
  */
 data class WifiCredentials(
     val ssid: String,
@@ -36,6 +41,9 @@ enum class WifiSecurity(val code: String) {
          * `SAE` all describe networks a `WPA` code joins. Null — for `WPA2-EAP` and anything
          * unknown — makes the whole payload unreadable rather than guessing at a network's
          * security, which is not a thing to be wrong about.
+         *
+         * @param code The `T:` value from a scanned payload, in any case.
+         * @return The matching [WifiSecurity], or `null` for a value this tool cannot represent.
          */
         fun fromCode(code: String): WifiSecurity? = when (code.uppercase()) {
             "WPA", "WPA2", "WPA2-PSK", "WPA-PSK", "WPA3", "SAE", "PSK" -> WPA

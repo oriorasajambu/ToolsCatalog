@@ -30,8 +30,18 @@ enum class CalibrationRejection {
 
 sealed interface CalibrationOutcome {
 
+    /**
+     * The flip produced a usable bias.
+     *
+     * @property calibration The solved device bias.
+     */
     data class Solved(val calibration: Calibration) : CalibrationOutcome
 
+    /**
+     * The flip was rejected and no bias was stored.
+     *
+     * @property reason Why the flip was rejected.
+     */
     data class Rejected(val reason: CalibrationRejection) : CalibrationOutcome
 }
 
@@ -66,9 +76,14 @@ sealed interface CalibrationOutcome {
 class SolveFlipCalibrationUseCase @Inject constructor() {
 
     /**
-     * @param first the reading before the flip, already averaged over a settled window
-     * @param second the reading after
-     * @param bothSteady whether the stability detector reported Steady for both captures
+     * Solves the device bias from two readings taken 180° apart.
+     *
+     * @param first         The reading before the flip, already averaged over a settled window.
+     * @param second        The reading after.
+     * @param bothSteady    Whether the stability detector reported Steady for both captures.
+     * @param takenAtMillis When the calibration was taken, epoch millis, stamped onto the result.
+     * @return [CalibrationOutcome.Solved] with the bias, or [CalibrationOutcome.Rejected] with the
+     *         reason the flip could not be used.
      */
     operator fun invoke(
         first: UpVector,

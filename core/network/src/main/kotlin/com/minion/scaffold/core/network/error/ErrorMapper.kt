@@ -16,6 +16,9 @@ import java.net.UnknownHostException
  * Mapping status codes to *meanings* is the point. 401 and 403 collapse into
  * [DomainError.Unauthorized] because the UI does the same thing for both; every 5xx keeps its
  * code because that is the one class of failure worth reporting verbatim.
+ *
+ * @receiver The exception the transport layer threw.
+ * @return The matching [DomainError], falling back to [DomainError.Unknown].
  */
 fun Throwable.toDomainError(): DomainError = when (this) {
     is UnknownHostException,

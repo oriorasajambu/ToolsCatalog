@@ -27,9 +27,10 @@ import kotlinx.coroutines.withContext
  * Import note: [LocalLifecycleOwner] comes from `androidx.lifecycle.compose`. The one in
  * `androidx.compose.ui.platform` is deprecated as of lifecycle 2.8.0.
  *
- * @param flow the effect stream, usually `viewModel.effect`
- * @param key an extra restart key, when the handler closes over something that can change
- * @param onEvent what to do with each event
+ * @param T       The event type carried by [flow].
+ * @param flow    The effect stream, usually `viewModel.effect`.
+ * @param key     An extra restart key, when the handler closes over something that can change.
+ * @param onEvent What to do with each event.
  */
 @Composable
 fun <T> ObserveAsEvents(flow: Flow<T>, key: Any? = null, onEvent: (T) -> Unit) {

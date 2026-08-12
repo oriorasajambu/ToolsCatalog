@@ -30,6 +30,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minion.scaffold.core.sound.model.SoundReference
 import com.minion.scaffold.feature.soundmeter.R
 
+/**
+ * The meter's settings: the calibration offset, and the accuracy and privacy statements.
+ *
+ * @param onNavigateBack Called when the user leaves the settings screen.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SoundMeterSettingsScreen(

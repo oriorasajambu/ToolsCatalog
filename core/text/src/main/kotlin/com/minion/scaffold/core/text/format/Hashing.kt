@@ -11,10 +11,28 @@ import java.security.MessageDigest
  */
 internal object Hashing {
 
+    /**
+     * The MD5 digest of [input]'s UTF-8 bytes, as lowercase hex.
+     *
+     * @param input The text to hash.
+     * @return The 32-character lowercase hex digest.
+     */
     fun md5(input: String): String = digest(input, "MD5")
 
+    /**
+     * The SHA-1 digest of [input]'s UTF-8 bytes, as lowercase hex.
+     *
+     * @param input The text to hash.
+     * @return The 40-character lowercase hex digest.
+     */
     fun sha1(input: String): String = digest(input, "SHA-1")
 
+    /**
+     * The SHA-256 digest of [input]'s UTF-8 bytes, as lowercase hex.
+     *
+     * @param input The text to hash.
+     * @return The 64-character lowercase hex digest.
+     */
     fun sha256(input: String): String = digest(input, "SHA-256")
 
     private fun digest(input: String, algorithm: String): String =

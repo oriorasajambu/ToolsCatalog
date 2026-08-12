@@ -15,5 +15,10 @@ internal interface OcrPreferencesRepository {
     /** Defaults to [OcrEngine.DEFAULT]. */
     val engine: Flow<OcrEngine>
 
+    /**
+     * Stores the selected recognition engine.
+     *
+     * @param engine The engine to select.
+     */
     suspend fun setEngine(engine: OcrEngine)
 }

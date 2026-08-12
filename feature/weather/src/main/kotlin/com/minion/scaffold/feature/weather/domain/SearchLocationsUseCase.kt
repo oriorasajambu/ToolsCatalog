@@ -15,6 +15,11 @@ internal class SearchLocationsUseCase @Inject constructor(
     private val repository: WeatherRepository,
 ) {
 
+    /**
+     * @param query The place-name query.
+     * @return The matches (possibly empty), or a failure. Empty without a network call when [query]
+     *   is shorter than [MIN_QUERY_LENGTH].
+     */
     suspend operator fun invoke(query: String): AppResult<List<LocationSearchResult>> {
         val trimmed = query.trim()
         if (trimmed.length < MIN_QUERY_LENGTH) return AppResult.Success(emptyList())

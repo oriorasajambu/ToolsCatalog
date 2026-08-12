@@ -14,10 +14,18 @@ import com.minion.scaffold.core.weather.model.WeatherUnit
  * unrepresentable.
  */
 internal data class WeatherSettingsState(
+    /** The currently selected display unit. */
     val unit: WeatherUnit = WeatherUnit.METRIC,
 ) : UiState
 
+/** Everything the user can do on the weather settings screen. */
 internal sealed interface WeatherSettingsIntent : UiIntent {
+
+    /**
+     * A display unit was selected.
+     *
+     * @property unit The newly selected unit system.
+     */
     data class UnitSelected(val unit: WeatherUnit) : WeatherSettingsIntent
 }
 

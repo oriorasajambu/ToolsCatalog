@@ -13,12 +13,14 @@ import com.minion.scaffold.core.weather.model.WeatherUnit
  * current-location card, and the reorderable saved-location list beneath it.
  */
 internal data class WeatherHomeState(
+    /** The location permission state. */
     val permission: PermissionState = PermissionState.Unknown,
 
     /** The pinned GPS card. Separate from [savedCards] because it has phases they do not — it can
      *  be waiting on a fix — and because it can be neither removed nor reordered. */
     val content: ContentState = ContentState.Loading,
 
+    /** The reorderable saved-location cards. */
     val savedCards: List<SavedCardUi> = emptyList(),
 
     /**
@@ -41,9 +43,18 @@ internal data class WeatherHomeState(
          */
         data object NoFix : ContentState
 
+        /**
+         * A fix was resolved and its forecast retrieved.
+         *
+         * @property card The pinned card to show.
+         */
         data class Success(val card: LocationCardUi) : ContentState
 
-        /** A fix was resolved but the fetch failed with nothing cached — the only real failure. */
+        /**
+         * A fix was resolved but the fetch failed with nothing cached — the only real failure.
+         *
+         * @property error Why the forecast could not be retrieved.
+         */
         data class Failure(val error: DomainError) : ContentState
     }
 }
@@ -54,11 +65,14 @@ internal data class WeatherHomeState(
  * words, mirroring [DomainError.toMessageRes] in `:core:ui`).
  */
 internal data class LocationCardUi(
+    /** The stable cache key. */
     val locationId: String,
+    /** The reverse-geocoded place name. */
     val displayName: String,
 
     /** Already converted into [WeatherHomeState.unit]. */
     val temperature: Double,
+    /** The current condition bucket. */
     val condition: WeatherCondition,
 
     /** Hours since this forecast was fetched, only when it's being shown stale after a failed
@@ -74,17 +88,28 @@ internal data class LocationCardUi(
  * carries its own phase instead of the screen having a single shared one.
  */
 internal data class SavedCardUi(
+    /** The saved location's id. */
     val locationId: String,
+    /** The saved location's display name. */
     val displayName: String,
+    /** This card's independently-loading forecast phase. */
     val forecast: ForecastState,
 ) {
 
+    /** One saved card's forecast phase. */
     sealed interface ForecastState {
 
+        /** The forecast is loading. */
         data object Loading : ForecastState
 
+        /**
+         * The forecast is ready.
+         *
+         * @property temperature   The temperature, already converted into [WeatherHomeState.unit].
+         * @property condition     The current condition bucket.
+         * @property staleHoursAgo Hours since fetch when shown stale, or `null` when fresh.
+         */
         data class Ready(
-            /** Already converted into [WeatherHomeState.unit]. */
             val temperature: Double,
             val condition: WeatherCondition,
             val staleHoursAgo: Long?,
@@ -99,22 +124,43 @@ internal data class SavedCardUi(
     }
 }
 
+/** Everything the user (or the system) can do on the weather home screen. */
 internal sealed interface WeatherHomeIntent : UiIntent {
 
-    /** See `QrScanIntent.PermissionResult` for why [shouldShowRationale] is read at the call site. */
+    /**
+     * The location permission request returned.
+     *
+     * See `QrScanIntent.PermissionResult` for why [shouldShowRationale] is read at the call site.
+     *
+     * @property granted             Whether the permission is granted.
+     * @property shouldShowRationale The system's rationale flag.
+     */
     data class PermissionResult(val granted: Boolean, val shouldShowRationale: Boolean) : WeatherHomeIntent
 
+    /** Open the app's system settings, to grant a permanently denied permission. */
     data object AppSettingsRequested : WeatherHomeIntent
 
     /** Retries a GPS fix ([WeatherHomeState.ContentState.NoFix]) or a failed fetch. */
     data object Retry : WeatherHomeIntent
 
+    /** Pull-to-refresh: force-refresh every card. */
     data object PullToRefresh : WeatherHomeIntent
 
+    /** The pinned current-location card was tapped. */
     data object CardClicked : WeatherHomeIntent
 
+    /**
+     * A saved card was tapped.
+     *
+     * @property locationId The id of the tapped location.
+     */
     data class SavedCardClicked(val locationId: String) : WeatherHomeIntent
 
+    /**
+     * A saved card was removed.
+     *
+     * @property locationId The id of the removed location.
+     */
     data class SavedCardRemoved(val locationId: String) : WeatherHomeIntent
 
     /**
@@ -127,14 +173,29 @@ internal sealed interface WeatherHomeIntent : UiIntent {
     /** The drag ended: persist whatever order the list is now in. */
     data object SavedCardOrderCommitted : WeatherHomeIntent
 
+    /** Open place-name search to add a location. */
     data object AddLocationClicked : WeatherHomeIntent
 
+    /** Open the weather settings. */
     data object SettingsClicked : WeatherHomeIntent
 }
 
+/** One-shot events from the weather home screen. */
 internal sealed interface WeatherHomeEffect : UiEffect {
+
+    /** Open the app's system settings. */
     data object OpenAppSettings : WeatherHomeEffect
+
+    /**
+     * Navigate to a location's forecast detail.
+     *
+     * @property locationId The id of the location to open.
+     */
     data class NavigateToDetail(val locationId: String) : WeatherHomeEffect
+
+    /** Navigate to place-name search. */
     data object NavigateToSearch : WeatherHomeEffect
+
+    /** Navigate to the weather settings. */
     data object NavigateToSettings : WeatherHomeEffect
 }

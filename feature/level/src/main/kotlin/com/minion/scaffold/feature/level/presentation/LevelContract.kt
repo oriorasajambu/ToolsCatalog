@@ -20,13 +20,16 @@ import com.minion.scaffold.feature.level.domain.GravitySensor
  */
 @Immutable
 internal data class LevelState(
+    /** Which sensor stream is behind the readings. */
     val sensor: GravitySensor = GravitySensor.Fused,
 
     /** The current reading. Already calibrated, smoothed and rotated into the display's frame. */
     val tilt: Tilt = Tilt.LEVEL,
 
+    /** How the phone is being held. */
     val pose: LevelPose = LevelPose.Transitional,
 
+    /** How much the current reading can be trusted. */
     val steadiness: Steadiness = Steadiness.Settling,
 
     /**
@@ -39,8 +42,10 @@ internal data class LevelState(
     val bubbleX: Double = 0.0,
     val bubbleY: Double = 0.0,
 
+    /** The stored device calibration in effect. */
     val calibration: Calibration = Calibration.NONE,
 
+    /** Whether the level's beeper is on. */
     val soundEnabled: Boolean = false,
 
     /**
@@ -62,11 +67,13 @@ internal data class LevelState(
     val reference: ReferenceCapture? = null,
 ) : UiState {
 
+    /** Whether the displayed reading is within [LEVEL_TOLERANCE_DEGREES] of level. */
     val isLevel: Boolean get() = displayed.inclination <= LEVEL_TOLERANCE_DEGREES
 
     /** What the user is actually looking at — the held reading if there is one, else the live one. */
     val displayed: Tilt get() = frozen ?: tilt
 
+    /** Whether a device calibration has been recorded. */
     val isCalibrated: Boolean get() = calibration.measuredMask != 0
 
     companion object {
@@ -83,7 +90,13 @@ internal data class LevelState(
     }
 }
 
-/** A captured reference surface, held only for as long as the screen is open. */
+/**
+ * A captured reference surface, held only for as long as the screen is open.
+ *
+ * @property upX The reference up-vector's x component.
+ * @property upY The reference up-vector's y component.
+ * @property upZ The reference up-vector's z component.
+ */
 @Immutable
 internal data class ReferenceCapture(
     val upX: Double,
@@ -91,6 +104,7 @@ internal data class ReferenceCapture(
     val upZ: Double,
 )
 
+/** Everything the user (or the system) can do on the level screen. */
 internal sealed interface LevelIntent : UiIntent {
 
     /**
@@ -102,27 +116,43 @@ internal sealed interface LevelIntent : UiIntent {
      */
     data object ScreenResumed : LevelIntent
 
+    /** The screen stopped being visible. */
     data object ScreenPaused : LevelIntent
 
+    /** Freeze or unfreeze the current reading. */
     data object FreezeToggled : LevelIntent
 
+    /** Capture the current reading as the relative-measurement reference. */
     data object ReferenceCaptured : LevelIntent
 
+    /** Clear the relative-measurement reference. */
     data object ReferenceCleared : LevelIntent
 
+    /** Turn the beeper on or off. */
     data object SoundToggled : LevelIntent
 
+    /** Dismiss the first-use calibration suggestion. */
     data object CalibrationPromptDismissed : LevelIntent
 
+    /** Clear the stored device calibration. */
     data object CalibrationCleared : LevelIntent
 
-    /** The device's natural orientation differs from portrait — see `LevelScreen`. */
+    /**
+     * The device's natural orientation differs from portrait — see `LevelScreen`.
+     *
+     * @property degrees The in-plane display rotation to correct for, in degrees.
+     */
     data class DisplayRotationChanged(val degrees: Double) : LevelIntent
 }
 
+/** One-shot events from the level screen. */
 internal sealed interface LevelEffect : UiEffect {
 
-    /** Something happened worth a word — a reference captured, a calibration cleared. */
+    /**
+     * Something happened worth a word — a reference captured, a calibration cleared.
+     *
+     * @property notice What to tell the user.
+     */
     data class Notice(val notice: LevelNotice) : LevelEffect
 }
 
@@ -138,8 +168,10 @@ internal enum class LevelNotice {
     /** A reference was taken while the phone was moving, so it was not captured. */
     ReferenceNotSteady,
 
+    /** A reference surface was captured. */
     ReferenceCaptured,
 
+    /** The stored calibration was cleared. */
     CalibrationCleared,
 
     /** No fused gravity sensor on this device, so readings settle more slowly. */

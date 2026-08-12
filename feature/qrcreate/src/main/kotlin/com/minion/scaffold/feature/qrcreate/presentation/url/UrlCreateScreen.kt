@@ -41,6 +41,13 @@ import com.minion.scaffold.core.designsystem.component.FormSection
 import com.minion.scaffold.feature.qrcreate.presentation.preview.HandleQrExportEffects
 import com.minion.scaffold.feature.qrcreate.presentation.preview.QrResultSection
 
+/**
+ * The web-link authoring screen: type a link, generate a scannable QR.
+ *
+ * @param onNavigateBack Called when the user leaves the screen.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun UrlCreateScreen(
     onNavigateBack: () -> Unit,

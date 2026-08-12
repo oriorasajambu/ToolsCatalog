@@ -16,10 +16,15 @@ import com.minion.scaffold.feature.qrscan.domain.ScannedContent
  * "showing a report *and* an error" is unrepresentable instead of merely unintended.
  */
 internal data class QrScanState(
+    /** Whether the payload comes from the camera or manual entry. */
     val mode: InputMode = InputMode.Camera,
+    /** The camera permission state. */
     val cameraPermission: PermissionState = PermissionState.Unknown,
+    /** Whether the torch is on. */
     val torchEnabled: Boolean = false,
+    /** The mutually exclusive decode phase. */
     val content: ContentState = ContentState.Idle,
+    /** The text in the manual-entry field. */
     val manualPayload: String = "",
 ) : UiState {
 
@@ -51,6 +56,11 @@ internal data class QrScanState(
          */
         data object Decoding : ContentState
 
+        /**
+         * A code was decoded.
+         *
+         * @property content What the code turned out to be.
+         */
         data class Success(val content: ScannedContent) : ContentState
 
         /**
@@ -61,6 +71,9 @@ internal data class QrScanState(
          * it here rather than relying on [QrScanState.manualPayload] is what lets a *camera* or
          * gallery failure show the damaged payload at all; that field is only ever written by
          * typing.
+         *
+         * @property error   Why the input could not be read.
+         * @property payload The trimmed payload the error's offsets index, or empty when there is none.
          */
         data class Failure(
             val error: QrScanError,
@@ -70,8 +83,16 @@ internal data class QrScanState(
 }
 
 /** Where a payload comes from. Both funnel into [QrScanIntent.PayloadSubmitted]. */
-internal enum class InputMode { Camera, Manual }
+internal enum class InputMode {
 
+    /** The camera viewfinder. */
+    Camera,
+
+    /** The manual paste/type field. */
+    Manual,
+}
+
+/** Everything the user (or the system) can do on the scan screen. */
 internal sealed interface QrScanIntent : UiIntent {
 
     /** Keystrokes in the manual payload field. */
@@ -112,10 +133,17 @@ internal sealed interface QrScanIntent : UiIntent {
         val shouldShowRationale: Boolean,
     ) : QrScanIntent
 
+    /**
+     * The input mode changed between camera and manual entry.
+     *
+     * @property mode The newly selected mode.
+     */
     data class ModeChanged(val mode: InputMode) : QrScanIntent
 
+    /** Toggle the torch. */
     data object TorchToggled : QrScanIntent
 
+    /** Open the app's system settings, to grant a permanently denied permission. */
     data object AppSettingsRequested : QrScanIntent
 
     /** Take the decoded payload to the editor. */
@@ -127,6 +155,7 @@ internal sealed interface QrScanIntent : UiIntent {
     /** Hand the scanned card to the contacts app. Only meaningful for [ScannedContent.Contact]. */
     data object AddContactRequested : QrScanIntent
 
+    /** Copy the whole decoded report. */
     data object CopyReportRequested : QrScanIntent
 
     /**
@@ -138,6 +167,7 @@ internal sealed interface QrScanIntent : UiIntent {
      */
     data class CopyValueRequested(val text: String) : QrScanIntent
 
+    /** Share the whole decoded report. */
     data object ShareReportRequested : QrScanIntent
 }
 

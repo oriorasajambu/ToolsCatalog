@@ -24,6 +24,9 @@ import kotlinx.coroutines.delay
  * Without it a tap gives no feedback at all and reads as a dead touch — the image sharpens a moment
  * later with nothing to connect it to. [tapPoint] comes from the camera controller, already in
  * viewfinder coordinates, so no mapping is needed.
+ *
+ * @param tapPoint Where the user last tapped, in viewfinder coordinates, or `null` for no ring.
+ * @param modifier The [Modifier] for the drawing canvas.
  */
 @Composable
 internal fun FocusRing(

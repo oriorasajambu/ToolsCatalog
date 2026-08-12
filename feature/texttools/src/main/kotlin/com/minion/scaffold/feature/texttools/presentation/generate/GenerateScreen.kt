@@ -41,6 +41,13 @@ import com.minion.scaffold.core.text.model.PasswordProblem
 import com.minion.scaffold.feature.texttools.R
 import com.minion.scaffold.feature.texttools.presentation.rememberClipboardCopy
 
+/**
+ * The generator screen: pick a kind, set its options, and generate a value.
+ *
+ * @param onNavigateBack Called when the user leaves the screen.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun GenerateScreen(
     onNavigateBack: () -> Unit,

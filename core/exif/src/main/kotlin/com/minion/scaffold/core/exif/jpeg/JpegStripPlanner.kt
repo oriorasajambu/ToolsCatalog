@@ -28,6 +28,14 @@ import com.minion.scaffold.core.exif.model.startsWith
  */
 internal object JpegStripPlanner {
 
+    /**
+     * Plans a metadata strip for a JPEG.
+     *
+     * @param bytes       The whole JPEG file.
+     * @param orientation The EXIF orientation to preserve as a minimal Exif block.
+     * @param keepIcc     Whether to retain an embedded ICC colour profile.
+     * @return [PlanResult.Success] with the plan, or [PlanResult.Failure] when the marker scan fails.
+     */
     fun plan(bytes: ByteArray, orientation: Int, keepIcc: Boolean): PlanResult {
         val scan = when (val result = JpegScanner.scan(bytes)) {
             is JpegScan.Failure -> return PlanResult.Failure(result.failure)

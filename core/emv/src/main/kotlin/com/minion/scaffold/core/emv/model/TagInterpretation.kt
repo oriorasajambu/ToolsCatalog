@@ -58,6 +58,13 @@ enum class PointOfInitiationMethod(val code: String?) {
     ;
 
     companion object {
+
+        /**
+         * The method for [code], or [UNKNOWN] for any code the specification does not define.
+         *
+         * @param code The two-character tag `01` value, e.g. `"11"` or `"12"`.
+         * @return The matching entry, never `null`.
+         */
         fun fromCode(code: String): PointOfInitiationMethod =
             entries.firstOrNull { it.code == code } ?: UNKNOWN
     }

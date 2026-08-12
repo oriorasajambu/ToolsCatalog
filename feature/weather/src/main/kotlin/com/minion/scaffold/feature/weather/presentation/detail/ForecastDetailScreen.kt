@@ -71,6 +71,13 @@ import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
+/**
+ * One location's forecast: current conditions, notable-conditions banner, hourly strip, daily list.
+ *
+ * @param onNavigateBack Called when the user leaves the detail screen.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun ForecastDetailScreen(
     onNavigateBack: () -> Unit,

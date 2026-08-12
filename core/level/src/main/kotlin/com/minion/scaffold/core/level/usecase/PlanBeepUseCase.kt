@@ -11,7 +11,11 @@ sealed interface BeepPlan {
     /** Not beeping — the feature is off. */
     data object Silent : BeepPlan
 
-    /** Repeating at [intervalMillis]. Shorter means closer to level. */
+    /**
+     * Repeating at [intervalMillis]. Shorter means closer to level.
+     *
+     * @property intervalMillis The gap between pulses, in milliseconds.
+     */
     data class Pulse(val intervalMillis: Long) : BeepPlan
 
     /** A continuous tone: inside tolerance. */
@@ -36,8 +40,13 @@ sealed interface BeepPlan {
 class PlanBeepUseCase @Inject constructor() {
 
     /**
-     * @param deviationDegrees how far from level, unsigned
-     * @param wasSteady whether the previous plan was [BeepPlan.Steady], for the hysteresis below
+     * The beep rhythm for the current deviation from level.
+     *
+     * @param deviationDegrees How far from level, unsigned.
+     * @param enabled          Whether the beeper is switched on.
+     * @param wasSteady        Whether the previous plan was [BeepPlan.Steady], for the hysteresis below.
+     * @return [BeepPlan.Silent] when disabled, [BeepPlan.Steady] within tolerance, otherwise a
+     *         [BeepPlan.Pulse] whose interval shortens towards level.
      */
     operator fun invoke(
         deviationDegrees: Double,

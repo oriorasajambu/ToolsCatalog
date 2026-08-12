@@ -5,6 +5,10 @@ package com.minion.scaffold.core.emv.model
  *
  * [payload] is retained because the report is shareable and a reader comparing it against the
  * original QR needs the source string alongside the interpretation.
+ *
+ * @property payload  The trimmed source payload the report was built from.
+ * @property segments Every segment in the order it appeared in [payload].
+ * @property crc      The verdict of recomputing the payload's checksum.
  */
 data class QrInquiryReport(
     val payload: String,
@@ -18,6 +22,9 @@ data class QrInquiryReport(
  * Interpretation is kept beside [node] rather than inside [TlvNode] so that the parser stays
  * concerned only with framing. Adding a decoder for a new tag then touches the catalog and
  * nothing else.
+ *
+ * @property node           The tag-length-value structure the parser recovered.
+ * @property interpretation What the catalog decoded [node]'s value into, or [TagInterpretation.None].
  */
 data class EmvSegment(
     val node: TlvNode,
@@ -29,6 +36,9 @@ data class EmvSegment(
  *
  * Both sides are kept, not just the verdict: a mismatch is only actionable if the reader can see
  * what was expected against what the payload actually claims.
+ *
+ * @property expected The checksum the payload carries in its tag `63`.
+ * @property actual   The checksum recomputed over the payload's own bytes.
  */
 data class CrcVerification(
     val expected: String,

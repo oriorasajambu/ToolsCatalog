@@ -51,6 +51,9 @@ import java.util.concurrent.Executors
  *   analysis — `:feature:qrscan` passes null once a report is on screen so the camera cannot
  *   re-read a code it has already delivered. **The caller owns the analyzer's lifetime**, including
  *   closing it if it holds a native detector; this composable only attaches and detaches it.
+ * @param torchEnabled whether the torch is currently on.
+ * @param onToggleTorch called when the user taps the torch button.
+ * @param modifier the [Modifier] for the viewfinder container.
  * @param captureController non-null enables the `IMAGE_CAPTURE` use case. Left null the controller
  *   binds analysis only, which avoids allocating a capture pipeline nothing triggers.
  * @param onTransformChanged fires whenever the mapping from analysis image to viewfinder may have

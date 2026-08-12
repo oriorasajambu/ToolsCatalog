@@ -43,7 +43,9 @@ import kotlin.math.tan
  * and slow enough to matter at 48000 of them a second.
  */
 class WeightingFilter internal constructor(
+    /** The weighting curve this filter applies. */
     val weighting: Weighting,
+    /** The sample rate the filter's coefficients were built for, in Hz. */
     val sampleRate: Int,
     private val sections: List<Biquad>,
     /** Chosen so the cascade is exactly 0 dB at 1 kHz, which is how the standard defines these. */
@@ -61,6 +63,10 @@ class WeightingFilter internal constructor(
      * In-place into a caller-owned buffer rather than returning a new array: this runs roughly fifty
      * times a second for the life of the screen, and allocating a block each time would hand the
      * collector a steady stream of garbage for no benefit.
+     *
+     * @param input  The raw 16-bit PCM block.
+     * @param count  How many samples of [input] to process.
+     * @param output The caller-owned buffer the filtered, normalised samples are written into.
      */
     fun process(input: ShortArray, count: Int, output: DoubleArray) {
         for (i in 0 until count) {
@@ -107,6 +113,11 @@ class WeightingFilter internal constructor(
          * is deliberate: prewarping shifts the response slightly, and the standard's requirement is
          * that the curve pass through 0 dB at 1 kHz — so it is the built filter that has to satisfy
          * it, not the prototype it came from.
+         *
+         * @param weighting      The weighting curve being built.
+         * @param sampleRate     The sample rate to design the digital sections for, in Hz.
+         * @param analogSections The analogue prototype sections to transform and cascade.
+         * @return A [WeightingFilter] normalised to 0 dB at [NORMALISE_HZ].
          */
         fun build(
             weighting: Weighting,

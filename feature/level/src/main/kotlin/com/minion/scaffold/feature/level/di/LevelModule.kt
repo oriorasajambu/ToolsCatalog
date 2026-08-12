@@ -19,6 +19,9 @@ internal abstract class LevelModule {
      * `@Singleton` because the sensor lookup happens once at construction, and because
      * [GravitySource.sensor] is read by the UI to explain which stream is running — two instances
      * disagreeing about that would be quietly confusing.
+     *
+     * @param impl The Android sensor-backed implementation.
+     * @return The [GravitySource] binding.
      */
     @Binds
     @Singleton
@@ -29,6 +32,9 @@ internal abstract class LevelModule {
      * created for the same file within one process, and a non-scoped binding would build a new
      * wrapper — though not a new `DataStore`, since the delegate caches per `Context` — on every
      * injection.
+     *
+     * @param impl The DataStore-backed implementation.
+     * @return The [LevelPreferencesRepository] binding.
      */
     @Binds
     @Singleton

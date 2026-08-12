@@ -28,6 +28,13 @@ import javax.inject.Inject
  */
 class BuildEmvPayloadUseCase @Inject constructor() {
 
+    /**
+     * Validates [draft] and, if it is sound, writes the payload.
+     *
+     * @param draft The form inputs to validate and write.
+     * @return [EmvBuildResult.Success] with the payload, or [EmvBuildResult.Invalid] listing
+     *         every field that failed validation.
+     */
     operator fun invoke(draft: EmvPayloadDraft): EmvBuildResult {
         val violations = draft.validate()
         return if (violations.isEmpty()) {

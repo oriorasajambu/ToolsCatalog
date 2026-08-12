@@ -1,6 +1,11 @@
 package com.minion.scaffold.core.emv.reference
 
-/** An ISO 18245 merchant category: the code as it appears in tag `52`, and what it means. */
+/**
+ * An ISO 18245 merchant category: the code as it appears in tag `52`, and what it means.
+ *
+ * @property code The four-digit ISO 18245 merchant category code, e.g. `"5812"`.
+ * @property name The category's English display name, e.g. `"Eating Places and Restaurants"`.
+ */
 data class MerchantCategory(
     val code: String,
     val name: String,
@@ -219,6 +224,11 @@ object MerchantCategoryCodes {
      */
     val all: List<MerchantCategory> = byCode.map { (code, name) -> MerchantCategory(code, name) }
 
-    /** The category name for [code], or null if it is not in the table. */
+    /**
+     * The category name for [code], or null if it is not in the table.
+     *
+     * @param code The four-digit ISO 18245 merchant category code.
+     * @return The category's display name, or `null` if the code is not listed.
+     */
     fun nameOf(code: String): String? = byCode[code]
 }

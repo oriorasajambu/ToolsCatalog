@@ -70,6 +70,9 @@ internal object EmvTagCatalog {
      *
      * A true answer here starts an *attempt* at nesting, not a commitment — see
      * `EmvTlvParser.readChildren`.
+     *
+     * @param tag The two-character tag to classify.
+     * @return `true` if [tag] is a template tag whose value may itself be TLV segments.
      */
     fun isTemplate(tag: String): Boolean {
         val numericTag = tag.toIntOrNull() ?: return false
@@ -87,6 +90,11 @@ internal object EmvTagCatalog {
      *
      * Tag `63` is not handled here — its interpretation needs the recomputed checksum, which only
      * the caller holding the whole payload can produce.
+     *
+     * @param tag      The two-character tag whose value to decode.
+     * @param rawValue The segment's raw value, exactly as it appears in the payload.
+     * @return The decoded [TagInterpretation], or [TagInterpretation.None] for tags that carry
+     *         readable text rather than a code.
      */
     fun interpret(tag: String, rawValue: String): TagInterpretation = when (tag) {
         TAG_PAYLOAD_FORMAT_INDICATOR -> TagInterpretation.PayloadVersion(

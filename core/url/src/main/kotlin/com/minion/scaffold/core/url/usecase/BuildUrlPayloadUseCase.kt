@@ -15,6 +15,13 @@ import javax.inject.Inject
  */
 class BuildUrlPayloadUseCase @Inject constructor() {
 
+    /**
+     * Normalises and validates [input] into a link payload.
+     *
+     * @param input The typed link, with or without a scheme.
+     * @return [UrlBuildResult.Success] with the normalised URL, or [UrlBuildResult.Invalid] with
+     *         the reason it could not be written.
+     */
     operator fun invoke(input: String): UrlBuildResult {
         val trimmed = input.trim()
         if (trimmed.isEmpty()) {

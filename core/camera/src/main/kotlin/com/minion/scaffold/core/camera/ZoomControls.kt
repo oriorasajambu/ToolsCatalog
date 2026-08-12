@@ -28,6 +28,11 @@ private val ZOOM_STEPS = listOf(1f, 2f, 5f)
  * Steps beyond [maxRatio] are **omitted, not disabled**: a ×5 button on a phone whose lens stops at
  * ×3 is a control that lies about what the hardware can do, and a greyed-out one invites the
  * question of how to enable it.
+ *
+ * @param currentRatio The lens's current zoom ratio, for highlighting the nearest step.
+ * @param maxRatio     The lens's maximum zoom ratio; steps above it are omitted.
+ * @param onSelectRatio Called with the chosen ratio when a step is tapped.
+ * @param modifier     The [Modifier] for the control row.
  */
 @Composable
 internal fun ZoomControls(

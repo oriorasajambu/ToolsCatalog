@@ -18,6 +18,7 @@ enum class PermissionState {
     /** Not yet asked in this session. Render nothing — anything here flashes behind the dialog. */
     Unknown,
 
+    /** The permission is granted. */
     Granted,
 
     /** Refused, but the system will still show the dialog. */
@@ -39,6 +40,10 @@ enum class PermissionState {
          *
          * The value has to be read at the call site because it needs an `Activity`, which has no
          * business being in a ViewModel.
+         *
+         * @param granted            Whether the permission is currently granted.
+         * @param shouldShowRationale The system's rationale flag, read after a request.
+         * @return [Granted], [Denied], or [PermanentlyDenied].
          */
         fun resolve(granted: Boolean, shouldShowRationale: Boolean): PermissionState = when {
             granted -> Granted

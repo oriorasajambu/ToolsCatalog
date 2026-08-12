@@ -11,6 +11,10 @@ internal class GetForecastUseCase @Inject constructor(
     /**
      * By cache key alone — for the detail screen, which is only ever reached from a card that has
      * already fetched, and therefore cached, this location's coordinates.
+     *
+     * @param locationKey  The cache key whose coordinates were already cached.
+     * @param forceRefresh Skip the cache and fetch fresh.
+     * @return The forecast and its staleness, or a failure.
      */
     suspend operator fun invoke(locationKey: String, forceRefresh: Boolean): AppResult<ForecastResult> =
         repository.getForecastByKey(locationKey, forceRefresh)
@@ -19,6 +23,12 @@ internal class GetForecastUseCase @Inject constructor(
      * With coordinates — for a saved-location card, which may never have been fetched before. The
      * key-only overload would answer [com.minion.scaffold.core.common.error.DomainError.EmptyCache]
      * for a city the user added seconds ago, since nothing has written its row yet.
+     *
+     * @param locationKey  The stable cache key.
+     * @param latitude     The location's latitude.
+     * @param longitude    The location's longitude.
+     * @param forceRefresh Skip the cache and fetch fresh.
+     * @return The forecast and its staleness, or a failure.
      */
     suspend operator fun invoke(
         locationKey: String,

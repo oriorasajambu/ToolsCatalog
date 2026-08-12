@@ -12,9 +12,18 @@ import com.minion.scaffold.core.common.mvi.UiEffect
  */
 internal sealed interface QrExportEffect : UiEffect {
 
+    /**
+     * Put the payload on the clipboard.
+     *
+     * @property text The payload text to copy.
+     */
     data class CopyText(val text: String) : QrExportEffect
 
-    /** A file the receiving app may read, produced by the exporter. */
+    /**
+     * Hand a generated PNG to the share sheet.
+     *
+     * @property uri A file the receiving app may read, produced by the exporter.
+     */
     data class ShareImage(val uri: Uri) : QrExportEffect
 
     /**
@@ -22,8 +31,18 @@ internal sealed interface QrExportEffect : UiEffect {
      *
      * Saving to the gallery is invisible without it: the image lands in another app entirely, and
      * without confirmation the button reads as broken.
+     *
+     * @property outcome Whether the save succeeded.
      */
     data class ShowExportMessage(val outcome: ExportOutcome) : QrExportEffect
 }
 
-internal enum class ExportOutcome { SAVED_TO_GALLERY, EXPORT_FAILED }
+/** The result of an export action, for the confirmation message. */
+internal enum class ExportOutcome {
+
+    /** The QR was saved to the photo library. */
+    SAVED_TO_GALLERY,
+
+    /** The export could not be written. */
+    EXPORT_FAILED,
+}

@@ -29,8 +29,11 @@ import kotlin.math.sqrt
  * rather than a data migration.
  */
 data class Calibration(
+    /** The rotation-vector x component, in radians. */
     val x: Double,
+    /** The rotation-vector y component, in radians. */
     val y: Double,
+    /** The rotation-vector z component, in radians. */
     val z: Double,
 
     /** Bitmask of which components were measured. See [MASK_X], [MASK_Y], [MASK_Z]. */
@@ -51,8 +54,10 @@ data class Calibration(
     val version: Int = CURRENT_VERSION,
 ) {
 
+    /** The overall correction angle in radians — the rotation vector's magnitude. */
     val angleRadians: Double get() = sqrt(x * x + y * y + z * z)
 
+    /** The overall correction angle in degrees — the "your device is 0.4° off" figure. */
     val angleDegrees: Double get() = Math.toDegrees(angleRadians)
 
     /** Whether this covers everything an edge/plumb reading needs. False for a flat-only flip. */

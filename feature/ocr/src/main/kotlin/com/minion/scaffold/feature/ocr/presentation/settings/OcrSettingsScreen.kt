@@ -34,6 +34,13 @@ import com.minion.scaffold.core.designsystem.theme.AppTheme
 import com.minion.scaffold.core.ocr.model.OcrEngine
 import com.minion.scaffold.feature.ocr.R
 
+/**
+ * The OCR engine picker: choose between ML Kit and PaddleOCR.
+ *
+ * @param onNavigateBack Called when the user leaves the engine picker.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun OcrSettingsScreen(
     onNavigateBack: () -> Unit,

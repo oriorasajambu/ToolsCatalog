@@ -26,8 +26,10 @@ import com.minion.scaffold.feature.soundmeter.domain.CaptureQuality
  */
 @Immutable
 internal data class SoundMeterState(
+    /** The microphone permission state. */
     val permission: PermissionState = PermissionState.Unknown,
 
+    /** How the input was opened, and so how much to trust the reading. */
     val quality: CaptureQuality = CaptureQuality.Unprocessed,
 
     /** Set once the capture has actually opened, so the UI can tell "starting" from "broken". */
@@ -49,10 +51,13 @@ internal data class SoundMeterState(
     /** What the big number shows, or why it shows nothing. */
     val reading: Reading = Reading.Waiting,
 
+    /** The frequency weighting (A/C/Z) in effect. */
     val weighting: Weighting = Weighting.A,
 
+    /** The time weighting (Fast/Slow) in effect. */
     val timeWeighting: TimeWeighting = TimeWeighting.Fast,
 
+    /** The calibration offset in dB. */
     val offsetDb: Double = 0.0,
 
     /**
@@ -64,6 +69,7 @@ internal data class SoundMeterState(
      */
     val measuring: Boolean = false,
 
+    /** The running session statistics. */
     val stats: SessionStats = SessionStats.EMPTY,
 
     /**
@@ -79,6 +85,7 @@ internal data class SoundMeterState(
     /** Whether the microphone is producing anything the screen can show. */
     val isLive: Boolean get() = capturing && !silenced && failure == null
 
+    /** Whether a session can be started — permission granted and no capture failure. */
     val canMeasure: Boolean get() = permission == PermissionState.Granted && failure == null
 
     /** Whether the session has anything worth copying or sharing. */
@@ -95,6 +102,11 @@ internal data class SoundMeterState(
     @Immutable
     sealed interface Reading {
 
+        /**
+         * A measurable level.
+         *
+         * @property dbSpl The level in dB SPL.
+         */
         data class Level(val dbSpl: Double) : Reading
 
         /**
@@ -106,6 +118,7 @@ internal data class SoundMeterState(
          */
         data object TooLoud : Reading
 
+        /** Below the converter's noise floor — quieter than this can measure. */
         data object TooQuiet : Reading
 
         /** The microphone is open and nothing has arrived yet. */
@@ -143,6 +156,17 @@ internal data class SoundMeterState(
  * The statistics are **quantised** on the way in — decibels to a tenth, seconds to whole numbers —
  * because they otherwise change on every block for reasons the eye cannot resolve. The duration
  * ticking from 12.34 to 12.36 seconds is not a display update, it is a wasted frame.
+ *
+ * @property permission    The microphone permission state.
+ * @property quality       How the input was opened.
+ * @property silenced      Whether another app is holding the microphone.
+ * @property failure       Why the capture is not running, or `null`.
+ * @property weighting     The frequency weighting in effect.
+ * @property timeWeighting The time weighting in effect.
+ * @property measuring     Whether a session is accumulating.
+ * @property canMeasure    Whether a session can be started.
+ * @property hasSummary    Whether the session has anything worth copying or sharing.
+ * @property stats         The quantised session statistics.
  */
 @Immutable
 internal data class MeterChrome(
@@ -158,6 +182,12 @@ internal data class MeterChrome(
     val stats: SessionStats,
 )
 
+/**
+ * Projects the full state onto the [MeterChrome] slice, quantising the statistics.
+ *
+ * @receiver The full meter state.
+ * @return The chrome slice for the non-reading parts of the screen.
+ */
 internal fun SoundMeterState.toChrome(): MeterChrome = MeterChrome(
     permission = permission,
     quality = quality,
@@ -195,32 +225,57 @@ internal sealed interface SoundMeterIntent : UiIntent {
      */
     data object ScreenResumed : SoundMeterIntent
 
+    /** The screen stopped being visible. */
     data object ScreenPaused : SoundMeterIntent
 
+    /**
+     * The microphone permission request returned.
+     *
+     * @property granted            Whether the permission is granted.
+     * @property shouldShowRationale The system's rationale flag.
+     */
     data class PermissionResult(
         val granted: Boolean,
         val shouldShowRationale: Boolean,
     ) : SoundMeterIntent
 
+    /** Open the app's system settings, to grant a permanently denied permission. */
     data object AppSettingsRequested : SoundMeterIntent
 
+    /** Start a measurement session. */
     data object StartPressed : SoundMeterIntent
 
+    /** Stop the measurement session. */
     data object StopPressed : SoundMeterIntent
 
+    /** Reset the session statistics. */
     data object ResetPressed : SoundMeterIntent
 
+    /**
+     * The frequency weighting changed.
+     *
+     * @property weighting The newly selected weighting.
+     */
     data class WeightingChanged(val weighting: Weighting) : SoundMeterIntent
 
+    /**
+     * The time weighting changed.
+     *
+     * @property timeWeighting The newly selected time weighting.
+     */
     data class TimeWeightingChanged(val timeWeighting: TimeWeighting) : SoundMeterIntent
 
+    /** Copy the session summary. */
     data object CopySummaryRequested : SoundMeterIntent
 
+    /** Share the session summary. */
     data object ShareSummaryRequested : SoundMeterIntent
 }
 
+/** One-shot events from the meter screen. */
 internal sealed interface SoundMeterEffect : UiEffect {
 
+    /** Open the app's system settings. */
     data object OpenAppSettings : SoundMeterEffect
 
     /**
@@ -232,8 +287,14 @@ internal sealed interface SoundMeterEffect : UiEffect {
      */
     data object CopySummary : SoundMeterEffect
 
+    /** Share the session summary, resolved to text by the screen. */
     data object ShareSummary : SoundMeterEffect
 
+    /**
+     * Show a transient message.
+     *
+     * @property notice What to tell the user.
+     */
     data class Notice(val notice: SoundMeterNotice) : SoundMeterEffect
 }
 
@@ -247,6 +308,7 @@ internal sealed interface SoundMeterEffect : UiEffect {
  */
 internal enum class SoundMeterNotice {
 
+    /** The session statistics were reset. */
     SessionReset,
 
     /** Stopped with nothing measurable in it — usually the microphone was silenced throughout. */

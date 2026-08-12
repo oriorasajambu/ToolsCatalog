@@ -11,11 +11,23 @@ import com.minion.scaffold.core.exif.model.PhotoMetadata
  */
 internal interface PhotoInspector {
 
+    /**
+     * Reads and inspects the photo at [uri].
+     *
+     * @param uri The picked photo.
+     * @return The inspection outcome — the photo and its metadata, or why it could not be read.
+     */
     suspend fun inspect(uri: Uri): InspectionResult
 }
 
+/** The outcome of inspecting a picked photo. */
 internal sealed interface InspectionResult {
 
+    /**
+     * The photo was read successfully.
+     *
+     * @property photo The inspected photo and its metadata.
+     */
     data class Success(val photo: InspectedPhoto) : InspectionResult
 
     /** The file could not be opened or read at all. */
@@ -27,17 +39,24 @@ internal sealed interface InspectionResult {
      * The strip works over the whole file as one array, so a ceiling is a real constraint rather
      * than defensiveness. Refusing with a clear message beats an `OutOfMemoryError` on a mid-range
      * phone, which surfaces as the app simply vanishing.
+     *
+     * @property byteCount The file's size in bytes.
      */
     data class TooLarge(val byteCount: Long) : InspectionResult
 }
 
+/**
+ * A picked photo, read into memory with its metadata.
+ *
+ * @property uri         The photo's content URI.
+ * @property bytes       The whole file in memory.
+ * @property displayName As reported by the picker. Shown because it frequently *is* a timestamp.
+ * @property metadata    What was found in the photo, ranked by exposure.
+ */
 internal data class InspectedPhoto(
     val uri: Uri,
     val bytes: ByteArray,
-
-    /** As reported by the picker. Shown because it frequently *is* a timestamp. */
     val displayName: String?,
-
     val metadata: PhotoMetadata,
 
     /**

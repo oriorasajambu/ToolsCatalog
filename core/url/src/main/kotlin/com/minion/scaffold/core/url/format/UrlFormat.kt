@@ -21,11 +21,19 @@ internal object UrlFormat {
      * A dot is excluded from the scheme's characters even though RFC 3986 permits it, so that
      * `example.com:8080` reads as a host and port rather than as a scheme called `example.com`.
      * No scheme in practical use contains a dot, and the alternative misreports the commoner case.
+     *
+     * @param value The candidate URL.
+     * @return The lowercased scheme, or `null` when [value] has no explicit scheme.
      */
     fun schemeOf(value: String): String? =
         EXPLICIT_SCHEME.find(value)?.groupValues?.get(1)?.lowercase()
 
-    /** The authority between the scheme and the first `/`, `?` or `#`. */
+    /**
+     * The authority between the scheme and the first `/`, `?` or `#`.
+     *
+     * @param value The candidate URL.
+     * @return The host portion, or an empty string when [value] has no `://` separator.
+     */
     fun hostOf(value: String): String {
         val separatorIndex = value.indexOf(SCHEME_SEPARATOR)
         if (separatorIndex < 0) return ""

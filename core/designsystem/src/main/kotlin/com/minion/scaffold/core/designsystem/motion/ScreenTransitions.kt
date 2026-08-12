@@ -27,19 +27,35 @@ import androidx.compose.animation.slideOutVertically
  * the motion is meant to make legible.
  */
 
-/** Enter bottom-to-top: the camera rising into view. Offsets by a full height, so it starts off-screen. */
+/**
+ * Enter bottom-to-top: the camera rising into view. Offsets by a full height, so it starts off-screen.
+ *
+ * @return The modal open [EnterTransition].
+ */
 fun slideUpEnter(): EnterTransition =
     slideInVertically(animationSpec = tween(DURATION_MILLIS, easing = FastOutSlowInEasing)) { it }
 
-/** Exit top-to-bottom: the camera dropping away as it closes. */
+/**
+ * Exit top-to-bottom: the camera dropping away as it closes.
+ *
+ * @return The modal close [ExitTransition].
+ */
 fun slideDownExit(): ExitTransition =
     slideOutVertically(animationSpec = tween(DURATION_MILLIS, easing = FastOutSlowInEasing)) { it }
 
-/** Enter right-to-left: a screen sliding in from the right edge — the standard push. */
+/**
+ * Enter right-to-left: a screen sliding in from the right edge — the standard push.
+ *
+ * @return The push open [EnterTransition].
+ */
 fun slideInFromRight(): EnterTransition =
     slideInHorizontally(animationSpec = tween(DURATION_MILLIS, easing = FastOutSlowInEasing)) { it }
 
-/** Exit left-to-right: a screen sliding off to the right as it closes. */
+/**
+ * Exit left-to-right: a screen sliding off to the right as it closes.
+ *
+ * @return The push close [ExitTransition].
+ */
 fun slideOutToRight(): ExitTransition =
     slideOutHorizontally(animationSpec = tween(DURATION_MILLIS, easing = FastOutSlowInEasing)) { it }
 

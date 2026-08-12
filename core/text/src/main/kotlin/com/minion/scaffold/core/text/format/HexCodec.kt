@@ -9,12 +9,23 @@ package com.minion.scaffold.core.text.format
  */
 internal object HexCodec {
 
+    /**
+     * [input]'s UTF-8 bytes as lowercase hexadecimal.
+     *
+     * @param input The text to encode.
+     * @return The hex string, two characters per byte.
+     */
     fun encode(input: String): String =
         input.toByteArray(Charsets.UTF_8).joinToString(separator = "") { byte ->
             "%02x".format(byte.toInt() and BYTE_MASK)
         }
 
-    /** The decoded text, or null when [input] is not an even run of hex digits. */
+    /**
+     * The decoded text, or null when [input] is not an even run of hex digits.
+     *
+     * @param input A hex string, whitespace ignored.
+     * @return The decoded UTF-8 text, or `null` for an odd length or a non-hex character.
+     */
     fun decode(input: String): String? {
         // Empty is valid — zero bytes decode to the empty string, which is the inverse of encoding
         // it. Only an odd length or a non-hex character is malformed.

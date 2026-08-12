@@ -20,7 +20,12 @@ internal object WifiValueCodec {
     private val SPECIAL_CHARACTERS = setOf(ESCAPE, ';', ',', ':', QUOTE)
     private val HEXADECIMAL = Regex("[0-9A-Fa-f]+")
 
-    /** A value as it appears in a payload: escaped, and quoted if it would read as hexadecimal. */
+    /**
+     * A value as it appears in a payload: escaped, and quoted if it would read as hexadecimal.
+     *
+     * @param value The raw field value, e.g. an SSID or passphrase.
+     * @return The encoded value ready to place after a `K:` key.
+     */
     fun encode(value: String): String {
         val escaped = buildString {
             for (character in value) {
@@ -35,7 +40,12 @@ internal object WifiValueCodec {
         else escaped
     }
 
-    /** The inverse of [encode]. */
+    /**
+     * The inverse of [encode].
+     *
+     * @param value An encoded field value from a payload.
+     * @return The decoded value with quoting and escapes removed.
+     */
     fun decode(value: String): String {
         // An unescaped quote at both ends is the structural quoting; an escaped one is content
         // and still begins with a backslash at this point, so the two cannot be confused.
@@ -69,6 +79,10 @@ internal object WifiValueCodec {
      *
      * `String.split` cannot do this, and that is the whole reason this function exists: it would
      * cut an SSID in half at its first escaped semicolon.
+     *
+     * @param value     The string to split, escapes intact.
+     * @param delimiter The character to split on when it is not escaped.
+     * @return The parts between unescaped delimiters, escapes still in place.
      */
     fun splitUnescaped(value: String, delimiter: Char): List<String> {
         val parts = mutableListOf<String>()
@@ -97,7 +111,12 @@ internal object WifiValueCodec {
         return parts
     }
 
-    /** Splits `K:V` at its first unescaped colon, or null when there is not one. */
+    /**
+     * Splits `K:V` at its first unescaped colon, or null when there is not one.
+     *
+     * @param field A single `key:value` field from a payload.
+     * @return The key-to-value pair, or `null` if [field] has no unescaped colon.
+     */
     fun splitKeyValue(field: String): Pair<String, String>? {
         var escaped = false
 

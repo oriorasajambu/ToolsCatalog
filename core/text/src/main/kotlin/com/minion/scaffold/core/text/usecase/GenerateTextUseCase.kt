@@ -21,14 +21,32 @@ class GenerateTextUseCase @Inject constructor(
     private val random: Random,
 ) {
 
+    /**
+     * A random version-4 UUID.
+     *
+     * @return The UUID in its canonical hyphenated string form.
+     */
     fun uuid(): String = UUID.randomUUID().toString()
 
+    /**
+     * [byteCount] random bytes, as lowercase hex, drawn from the injected [random].
+     *
+     * @param byteCount How many random bytes to draw.
+     * @return The bytes as a hex string, two characters per byte.
+     */
     fun randomHex(byteCount: Int): String {
         val bytes = ByteArray(byteCount)
         random.nextBytes(bytes)
         return bytes.joinToString(separator = "") { "%02x".format(it.toInt() and BYTE_MASK) }
     }
 
+    /**
+     * A random password matching [spec], with one character from each selected class guaranteed.
+     *
+     * @param spec The length and character classes to draw from.
+     * @return [GenerateResult.Success] with the password, or [GenerateResult.Invalid] when [spec]
+     *         selects no classes or is too short to honour "one of each".
+     */
     fun password(spec: PasswordSpec): GenerateResult {
         if (spec.classes.isEmpty()) {
             return GenerateResult.Invalid(PasswordProblem.NO_CHARACTER_CLASS)

@@ -64,6 +64,9 @@ import com.minion.scaffold.feature.tools.R
  * and a two-column **Utilities** grid. Colours come entirely from `MaterialTheme.colorScheme`, so
  * the whole screen is the Midnight palette without a single hex literal here — a hex outside the
  * design system is the bug the design system exists to prevent.
+ *
+ * @param onOpenTool Called with the route of the tool the user selected.
+ * @param modifier   The [Modifier] for the screen.
  */
 @Composable
 internal fun ToolsScreen(

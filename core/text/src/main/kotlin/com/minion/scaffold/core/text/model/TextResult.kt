@@ -8,8 +8,18 @@ package com.minion.scaffold.core.text.model
  */
 sealed interface TextResult {
 
+    /**
+     * The transform succeeded.
+     *
+     * @property output The transformed text.
+     */
     data class Success(val output: String) : TextResult
 
+    /**
+     * The transform could not read its input.
+     *
+     * @property reason Why the input could not be read.
+     */
     data class Failure(val reason: TextError) : TextResult
 }
 

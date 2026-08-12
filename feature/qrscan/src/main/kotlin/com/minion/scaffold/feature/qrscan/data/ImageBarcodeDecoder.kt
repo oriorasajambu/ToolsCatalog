@@ -11,6 +11,12 @@ import android.net.Uri
  */
 internal interface ImageBarcodeDecoder {
 
+    /**
+     * Reads a QR payload out of the image at [uri].
+     *
+     * @param uri The picked image.
+     * @return [ImageDecodeResult.Found] with the payload, or a reason none was read.
+     */
     suspend fun decode(uri: Uri): ImageDecodeResult
 }
 
@@ -23,6 +29,11 @@ internal interface ImageBarcodeDecoder {
  */
 internal sealed interface ImageDecodeResult {
 
+    /**
+     * A QR code was found.
+     *
+     * @property payload The decoded payload.
+     */
     data class Found(val payload: String) : ImageDecodeResult
 
     /** The image opened fine and simply has no QR code in it. */

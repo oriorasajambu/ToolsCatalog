@@ -45,6 +45,13 @@ import com.minion.scaffold.core.designsystem.component.PickerField
 import com.minion.scaffold.feature.qrcreate.presentation.preview.HandleQrExportEffects
 import com.minion.scaffold.feature.qrcreate.presentation.preview.QrResultSection
 
+/**
+ * The Wi-Fi authoring screen: enter a network's details, generate a scannable QR.
+ *
+ * @param onNavigateBack Called when the user leaves the screen.
+ * @param modifier       The [Modifier] for the screen.
+ * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun WifiCreateScreen(
     onNavigateBack: () -> Unit,

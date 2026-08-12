@@ -19,9 +19,10 @@ import kotlinx.coroutines.flow.update
  * Unidirectional by construction — the UI can only send an [UiIntent], and can only observe
  * [state] and [effect]. There is no setter for a screen to reach in and mutate a field.
  *
- * @param S the screen's complete state
- * @param I everything the user can do
- * @param E one-shot events: navigation, toasts
+ * @param S            The screen's complete state.
+ * @param I            Everything the user can do.
+ * @param E            One-shot events: navigation, toasts.
+ * @param initialState The state the screen renders before anything has loaded.
  */
 abstract class MviViewModel<S : UiState, I : UiIntent, E : UiEffect>(
     initialState: S,
@@ -53,7 +54,11 @@ abstract class MviViewModel<S : UiState, I : UiIntent, E : UiEffect>(
      */
     val effect: Flow<E> = _effect.receiveAsFlow()
 
-    /** The single entry point for everything the user does. */
+    /**
+     * The single entry point for everything the user does.
+     *
+     * @param intent The action the user (or system) performed.
+     */
     abstract fun onIntent(intent: I)
 
     /**
@@ -61,6 +66,8 @@ abstract class MviViewModel<S : UiState, I : UiIntent, E : UiEffect>(
      *
      * Uses [MutableStateFlow.update], which is atomic — a read-then-write via `value` would lose
      * an update when two coroutines reduce concurrently.
+     *
+     * @param block Receives the current state and returns the next.
      */
     protected fun reduce(block: S.() -> S) {
         _state.update(block)
@@ -69,7 +76,11 @@ abstract class MviViewModel<S : UiState, I : UiIntent, E : UiEffect>(
     /** The current state, for reducers that need to read before deciding. */
     protected val currentState: S get() = _state.value
 
-    /** Sends a one-shot [effect]. Suspends only if the buffer is full. */
+    /**
+     * Sends a one-shot [effect]. Suspends only if the buffer is full.
+     *
+     * @param effect The one-shot event to deliver.
+     */
     protected suspend fun emitEffect(effect: E) {
         _effect.send(effect)
     }

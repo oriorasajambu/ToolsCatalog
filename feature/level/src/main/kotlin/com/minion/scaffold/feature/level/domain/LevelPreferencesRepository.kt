@@ -25,12 +25,23 @@ internal interface LevelPreferencesRepository {
     /** Whether the first-use prompt explaining calibration has been dismissed. */
     val calibrationPromptSeen: Flow<Boolean>
 
+    /**
+     * Stores a completed calibration.
+     *
+     * @param calibration The device bias to remember.
+     */
     suspend fun setCalibration(calibration: Calibration)
 
     /** Back to uncalibrated. The escape hatch for a flip taken on a surface that was not flat. */
     suspend fun clearCalibration()
 
+    /**
+     * Turns the level's beeper on or off.
+     *
+     * @param enabled Whether the beeper should sound.
+     */
     suspend fun setSoundEnabled(enabled: Boolean)
 
+    /** Records that the first-use calibration prompt has been dismissed. */
     suspend fun setCalibrationPromptSeen()
 }

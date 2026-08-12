@@ -15,14 +15,20 @@ import javax.inject.Inject
  * declared MIME type. A picker will hand over a `.jpg` that is really a HEIC — phones rename on
  * export and messaging apps are worse — and a stripper that trusted the label would run a JPEG
  * parser over ISO base-media boxes and produce something between a corrupt file and a confident lie.
- *
- * @param orientation the EXIF orientation of the source, read by the caller. JPEG only; see
- *   `MinimalExif` for why the one tag survives and why it is synthesised rather than edited.
- * @param keepIcc whether to retain a JPEG colour profile. A user preference, because it trades a
- *   strictly smaller file against wide-gamut photos rendering correctly.
  */
 class PlanStripUseCase @Inject constructor() {
 
+    /**
+     * Plans how to write a clean copy of [bytes].
+     *
+     * @param bytes       The whole source file.
+     * @param orientation The EXIF orientation of the source, read by the caller. JPEG only; see
+     *   `MinimalExif` for why the one tag survives and why it is synthesised rather than edited.
+     * @param keepIcc     Whether to retain a JPEG colour profile. A user preference, because it
+     *   trades a strictly smaller file against wide-gamut photos rendering correctly.
+     * @return [PlanResult.Success] with the plan, or [PlanResult.Failure] when the file is not a
+     *   supported image.
+     */
     operator fun invoke(
         bytes: ByteArray,
         orientation: Int,

@@ -48,6 +48,15 @@ import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.feature.ocr.R
 import kotlinx.coroutines.launch
 
+/**
+ * The OCR screen: aim the camera or pick an image, choose blocks, edit the extracted text.
+ *
+ * @param onNavigateBack       Called when the user leaves the OCR screen.
+ * @param onSendToTextTools    Called with the extracted text bound for the text tools.
+ * @param onNavigateToSettings Called when the user opens the engine picker.
+ * @param modifier             The [Modifier] for the screen.
+ * @param viewModel            The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
 @Composable
 internal fun OcrScreen(
     onNavigateBack: () -> Unit,

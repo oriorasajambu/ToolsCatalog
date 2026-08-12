@@ -30,9 +30,21 @@ internal object HtmlEntityCodec {
         "#39" to "'",
     )
 
+    /**
+     * [input] with the five markup-breaking characters replaced by their named entities.
+     *
+     * @param input The text to escape.
+     * @return The escaped text, safe to paste into HTML.
+     */
     fun encode(input: String): String =
         ENCODE.fold(input) { acc, (raw, entity) -> acc.replace(raw, entity) }
 
+    /**
+     * [input] with named and numeric entities resolved; unknown entities are left verbatim.
+     *
+     * @param input The text to unescape.
+     * @return The unescaped text.
+     */
     fun decode(input: String): String = ENTITY.replace(input) { match ->
         val body = match.groupValues[1]
         when {

@@ -41,6 +41,10 @@ enum class SlopeUnit {
  * Null only happens for a percent grade at or beyond [SlopeUnit.MAX_GRADE_DEGREES]; the caller shows
  * a dash. Returning null rather than `Double.POSITIVE_INFINITY` keeps the "there is no number here"
  * case impossible to format by accident.
+ *
+ * @param degrees The slope angle in degrees.
+ * @param unit    The unit to express it in.
+ * @return The value in [unit], or `null` for a percent grade at or beyond the vertical cap.
  */
 fun convertSlope(degrees: Double, unit: SlopeUnit): Double? = when (unit) {
     SlopeUnit.Degrees -> degrees

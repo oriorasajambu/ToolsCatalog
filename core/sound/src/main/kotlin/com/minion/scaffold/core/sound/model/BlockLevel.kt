@@ -11,7 +11,11 @@ package com.minion.scaffold.core.sound.model
  */
 sealed interface BlockLevel {
 
-    /** A level this device can actually claim to have measured, in dB SPL. */
+    /**
+     * A level this device can actually claim to have measured, in dB SPL.
+     *
+     * @property dbSpl The measured level in dB SPL.
+     */
     data class Measured(val dbSpl: Double) : BlockLevel
 
     /**

@@ -42,6 +42,13 @@ import com.minion.scaffold.feature.tools.R
  *
  * Titles are `@StringRes`, not `String`: this list is built once at class-init time, and a `String`
  * resolved then would not follow a locale change.
+ *
+ * @property id             A stable identifier for the tool.
+ * @property titleRes       The string resource for the tool's title.
+ * @property descriptionRes The string resource for the tool's description.
+ * @property icon           The tool's icon.
+ * @property route          The route that opens the tool.
+ * @property category       Which home-screen section the tool belongs to.
  */
 internal data class Tool(
     val id: String,
@@ -59,7 +66,17 @@ internal data class Tool(
  * promotes the primary reader to a hero card, lists the creators, and grids the utilities — the
  * Midnight Pro catalog layout.
  */
-internal enum class ToolCategory { Reader, Create, Utility }
+internal enum class ToolCategory {
+
+    /** A tool that consumes a code — promoted to the hero card. */
+    Reader,
+
+    /** A tool that writes a code — listed in the Create section. */
+    Create,
+
+    /** A tool that does neither — shown in the Utilities grid. */
+    Utility,
+}
 
 /** Every tool the app offers. */
 internal object ToolCatalog {
