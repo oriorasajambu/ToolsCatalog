@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="speedometer_title">Speedometer</string>
+    <string name="speedometer_navigate_back">Back</string>
+    <string name="speedometer_settings">Units and accuracy</string>
+
+    <!-- Readout -->
+    <string name="speedometer_no_reading">—</string>
+    <string name="speedometer_unit_kmh">km/h</string>
+    <string name="speedometer_unit_mph">mph</string>
+    <string name="speedometer_unit_knots">knots</string>
+    <!--
+      Shown only on the rare receiver that reports no velocity of its own. The number then comes from
+      position differences, which carry far more noise, and saying so beats presenting the two
+      identically.
+    -->
+    <string name="speedometer_speed_derived">Estimated from position changes — this device reports no measured speed.</string>
+
+    <string name="speedometer_quality_none">no fix</string>
+    <string name="speedometer_quality_poor">poor signal</string>
+    <string name="speedometer_quality_usable">fair signal</string>
+    <string name="speedometer_quality_good">good signal</string>
+
+    <!-- Satellites -->
+    <string name="speedometer_searching">Looking for satellites</string>
+    <string name="speedometer_searching_body">The first fix can take a few minutes without a data connection, and needs a clear view of the sky. Nothing is downloaded — the satellites are read directly.</string>
+    <string name="speedometer_satellites_used">%1$d of %2$d satellites in use</string>
+    <string name="speedometer_constellations">Systems: %1$s</string>
+    <string name="speedometer_no_satellites">No satellites visible yet. A window helps; open sky is better.</string>
+
+    <!-- Position and altitude -->
+    <string name="speedometer_altitude">Altitude</string>
+    <string name="speedometer_altitude_meters">%1$.0f m</string>
+    <string name="speedometer_altitude_feet">%1$.0f ft</string>
+    <string name="speedometer_altitude_unavailable">not reported</string>
+    <!--
+      Says which datum, because the difference is the whole point of the geoid table: a receiver's raw
+      altitude is a height above a mathematical ellipsoid and differs from sea level by tens of metres
+      in most of the world.
+    -->
+    <string name="speedometer_altitude_note">Above mean sea level, corrected from the satellite figure.</string>
+    <string name="speedometer_rate_of_climb">Climbing %1$+.0f m/min</string>
+
+    <string name="speedometer_position">Position</string>
+    <string name="speedometer_copy">Copy</string>
+    <string name="speedometer_open_in_maps">Open in a map app</string>
+
+    <!--
+      Persistent, not a snackbar. Someone may be testing deliberately, so the readout stays live — but
+      a fabricated speed must never be indistinguishable from a real one, including in a screenshot.
+    -->
+    <string name="speedometer_mocked">Simulated location — these readings are not from the satellites.</string>
+
+    <!-- Trip -->
+    <string name="speedometer_trip_title">This trip</string>
+    <string name="speedometer_trip_running">Recording</string>
+    <string name="speedometer_trip_held">Held</string>
+    <string name="speedometer_start">Start trip</string>
+    <string name="speedometer_stop">Stop</string>
+    <string name="speedometer_reset">Reset</string>
+    <string name="speedometer_trip_distance">Distance</string>
+    <string name="speedometer_trip_average">Average</string>
+    <string name="speedometer_trip_max">Max</string>
+    <string name="speedometer_trip_climb">Climb</string>
+    <string name="speedometer_trip_duration">Duration %1$d min %2$02d s</string>
+    <string name="speedometer_stat_empty">—</string>
+    <string name="speedometer_distance_km">%1$.2f km</string>
+    <string name="speedometer_distance_miles">%1$.2f mi</string>
+    <string name="speedometer_speed_value">%1$.0f</string>
+
+    <!-- Permission -->
+    <string name="speedometer_permission_rationale">This needs location access to read your device\'s satellite receiver. Nothing is sent anywhere — there is no map, no network, and no data connection involved.</string>
+    <string name="speedometer_permission_grant">Allow location access</string>
+    <string name="speedometer_permission_blocked">Location access is turned off for this app. You can switch it back on in Settings.</string>
+    <string name="speedometer_permission_open_settings">Open settings</string>
+
+    <!--
+      The subtle case. Approximate location is deliberately coarsened to roughly a city block and is
+      re-coarsened on every request, so consecutive readings jump around a grid. A speed derived from
+      that is not merely imprecise, it is meaningless. The user chose this in the system dialog, so it
+      earns an explanation rather than an error.
+    -->
+    <string name="speedometer_permission_approximate">You granted approximate location, which is deliberately rounded to about a city block. Speed and altitude cannot be worked out from it. Precise location is needed — it stays on the device.</string>
+    <string name="speedometer_permission_upgrade">Allow precise location</string>
+
+    <string name="speedometer_provider_disabled">Location is switched off on this device.</string>
+    <string name="speedometer_provider_open_settings">Open location settings</string>
+
+    <!-- Notices -->
+    <string name="speedometer_notice_copied">Copied</string>
+    <string name="speedometer_notice_no_map_app">No map app on this device.</string>
+    <string name="speedometer_notice_trip_reset">Trip cleared</string>
+    <string name="speedometer_notice_nothing_recorded">Nothing was recorded in that trip</string>
+
+    <!-- Settings -->
+    <string name="speedometer_settings_title">Units and accuracy</string>
+    <string name="speedometer_settings_speed_unit">Speed</string>
+    <string name="speedometer_settings_distance_unit">Altitude and distance</string>
+    <string name="speedometer_settings_distance_metric">Metres and kilometres</string>
+    <string name="speedometer_settings_distance_imperial">Feet and miles</string>
+    <string name="speedometer_settings_coordinate_format">Coordinates</string>
+    <string name="speedometer_settings_coordinates_decimal">Decimal degrees</string>
+    <string name="speedometer_settings_coordinates_dms">Degrees, minutes, seconds</string>
+
+    <string name="speedometer_settings_accuracy_title">How accurate is this?</string>
+    <string name="speedometer_settings_accuracy_body">Speed comes from the Doppler shift of the satellite signals — a direct measurement of how fast you are moving, usually accurate to a fraction of a km/h. It is not worked out from how far you have travelled, which would be far noisier.\n\nThe signal indicator reflects what the receiver itself reports about its accuracy. When it says the signal is poor, treat the numbers as approximate.</string>
+
+    <string name="speedometer_settings_dashboard_title">Why this disagrees with your car</string>
+    <!--
+      The single most useful thing this screen can say. Without it, a 6 km/h discrepancy reads as the
+      app being broken, when in fact the dashboard is the less accurate of the two by design.
+    -->
+    <string name="speedometer_settings_dashboard_body">A car\'s speedometer is required by regulation never to read low, so manufacturers deliberately set it high — typically by 5 to 10 percent. A dashboard showing 100 km/h usually means about 92 to 95. Satellite speed has no such bias, so if the two disagree and this one reads lower, that is expected.\n\nThis does not make it a legal reference. Use the dashboard for that.</string>
+
+    <string name="speedometer_settings_altitude_title">Altitude and sea level</string>
+    <string name="speedometer_settings_altitude_body">Satellites report height above a smooth mathematical model of the Earth, not above sea level. The two differ by anywhere from −107 to +85 metres depending where you are. This app corrects for that using a bundled model of the Earth\'s gravity field, so the altitude shown is a true height above mean sea level.\n\nHeight is inherently the weakest part of a satellite fix — expect it to be several times less accurate than your position.</string>
+</resources>

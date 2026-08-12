@@ -11,6 +11,7 @@ import com.minion.scaffold.core.designsystem.motion.slideInFromRight
 import com.minion.scaffold.core.designsystem.motion.slideOutToRight
 import com.minion.scaffold.core.navigation.LevelCalibrationRoute
 import com.minion.scaffold.core.navigation.ExifStripSettingsRoute
+import com.minion.scaffold.core.navigation.SpeedometerSettingsRoute
 import com.minion.scaffold.core.navigation.OcrSettingsRoute
 import com.minion.scaffold.core.navigation.SoundMeterSettingsRoute
 import com.minion.scaffold.core.navigation.ToolsRoute
@@ -21,6 +22,8 @@ import com.minion.scaffold.feature.qrcreate.presentation.url.urlCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.vcard.vCardCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.wifi.wifiCreateScreen
 import com.minion.scaffold.feature.exifstrip.presentation.exifStripScreen
+import com.minion.scaffold.feature.speedometer.presentation.speedometerScreen
+import com.minion.scaffold.feature.speedometer.presentation.speedometerSettingsScreen
 import com.minion.scaffold.feature.exifstrip.presentation.exifStripSettingsScreen
 import com.minion.scaffold.feature.level.presentation.levelCalibrationScreen
 import com.minion.scaffold.feature.level.presentation.levelScreen
@@ -125,6 +128,13 @@ fun AppNavHost(
             onNavigateToSettings = { navController.navigate(ExifStripSettingsRoute) },
         )
         exifStripSettingsScreen(
+            onNavigateBack = { navController.popBackStack() },
+        )
+        speedometerScreen(
+            onNavigateBack = { navController.popBackStack() },
+            onNavigateToSettings = { navController.navigate(SpeedometerSettingsRoute) },
+        )
+        speedometerSettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
         weatherScreen(

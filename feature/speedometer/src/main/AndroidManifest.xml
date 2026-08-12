@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Fine location is mandatory here, unlike in :feature:weather where coarse is enough. Since
+      Android 12 the system dialog lets the user grant Approximate instead, which is deliberately
+      coarsened to roughly a city block and is re-coarsened per request — so consecutive fixes jump
+      around a grid. A speed derived from those is not merely imprecise, it is meaningless, which is
+      why the screen detects that grant specifically and offers the precise upgrade rather than
+      showing numbers.
+
+      Coarse is declared alongside because the system requires it to be requested with fine, and
+      because both permissions are already declared app-wide by :feature:weather; naming them here
+      keeps the dependency visible where it is used.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!--
+      Deliberately absent: ACCESS_BACKGROUND_LOCATION and any foreground service. The receiver runs
+      only while the screen is on show, so there is nothing to hold in the background — and not
+      holding the permission is a stronger guarantee of that than any amount of UI copy. A 1 Hz GNSS
+      stream is expensive enough that tying it to a visible screen is also the honest battery choice.
+    -->
+
+    <!-- Not required: a device with no GNSS still installs the app and gets every other tool. -->
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false" />
+
+</manifest>
