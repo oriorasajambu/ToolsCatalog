@@ -11,6 +11,16 @@ import kotlin.math.min
  *
  * Separate from the rendered [TripStats] for the same reason `SessionState` is separate from
  * `SessionStats` in `:core:sound`: this is bookkeeping the screen has no business seeing.
+ *
+ * @property distanceMeters             Distance travelled so far, in metres.
+ * @property durationSeconds            Time in motion so far, in seconds.
+ * @property maxSpeedMetersPerSecond    The fastest sustained speed, or `null` before any.
+ * @property elevationGainMeters        Cumulative climb, in metres.
+ * @property minAltitudeMeters          The lowest altitude seen, or `null` before any.
+ * @property maxAltitudeMeters          The highest altitude seen, or `null` before any.
+ * @property lastFix                    The previous fix, for interval arithmetic.
+ * @property lastAcceptedAltitudeMeters The last altitude that passed the elevation gate.
+ * @property previousTrustworthySpeed   The previous trustworthy speed, for the max-speed dwell.
  */
 data class TripState(
     val distanceMeters: Double = 0.0,
@@ -34,6 +44,11 @@ data class TripState(
     val averageSpeedMetersPerSecond: Double?
         get() = if (durationSeconds > 0.0) distanceMeters / durationSeconds else null
 
+    /**
+     * A render-ready snapshot of these totals.
+     *
+     * @return The [TripStats] the screen displays.
+     */
     fun toStats() = TripStats(
         distanceMeters = distanceMeters,
         durationSeconds = durationSeconds,
@@ -45,6 +60,17 @@ data class TripState(
     )
 }
 
+/**
+ * The render-ready trip totals.
+ *
+ * @property distanceMeters             Distance travelled, in metres.
+ * @property durationSeconds            Time in motion, in seconds.
+ * @property averageSpeedMetersPerSecond Distance over duration, or `null` before any motion.
+ * @property maxSpeedMetersPerSecond    The fastest sustained speed, or `null` before any.
+ * @property elevationGainMeters        Cumulative climb, in metres.
+ * @property minAltitudeMeters          The lowest altitude seen, or `null` before any.
+ * @property maxAltitudeMeters          The highest altitude seen, or `null` before any.
+ */
 data class TripStats(
     val distanceMeters: Double,
     val durationSeconds: Double,
@@ -54,9 +80,11 @@ data class TripStats(
     val minAltitudeMeters: Double?,
     val maxAltitudeMeters: Double?,
 ) {
+    /** Whether the trip has accumulated any motion worth showing. */
     val hasMeasurement: Boolean get() = durationSeconds > 0.0
 
     companion object {
+        /** A trip that has measured nothing. */
         val EMPTY = TripStats(0.0, 0.0, null, null, 0.0, null, null)
     }
 }
@@ -95,9 +123,14 @@ data class TripStats(
 class AccumulateTripUseCase @Inject constructor() {
 
     /**
-     * @param resolvedSpeedMetersPerSecond the already-gated speed from [ResolveSpeedUseCase], which
+     * Folds one fix into the trip totals.
+     *
+     * @param state                        The accumulated trip state from the previous call.
+     * @param fix                          The current fix.
+     * @param resolvedSpeedMetersPerSecond The already-gated speed from [ResolveSpeedUseCase], which
      *   is exactly zero when the receiver's own uncertainty says the device is not moving.
-     * @param mslAltitudeMeters height above sea level, after the geoid correction.
+     * @param mslAltitudeMeters            Height above sea level, after the geoid correction, or `null`.
+     * @return The updated trip state.
      */
     operator fun invoke(
         state: TripState,

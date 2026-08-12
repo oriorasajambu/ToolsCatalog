@@ -9,7 +9,9 @@ package com.minion.scaffold.core.gnss.model
  * and a sentinel would erase the distinction.
  */
 data class GnssFix(
+    /** Latitude in decimal degrees. */
     val latitude: Double,
+    /** Longitude in decimal degrees. */
     val longitude: Double,
 
     /**
@@ -31,8 +33,11 @@ data class GnssFix(
      */
     val speedMetersPerSecond: Double?,
 
+    /** The receiver's 1σ speed error in m/s, or `null` when it did not report one. */
     val speedAccuracyMetersPerSecond: Double?,
+    /** The receiver's horizontal position error in metres, or `null` when unreported. */
     val horizontalAccuracyMeters: Double?,
+    /** The receiver's vertical position error in metres, or `null` when unreported. */
     val verticalAccuracyMeters: Double?,
 
     /**
@@ -69,7 +74,9 @@ enum class FixQuality {
     /** Usable for a rough position, not for a speed anyone should act on. */
     Poor,
 
+    /** Workable for position and speed, visibly noisy for altitude. */
     Usable,
 
+    /** A clear-sky fix; every reading is trustworthy. */
     Good,
 }

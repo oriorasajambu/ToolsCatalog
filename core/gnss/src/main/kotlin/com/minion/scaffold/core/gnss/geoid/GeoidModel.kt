@@ -52,6 +52,10 @@ class GeoidModel @Inject constructor() {
      * Positive where the geoid is above the ellipsoid. Subtract it from an ellipsoidal height to get
      * a height above mean sea level — the direction matters, and getting it backwards produces an
      * entirely plausible number wrong by twice the separation.
+     *
+     * @param latitude  Latitude in decimal degrees.
+     * @param longitude Longitude in decimal degrees.
+     * @return The geoid separation in metres, or `null` when the table could not be read.
      */
     fun separationMeters(latitude: Double, longitude: Double): Double? {
         val grid = grid ?: return null
@@ -63,6 +67,11 @@ class GeoidModel @Inject constructor() {
      *
      * `null` when the table is unavailable, so a caller has to decide what to show rather than being
      * handed an uncorrected figure that looks like a corrected one.
+     *
+     * @param ellipsoidalAltitudeMeters Height above the WGS-84 ellipsoid, from the receiver.
+     * @param latitude                  Latitude in decimal degrees.
+     * @param longitude                 Longitude in decimal degrees.
+     * @return Height above mean sea level in metres, or `null` when the table is unavailable.
      */
     fun mslAltitudeMeters(
         ellipsoidalAltitudeMeters: Double,
@@ -131,6 +140,10 @@ internal class GeoidGrid(
      * The geoid is a long-wavelength field, so linear interpolation between posts half a degree apart
      * costs about 0.1 m RMS against the source grid — two orders of magnitude below the ±10–30 m that
      * GNSS vertical accuracy contributes.
+     *
+     * @param latitude  Latitude in decimal degrees; clamped to the grid's range.
+     * @param longitude Longitude in decimal degrees; wrapped into `[-180, 180)`.
+     * @return The interpolated geoid separation in metres.
      */
     fun interpolate(latitude: Double, longitude: Double): Double {
         val clampedLatitude = latitude.coerceIn(-MAX_LATITUDE, MAX_LATITUDE)

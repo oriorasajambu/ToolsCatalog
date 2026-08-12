@@ -14,6 +14,11 @@ import kotlin.math.sqrt
  * [movingStreak] and [stillStreak] are the dwell: a single fix on either side of the threshold does
  * not flip the readout, the same shape as the level's pose machine and the sound meter's clipping
  * detector. Without it a phone at the kerb flickers between 0 and 2 km/h once a second.
+ *
+ * @property previous     The previous fix, for the derivation fallback.
+ * @property movingStreak Consecutive fixes that looked moving.
+ * @property stillStreak  Consecutive fixes that looked still.
+ * @property moving       The committed moving/still verdict, after the dwell.
  */
 data class SpeedState(
     val previous: GnssFix? = null,
@@ -27,6 +32,11 @@ data class SpeedState(
  *
  * [derived] is surfaced because it is a materially weaker measurement, and the screen says so rather
  * than presenting the two identically.
+ *
+ * @property metersPerSecond         The speed to display, in m/s; zero when the device is not moving.
+ * @property accuracyMetersPerSecond The speed's 1σ error in m/s, or `null` when unknown.
+ * @property derived                 Whether the speed was computed here rather than reported by the
+ *   receiver — the weaker path.
  */
 data class ResolvedSpeed(
     val metersPerSecond: Double,
@@ -68,6 +78,13 @@ data class ResolvedSpeed(
  */
 class ResolveSpeedUseCase @Inject constructor() {
 
+    /**
+     * Folds one fix into the speed state and resolves the speed to show.
+     *
+     * @param state The accumulated state from the previous call.
+     * @param fix   The current fix.
+     * @return The updated state paired with the resolved speed (zeroed while not moving).
+     */
     operator fun invoke(state: SpeedState, fix: GnssFix): Pair<SpeedState, ResolvedSpeed> {
         val measured = fix.speedMetersPerSecond
         val raw = when {
@@ -163,6 +180,12 @@ class ResolveSpeedUseCase @Inject constructor() {
  * over the tens of metres between consecutive fixes is a fraction of a millimetre — far below the
  * metres of position noise it is being applied to. Vincenty's method would be exact and would be
  * solving a problem this does not have.
+ *
+ * @param latitude1  First point's latitude in decimal degrees.
+ * @param longitude1 First point's longitude in decimal degrees.
+ * @param latitude2  Second point's latitude in decimal degrees.
+ * @param longitude2 Second point's longitude in decimal degrees.
+ * @return The great-circle distance between the two points, in metres.
  */
 internal fun haversineMeters(
     latitude1: Double,

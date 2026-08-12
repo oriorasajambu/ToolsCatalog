@@ -14,12 +14,21 @@ import kotlin.math.roundToInt
  * The factors are exact by definition, not measured — a knot is exactly 1852 m/h and a mile is
  * exactly 1609.344 m — so the tests assert them to full precision rather than to a tolerance.
  */
-enum class SpeedUnit(val metersPerSecondToUnit: Double) {
+enum class SpeedUnit(
+    /** The factor that converts m/s into this unit. */
+    val metersPerSecondToUnit: Double,
+) {
     KilometersPerHour(3.6),
     MilesPerHour(3600.0 / 1609.344),
     Knots(3600.0 / 1852.0),
     ;
 
+    /**
+     * Converts a speed in m/s into this unit.
+     *
+     * @param metersPerSecond The speed in metres per second.
+     * @return The same speed expressed in this unit.
+     */
     fun fromMetersPerSecond(metersPerSecond: Double): Double =
         metersPerSecond * metersPerSecondToUnit
 }
@@ -30,7 +39,12 @@ enum class DistanceUnit {
     Imperial,
     ;
 
-    /** Altitude, in metres or feet. */
+    /**
+     * Altitude, in metres or feet.
+     *
+     * @param meters The altitude in metres.
+     * @return The altitude in this unit — metres for [Metric], feet for [Imperial].
+     */
     fun altitudeFromMeters(meters: Double): Double = when (this) {
         Metric -> meters
         Imperial -> meters * FEET_PER_METER
@@ -41,6 +55,9 @@ enum class DistanceUnit {
      *
      * Deliberately not the same conversion as altitude: nobody measures a journey in feet or a
      * mountain in miles, so the pair of them is two conversions rather than one scale factor.
+     *
+     * @param meters The distance in metres.
+     * @return The distance in this unit — kilometres for [Metric], miles for [Imperial].
      */
     fun journeyFromMeters(meters: Double): Double = when (this) {
         Metric -> meters / METERS_PER_KILOMETER
@@ -55,6 +72,7 @@ enum class DistanceUnit {
     }
 }
 
+/** How a coordinate pair is written. */
 enum class CoordinateFormat {
     /** `3.595200°, 98.672200°` — what pastes into anything else. */
     Decimal,
@@ -73,6 +91,14 @@ enum class CoordinateFormat {
  */
 object CoordinateFormatter {
 
+    /**
+     * Formats a latitude/longitude pair.
+     *
+     * @param latitude  Latitude in decimal degrees.
+     * @param longitude Longitude in decimal degrees.
+     * @param format    The output format.
+     * @return The formatted coordinate string.
+     */
     fun format(latitude: Double, longitude: Double, format: CoordinateFormat): String =
         when (format) {
             CoordinateFormat.Decimal ->

@@ -26,6 +26,12 @@ import javax.inject.Inject
  */
 class ClassifyFixQualityUseCase @Inject constructor() {
 
+    /**
+     * Grades the fix from its reported horizontal accuracy.
+     *
+     * @param fix The current fix, or `null` when there is none.
+     * @return [FixQuality.None] when there is no fix or no accuracy, otherwise a grade.
+     */
     operator fun invoke(fix: GnssFix?): FixQuality {
         val accuracy = fix?.horizontalAccuracyMeters ?: return FixQuality.None
 
