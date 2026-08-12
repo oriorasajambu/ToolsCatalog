@@ -26,6 +26,9 @@ import com.minion.scaffold.core.designsystem.component.FormSection
  *
  * @param emptyHint what to say before anything has been generated. The only format-specific words
  *   here, because it has to name the fields the user still needs to fill in.
+ * @param payloadContent how to render the generated payload string. Defaults to plain monospace
+ *   text; the EMV screen supplies a coloured tag breakdown here, which is what keeps that
+ *   format-specific view out of this otherwise format-agnostic section.
  */
 @Composable
 internal fun QrResultSection(
@@ -36,6 +39,7 @@ internal fun QrResultSection(
     onShare: () -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
+    payloadContent: @Composable (payload: String) -> Unit = { PlainPayloadText(it) },
 ) {
     val spacing = dimensionResource(R.dimen.qrcreate_spacing)
 
@@ -60,11 +64,7 @@ internal fun QrResultSection(
                 .size(dimensionResource(R.dimen.qrcreate_qr_size)),
         )
 
-        Text(
-            text = payload,
-            style = MaterialTheme.typography.bodySmall,
-            fontFamily = FontFamily.Monospace,
-        )
+        payloadContent(payload)
 
         Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
             AppButton(
@@ -83,4 +83,14 @@ internal fun QrResultSection(
             enabled = !exporting,
         )
     }
+}
+
+/** The default payload rendering: the raw string in monospace, no structure. */
+@Composable
+private fun PlainPayloadText(payload: String) {
+    Text(
+        text = payload,
+        style = MaterialTheme.typography.bodySmall,
+        fontFamily = FontFamily.Monospace,
+    )
 }

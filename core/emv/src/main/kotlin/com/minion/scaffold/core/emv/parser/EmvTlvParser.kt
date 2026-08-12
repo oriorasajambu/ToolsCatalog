@@ -73,6 +73,48 @@ internal object EmvTlvParser {
     }
 
     /**
+     * One tag from [flatten]: its dotted path, nesting depth, node and payload-absolute span.
+     *
+     * Interpretation is deliberately absent — framing is this object's only business, and what a
+     * value *means* is [EmvTagCatalog]'s. The use case that adds it is what turns these into a
+     * public `PayloadTag`.
+     */
+    data class FlatNode(
+        val path: String,
+        val depth: Int,
+        val node: TlvNode,
+        val span: PayloadSpan,
+    )
+
+    /**
+     * Walks [segments] into a flat, positioned list: every node in payload order, a template
+     * immediately before its children.
+     *
+     * The span arithmetic is the same rule [spanOf] applies — a node occupies its header plus its
+     * declared length, and a child's offsets are measured from its parent's value start
+     * (`start + HEADER_LENGTH`). Kept here rather than in a caller so that one rule has one home;
+     * a highlighter recomputing it would be the second implementation the span note warns against.
+     *
+     * @param segments Top-level segments in payload order, as returned by [parse].
+     * @return Every node, flattened, each carrying the payload-absolute [FlatNode.span] it occupies.
+     */
+    fun flatten(segments: List<TlvNode>): List<FlatNode> = buildList {
+        fun walk(nodes: List<TlvNode>, baseOffset: Int, parentPath: String?, depth: Int) {
+            var cursor = baseOffset
+            for (node in nodes) {
+                val span = PayloadSpan(cursor, cursor + HEADER_LENGTH + node.length)
+                val path = if (parentPath == null) node.tag else "$parentPath.${node.tag}"
+                add(FlatNode(path = path, depth = depth, node = node, span = span))
+                if (node.children.isNotEmpty()) {
+                    walk(node.children, cursor + HEADER_LENGTH, path, depth + 1)
+                }
+                cursor = span.endExclusive
+            }
+        }
+        walk(segments, baseOffset = 0, parentPath = null, depth = 0)
+    }
+
+    /**
      * Reads [data] to exhaustion.
      *
      * Exact consumption is structural rather than checked: the loop advances by exactly the

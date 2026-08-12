@@ -5,6 +5,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 /**
@@ -120,6 +122,63 @@ private val SignalColorScheme = lightColorScheme(
 )
 
 /**
+ * An ordered set of background tints for highlighting distinct items — the payload tags on the QR
+ * create screen paint one band per tag from this, cycling when there are more tags than colours.
+ *
+ * Kept outside `ColorScheme` because it is a *list*, not a role: the Material scheme has no slot for
+ * "the eight interchangeable accents", and forcing these into `tertiary` and friends would give them
+ * meanings they do not have. Read via [LocalTagHighlightPalette].
+ *
+ * @property bands The tint colours in order; glyphs drawn over them stay `onSurface` for contrast.
+ */
+data class TagHighlightPalette(val bands: List<Color>)
+
+/**
+ * The active [TagHighlightPalette]. Provided by [AppTheme] per light/dark scheme; the empty default
+ * only applies outside a theme, where a consumer falls back to plain text.
+ */
+val LocalTagHighlightPalette = staticCompositionLocalOf { TagHighlightPalette(emptyList()) }
+
+/**
+ * A colour for each of [count] items, in order — the assignment the QR screens share so a tag reads
+ * as the same colour whether it is scanned or created.
+ *
+ * Cycles [TagHighlightPalette.bands] and nudges any slot that would repeat its predecessor's, so
+ * consecutive items never share a colour even past the eighth. Empty when there are no bands
+ * (outside a theme), which the caller reads as "fall back to plain text".
+ *
+ * @param count How many items need a colour, in the order they appear.
+ * @return [count] colours, index-aligned to the items; empty if [bands] is empty.
+ */
+fun TagHighlightPalette.cycle(count: Int): List<Color> {
+    if (bands.isEmpty()) return emptyList()
+
+    val result = ArrayList<Color>(count)
+    var previous = -1
+    repeat(count) { index ->
+        var slot = index % bands.size
+        if (slot == previous && bands.size > 1) slot = (slot + 1) % bands.size
+        result += bands[slot]
+        previous = slot
+    }
+    return result
+}
+
+private val MidnightTagPalette = TagHighlightPalette(
+    listOf(
+        MidnightTag1, MidnightTag2, MidnightTag3, MidnightTag4,
+        MidnightTag5, MidnightTag6, MidnightTag7, MidnightTag8,
+    ),
+)
+
+private val SignalTagPalette = TagHighlightPalette(
+    listOf(
+        SignalTag1, SignalTag2, SignalTag3, SignalTag4,
+        SignalTag5, SignalTag6, SignalTag7, SignalTag8,
+    ),
+)
+
+/**
  * The single theme wrapper. Everything the app draws sits inside exactly one of these, applied once
  * in `MainActivity`.
  *
@@ -139,10 +198,14 @@ fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(
-        colorScheme = if (darkTheme) MidnightColorScheme else SignalColorScheme,
-        typography = AppTypography,
-        shapes = AppShapes,
-        content = content,
-    )
+    CompositionLocalProvider(
+        LocalTagHighlightPalette provides if (darkTheme) MidnightTagPalette else SignalTagPalette,
+    ) {
+        MaterialTheme(
+            colorScheme = if (darkTheme) MidnightColorScheme else SignalColorScheme,
+            typography = AppTypography,
+            shapes = AppShapes,
+            content = content,
+        )
+    }
 }
