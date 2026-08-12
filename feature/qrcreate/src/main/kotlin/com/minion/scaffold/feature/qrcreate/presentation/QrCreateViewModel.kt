@@ -8,6 +8,7 @@ import com.minion.scaffold.core.emv.model.EmvParseResult
 import com.minion.scaffold.core.emv.model.PointOfInitiationMethod
 import com.minion.scaffold.core.emv.usecase.BuildEmvPayloadUseCase
 import com.minion.scaffold.core.emv.usecase.EmvDraftFromPayloadUseCase
+import com.minion.scaffold.core.emv.usecase.EmvPayloadBreakdownUseCase
 import com.minion.scaffold.core.navigation.QrCreateRoute
 import com.minion.scaffold.core.ui.mvi.MviViewModel
 import com.minion.scaffold.feature.qrcreate.data.QrImageExporter
@@ -26,6 +27,7 @@ internal class QrCreateViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     draftFromPayload: EmvDraftFromPayloadUseCase,
     private val buildEmvPayload: BuildEmvPayloadUseCase,
+    private val breakdownPayload: EmvPayloadBreakdownUseCase,
     private val imageExporter: QrImageExporter,
 ) : MviViewModel<QrCreateState, QrCreateIntent, QrExportEffect>(
     initialState(savedStateHandle, draftFromPayload),
@@ -117,6 +119,7 @@ internal class QrCreateViewModel @Inject constructor(
             copy(
                 form = transform(form),
                 payload = null,
+                tags = emptyList(),
                 violations = violations.filterNot {
                     it.field == clearing && it.accountIndex == accountIndex
                 },
@@ -134,11 +137,15 @@ internal class QrCreateViewModel @Inject constructor(
     private fun generate() {
         when (val result = buildEmvPayload(currentState.form.toDraft())) {
             is EmvBuildResult.Success -> reduce {
-                copy(payload = result.payload, violations = emptyList())
+                copy(
+                    payload = result.payload,
+                    tags = breakdownPayload(result.payload),
+                    violations = emptyList(),
+                )
             }
 
             is EmvBuildResult.Invalid -> reduce {
-                copy(payload = null, violations = result.violations)
+                copy(payload = null, tags = emptyList(), violations = result.violations)
             }
         }
     }

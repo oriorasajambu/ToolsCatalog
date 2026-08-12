@@ -55,6 +55,7 @@ import com.minion.scaffold.feature.qrcreate.presentation.form.describe
 import com.minion.scaffold.feature.qrcreate.presentation.form.TipMode
 import com.minion.scaffold.feature.qrcreate.presentation.preview.HandleQrExportEffects
 import com.minion.scaffold.feature.qrcreate.presentation.preview.QrResultSection
+import com.minion.scaffold.feature.qrcreate.presentation.preview.TagBreakdownView
 
 /**
  * The EMV QR authoring screen: fill in a merchant's details, generate a scannable payload.
@@ -189,6 +190,7 @@ private fun QrCreateContent(
                     onCopy = { onIntent(QrCreateIntent.CopyPayloadRequested) },
                     onShare = { onIntent(QrCreateIntent.ShareImageRequested) },
                     onSave = { onIntent(QrCreateIntent.SaveImageRequested) },
+                    payloadContent = { payload -> TagBreakdownView(payload = payload, tags = state.tags) },
                 )
             }
         }

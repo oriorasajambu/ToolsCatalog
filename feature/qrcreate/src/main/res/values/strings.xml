@@ -102,6 +102,43 @@
     <string name="qrcreate_export_failed">That image could not be created.</string>
     <string name="qrcreate_empty_hint">Fill in the merchant details, then generate a code.</string>
 
+    <!-- Result: tag breakdown. The payload coloured by tag, with a tappable legend. -->
+    <string name="qrcreate_breakdown_a11y">The payload, with each tag shown in its own colour.</string>
+    <!-- Legend chip: identifies the tag by its path, e.g. "Tag: 00", "Tag: 26.00". -->
+    <string name="qrcreate_tag_chip">Tag: %1$s</string>
+    <!-- Detail line for the focused tag: "53 Currency: 682 (SAR)". -->
+    <string name="qrcreate_tag_detail">%1$s %2$s: %3$s</string>
+    <!-- A coded value paired with its decoding: "682 (SAR)", "5411 (Grocery Stores)". -->
+    <string name="qrcreate_tag_value_named">%1$s (%2$s)</string>
+    <string name="qrcreate_tag_value_checksum_ok">%1$s (matches)</string>
+    <string name="qrcreate_tag_value_checksum_mismatch">%1$s (mismatch)</string>
+    <string name="qrcreate_tag_initiation_static">Static</string>
+    <string name="qrcreate_tag_initiation_dynamic">Dynamic</string>
+    <!-- Fallback name for a tag with no specific label: "Tag 91". -->
+    <string name="qrcreate_tag_generic">Tag %1$s</string>
+
+    <!-- Tag names, shown in the breakdown's detail line. -->
+    <string name="qrcreate_tag_00">Payload format</string>
+    <string name="qrcreate_tag_01">Initiation method</string>
+    <string name="qrcreate_tag_52">Merchant category</string>
+    <string name="qrcreate_tag_53">Currency</string>
+    <string name="qrcreate_tag_54">Amount</string>
+    <string name="qrcreate_tag_55">Tip or convenience fee</string>
+    <string name="qrcreate_tag_56">Convenience fee</string>
+    <string name="qrcreate_tag_57">Convenience fee</string>
+    <string name="qrcreate_tag_58">Country</string>
+    <string name="qrcreate_tag_59">Merchant name</string>
+    <string name="qrcreate_tag_60">Merchant city</string>
+    <string name="qrcreate_tag_61">Postal code</string>
+    <string name="qrcreate_tag_62">Additional data</string>
+    <string name="qrcreate_tag_63">Checksum</string>
+    <string name="qrcreate_tag_64">Merchant name (alternate language)</string>
+    <string name="qrcreate_tag_template">Merchant account</string>
+    <string name="qrcreate_tag_sub_00">Globally unique identifier</string>
+    <string name="qrcreate_tag_sub_01">Merchant PAN</string>
+    <string name="qrcreate_tag_sub_02">Merchant ID</string>
+    <string name="qrcreate_tag_sub_03">Merchant criteria</string>
+
     <!-- Validation. Shown under the field that caused them. -->
     <string name="qrcreate_violation_required">This is required.</string>
     <string name="qrcreate_violation_too_long">Too long for this field.</string>

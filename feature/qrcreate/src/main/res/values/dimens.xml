@@ -3,4 +3,9 @@
     <dimen name="qrcreate_spacing">16dp</dimen>
     <dimen name="qrcreate_spacing_tight">8dp</dimen>
     <dimen name="qrcreate_qr_size">220dp</dimen>
+
+    <!-- Legend chips in the tag breakdown. -->
+    <dimen name="qrcreate_chip_padding_horizontal">10dp</dimen>
+    <dimen name="qrcreate_chip_padding_vertical">6dp</dimen>
+    <dimen name="qrcreate_chip_border">2dp</dimen>
 </resources>

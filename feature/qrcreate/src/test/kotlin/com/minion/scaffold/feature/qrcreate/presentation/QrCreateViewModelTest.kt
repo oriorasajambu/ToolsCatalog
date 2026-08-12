@@ -9,6 +9,7 @@ import com.minion.scaffold.core.emv.model.ViolationReason
 import com.minion.scaffold.core.emv.reference.MerchantCategoryCodes
 import com.minion.scaffold.core.emv.usecase.BuildEmvPayloadUseCase
 import com.minion.scaffold.core.emv.usecase.EmvDraftFromPayloadUseCase
+import com.minion.scaffold.core.emv.usecase.EmvPayloadBreakdownUseCase
 import com.minion.scaffold.core.emv.usecase.ParseEmvPayloadUseCase
 import com.minion.scaffold.core.navigation.QrCreateRoute
 import com.minion.scaffold.feature.qrcreate.presentation.preview.ExportOutcome
@@ -47,6 +48,7 @@ internal class QrCreateViewModelTest {
         SavedStateHandle(mapOf(QrCreateRoute.ARG_PAYLOAD to payload)),
         EmvDraftFromPayloadUseCase(ParseEmvPayloadUseCase()),
         BuildEmvPayloadUseCase(),
+        EmvPayloadBreakdownUseCase(),
         exporter,
     )
 
@@ -130,6 +132,31 @@ internal class QrCreateViewModelTest {
         viewModel.onIntent(QrCreateIntent.FieldChanged(EmvField.MERCHANT_CITY, "Depok"))
 
         assertNull(viewModel.state.value.payload)
+    }
+
+    /** The highlight breakdown appears with the payload, and every top-level tag it covers. */
+    @Test
+    fun `generating a valid form breaks the payload into tags`() {
+        fillValidForm()
+
+        viewModel.onIntent(QrCreateIntent.GenerateRequested)
+
+        val tags = viewModel.state.value.tags
+        assertTrue(tags.isNotEmpty())
+        assertEquals("00", tags.first().path)
+        assertTrue(tags.any { it.path == "63" })
+    }
+
+    /** The breakdown is cleared with the payload, so it never points at stale characters. */
+    @Test
+    fun `editing after generating discards the tag breakdown`() {
+        fillValidForm()
+        viewModel.onIntent(QrCreateIntent.GenerateRequested)
+        assertTrue(viewModel.state.value.tags.isNotEmpty())
+
+        viewModel.onIntent(QrCreateIntent.FieldChanged(EmvField.MERCHANT_CITY, "Depok"))
+
+        assertTrue(viewModel.state.value.tags.isEmpty())
     }
 
     @Test

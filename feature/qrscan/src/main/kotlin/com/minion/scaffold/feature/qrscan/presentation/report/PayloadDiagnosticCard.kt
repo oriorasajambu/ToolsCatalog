@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.minion.scaffold.core.designsystem.component.OffsetGridText
 import com.minion.scaffold.core.emv.model.QrParseError
 import com.minion.scaffold.feature.qrscan.R
 import com.minion.scaffold.feature.qrscan.presentation.QrScanError
@@ -41,8 +42,13 @@ internal fun PayloadDiagnosticCard(
     val spacing = dimensionResource(R.dimen.qrscan_spacing)
     val parseError = (error as? QrScanError.Parse)?.error
 
-    val spans = remember(payload, parseError, stale) {
-        if (stale || parseError == null) emptyList() else parseError.toGridSpans(payload.length)
+    val scheme = MaterialTheme.colorScheme
+    val spans = remember(payload, parseError, stale, scheme) {
+        if (stale || parseError == null) {
+            emptyList()
+        } else {
+            parseError.toGridSpans(payload.length).toOffsetSpans(scheme)
+        }
     }
 
     Card(

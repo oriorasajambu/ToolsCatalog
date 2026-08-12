@@ -53,6 +53,24 @@ internal val MidnightErrorContainer = Color(0xFF33161C)
 internal val MidnightOnErrorContainer = Color(0xFFFFB3BB)
 
 /**
+ * The tag-highlight bands — eight hues used, in order, as the background behind a payload tag and
+ * on its legend chip. Fully opaque and saturated (deep jewel tones), yet dark enough that the
+ * near-white `onSurface` glyphs on top keep a ≥4.5:1 contrast — the band carries the identity, the
+ * text stays legible. The hues are **ordered so neighbours contrast**: because tags are coloured in
+ * payload order, consecutive tags must not land on lookalike hues (blue→amber→green→…, never
+ * teal→green). Each index is the same hue as its `Signal*` twin, so a tag reads as "the blue one"
+ * in either theme.
+ */
+internal val MidnightTag1 = Color(0xFF22359E) // blue
+internal val MidnightTag2 = Color(0xFF7E4A0C) // amber
+internal val MidnightTag3 = Color(0xFF15702F) // green
+internal val MidnightTag4 = Color(0xFF97199B) // magenta
+internal val MidnightTag5 = Color(0xFF0E6076) // teal
+internal val MidnightTag6 = Color(0xFF9E1B3D) // rose
+internal val MidnightTag7 = Color(0xFF5B2BB0) // purple
+internal val MidnightTag8 = Color(0xFFA32B12) // orange-red
+
+/**
  * **Signal** — the app's light scheme: a bright mint ground, white cards on soft green lines, and a
  * single emerald accent for tiles, fills and the featured scan card. Imported from the
  * "ToolsCatalog · Direction 1b — Signal" design direction; the values are that direction's own CSS
@@ -100,3 +118,17 @@ internal val SignalOnSuccessContainer = Color(0xFF0B7C57)
 internal val SignalError = Color(0xFFB3261E)
 internal val SignalErrorContainer = Color(0xFFF9DEDC)
 internal val SignalOnErrorContainer = Color(0xFF410E0B)
+
+/**
+ * The tag-highlight bands for the light scheme — the same eight hues in the same order as their
+ * `Midnight*` twins, but as saturated pale tints a near-black `onSurface` glyph reads cleanly on.
+ * See [MidnightTag1].
+ */
+internal val SignalTag1 = Color(0xFFC7D4F7) // blue
+internal val SignalTag2 = Color(0xFFF1E1BE) // amber
+internal val SignalTag3 = Color(0xFFC6EBCF) // green
+internal val SignalTag4 = Color(0xFFF1CBF1) // magenta
+internal val SignalTag5 = Color(0xFFC2E7EF) // teal
+internal val SignalTag6 = Color(0xFFF7C9D6) // rose
+internal val SignalTag7 = Color(0xFFDBCEF9) // purple
+internal val SignalTag8 = Color(0xFFF8D0C4) // orange-red

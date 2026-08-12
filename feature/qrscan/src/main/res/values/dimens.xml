@@ -8,6 +8,12 @@
     <dimen name="qrscan_spacing">16dp</dimen>
     <dimen name="qrscan_spacing_tight">4dp</dimen>
     <dimen name="qrscan_subtag_indent">12dp</dimen>
+
+    <!-- The tag colour chips on the report's segment cards, matching the payload's bands. -->
+    <dimen name="qrscan_chip_padding_horizontal">8dp</dimen>
+    <dimen name="qrscan_chip_padding_vertical">4dp</dimen>
+    <dimen name="qrscan_chip_gap">8dp</dimen>
+    <dimen name="qrscan_selected_border">2dp</dimen>
     <dimen name="qrscan_input_min_height">96dp</dimen>
     <dimen name="qrscan_qr_size">200dp</dimen>
 

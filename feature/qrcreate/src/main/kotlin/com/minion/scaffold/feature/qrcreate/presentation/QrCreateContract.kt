@@ -4,6 +4,7 @@ import com.minion.scaffold.core.common.mvi.UiIntent
 import com.minion.scaffold.core.common.mvi.UiState
 import com.minion.scaffold.core.emv.model.EmvField
 import com.minion.scaffold.core.emv.model.FieldViolation
+import com.minion.scaffold.core.emv.model.PayloadTag
 import com.minion.scaffold.core.emv.model.PointOfInitiationMethod
 import com.minion.scaffold.core.emv.model.ViolationReason
 import com.minion.scaffold.core.emv.reference.Currency
@@ -26,6 +27,12 @@ internal data class QrCreateState(
     val violations: List<FieldViolation> = emptyList(),
     /** The generated payload, or `null` before Generate or after an edit. */
     val payload: String? = null,
+    /**
+     * The generated payload broken into its tags for highlighting, or empty when there is no
+     * payload. Cleared alongside [payload] on every edit, for the same reason: a breakdown of a
+     * payload the form no longer matches would point at the wrong characters.
+     */
+    val tags: List<PayloadTag> = emptyList(),
     /** Whether an export is in progress. */
     val exporting: Boolean = false,
     /** Opened with a payload to change, rather than to write one from nothing. */
