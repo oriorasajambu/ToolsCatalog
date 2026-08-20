@@ -4,6 +4,7 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
@@ -36,6 +37,7 @@ import com.minion.scaffold.feature.texttools.presentation.generateScreen
 import com.minion.scaffold.feature.texttools.presentation.textToolsScreen
 import com.minion.scaffold.feature.tools.presentation.toolsScreen
 import com.minion.scaffold.feature.weather.presentation.weatherScreen
+import com.minion.scaffold.showkase.ComponentCatalog
 
 /**
  * The app's single navigation graph, assembled from every feature's entry point.
@@ -56,6 +58,17 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
+    // The Showkase browser has no launcher icon of its own any more — two home-screen entries for
+    // one debug install is confusing — so the home screen's brand tile opens it instead. Null in a
+    // release build, where the constant folds away and the tile stays decorative.
+    val context = LocalContext.current
+    val openComponentCatalog: (() -> Unit)? =
+        if (ComponentCatalog.IS_AVAILABLE) {
+            { ComponentCatalog.open(context) }
+        } else {
+            null
+        }
+
     NavHost(
         navController = navController,
         startDestination = ToolsRoute,
@@ -74,6 +87,7 @@ fun AppNavHost(
         // feature owns that route, so adding a tool does not touch this file.
         toolsScreen(
             onOpenTool = { route -> navController.navigate(route) },
+            onOpenComponentCatalog = openComponentCatalog,
         )
         // The scanner reports a payload the user wants to change; :app is the only place that
         // knows the editor exists, so neither feature learns about the other.

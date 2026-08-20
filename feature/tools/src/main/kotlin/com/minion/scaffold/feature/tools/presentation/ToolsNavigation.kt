@@ -13,12 +13,21 @@ import com.minion.scaffold.core.navigation.ToolsRoute
  * `when` over tool ids that would have to be kept in step with the catalog.
  *
  * @receiver The nav graph builder to register the destination on.
+ * [onOpenComponentCatalog] is the Showkase browser's only entry point. It is null in a release
+ * build — `:app` is the module that knows whether the catalog was compiled in — and a null
+ * lambda leaves the brand tile decorative, so a developer tool cannot ship as a visible control.
+ *
  * @param onOpenTool Called with the route of the tool the user selected.
+ * @param onOpenComponentCatalog Called when the brand tile is tapped, or null where no catalog exists.
  */
 fun NavGraphBuilder.toolsScreen(
     onOpenTool: (AppRoute) -> Unit,
+    onOpenComponentCatalog: (() -> Unit)? = null,
 ) {
     composable<ToolsRoute> {
-        ToolsScreen(onOpenTool = onOpenTool)
+        ToolsScreen(
+            onOpenTool = onOpenTool,
+            onOpenComponentCatalog = onOpenComponentCatalog,
+        )
     }
 }

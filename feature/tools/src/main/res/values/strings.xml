@@ -15,6 +15,9 @@
     <string name="tools_hero_action">Start scanning</string>
     <string name="tools_hero_qr_description">A decorative QR code</string>
 
+    <!-- Click label on the brand tile, which opens the component catalog in debug builds. -->
+    <string name="tools_brand_catalog_action">Open the component catalog</string>
+
     <!-- Home — section headers -->
     <string name="tools_section_create">CREATE</string>
     <string name="tools_section_utilities">UTILITIES</string>

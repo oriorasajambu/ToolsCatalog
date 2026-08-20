@@ -22,12 +22,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,12 +43,11 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minion.scaffold.core.designsystem.component.AppButton
 import com.minion.scaffold.core.designsystem.component.QrCodeImage
+import com.minion.scaffold.core.designsystem.theme.AppTextStyles
 import com.minion.scaffold.core.designsystem.theme.AppTheme
 import com.minion.scaffold.core.navigation.AppRoute
 import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
@@ -72,6 +69,7 @@ import com.minion.scaffold.feature.tools.R
 internal fun ToolsScreen(
     onOpenTool: (AppRoute) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenComponentCatalog: (() -> Unit)? = null,
     viewModel: ToolsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -86,6 +84,7 @@ internal fun ToolsScreen(
         state = state,
         onIntent = viewModel::onIntent,
         modifier = modifier,
+        onOpenComponentCatalog = onOpenComponentCatalog,
     )
 }
 
@@ -110,6 +109,7 @@ private fun ToolsContent(
     state: ToolsState,
     onIntent: (ToolsIntent) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenComponentCatalog: (() -> Unit)? = null,
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -124,7 +124,7 @@ private fun ToolsContent(
                 .padding(bottom = dimensionResource(R.dimen.tools_section_gap)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tools_section_gap)),
         ) {
-            HomeHeader()
+            HomeHeader(onBrandClick = onOpenComponentCatalog)
 
             state.hero?.let { hero ->
                 HeroCard(
@@ -157,8 +157,21 @@ private fun ToolsContent(
     }
 }
 
+/**
+ * The brand row: logo tile and app name.
+ *
+ * [onBrandClick] is how the component catalog is reached. `:app` supplies it only in a debug
+ * build, and a null lambda leaves the tile inert — so the developer entry point is genuinely
+ * absent from release rather than merely hidden, and it costs the product UI no visible control.
+ *
+ * @param modifier     The [Modifier] for the row.
+ * @param onBrandClick Called when the logo tile is tapped, or null to make it decorative.
+ */
 @Composable
-private fun HomeHeader(modifier: Modifier = Modifier) {
+private fun HomeHeader(
+    modifier: Modifier = Modifier,
+    onBrandClick: (() -> Unit)? = null,
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -168,6 +181,7 @@ private fun HomeHeader(modifier: Modifier = Modifier) {
         IconTile(
             icon = Icons.Filled.QrCode2,
             size = dimensionResource(R.dimen.tools_brand_tile),
+            onClick = onBrandClick,
         )
         Spacer(Modifier.width(dimensionResource(R.dimen.tools_row_gap)))
         Text(
@@ -176,20 +190,6 @@ private fun HomeHeader(modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.weight(1f),
         )
-        // Decorative brand anchor, not a control — there is no profile screen behind it.
-        Box(
-            modifier = Modifier
-                .size(dimensionResource(R.dimen.tools_avatar))
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Person,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
     }
 }
 
@@ -208,7 +208,7 @@ private fun HeroCard(
 ) {
     val scheme = MaterialTheme.colorScheme
     val glow = Brush.radialGradient(
-        colors = listOf(scheme.primary.copy(alpha = 0.35f), Color.Transparent),
+        colors = listOf(scheme.primary.copy(alpha = HERO_GLOW_ALPHA), Color.Transparent),
         center = Offset.Unspecified,
         radius = HERO_GLOW_RADIUS,
     )
@@ -218,7 +218,7 @@ private fun HeroCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(dimensionResource(R.dimen.tools_hero_radius)))
             .border(
-                width = 1.dp,
+                width = dimensionResource(R.dimen.tools_border),
                 color = scheme.outlineVariant,
                 shape = RoundedCornerShape(dimensionResource(R.dimen.tools_hero_radius)),
             )
@@ -230,11 +230,11 @@ private fun HeroCard(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tools_hero_text_gap)),
             ) {
                 Text(
                     text = stringResource(R.string.tools_hero_eyebrow),
-                    style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.6.sp),
+                    style = AppTextStyles.eyebrow,
                     color = scheme.primary,
                 )
                 Text(
@@ -277,7 +277,7 @@ private fun ScanlineQr(payload: String, modifier: Modifier = Modifier) {
         modifier = modifier
             .size(tile)
             .clip(RoundedCornerShape(dimensionResource(R.dimen.tools_hero_qr_radius)))
-            .background(Color.White)
+            .background(QR_QUIET_ZONE)
             .padding(dimensionResource(R.dimen.tools_hero_qr_inset)),
     ) {
         QrCodeImage(
@@ -289,7 +289,7 @@ private fun ScanlineQr(payload: String, modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .offset { IntOffset(x = 0, y = (tile * SCANLINE_TRAVEL * progress).roundToPx()) }
-                .height(2.dp)
+                .height(dimensionResource(R.dimen.tools_scanline_thickness))
                 .background(
                     Brush.horizontalGradient(
                         listOf(
@@ -315,7 +315,7 @@ private fun Section(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.2.sp),
+            style = AppTextStyles.sectionHeading,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         content()
@@ -336,7 +336,7 @@ private fun ToolRow(
             .fillMaxWidth()
             .clip(RoundedCornerShape(dimensionResource(R.dimen.tools_card_radius)))
             .border(
-                width = 1.dp,
+                width = dimensionResource(R.dimen.tools_border),
                 color = scheme.outlineVariant,
                 shape = RoundedCornerShape(dimensionResource(R.dimen.tools_card_radius)),
             )
@@ -412,7 +412,7 @@ private fun UtilityCard(
         modifier = modifier
             .clip(RoundedCornerShape(dimensionResource(R.dimen.tools_card_radius)))
             .border(
-                width = 1.dp,
+                width = dimensionResource(R.dimen.tools_border),
                 color = scheme.outlineVariant,
                 shape = RoundedCornerShape(dimensionResource(R.dimen.tools_card_radius)),
             )
@@ -441,12 +441,22 @@ private fun IconTile(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     size: androidx.compose.ui.unit.Dp,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
+    val clickLabel = stringResource(R.string.tools_brand_catalog_action)
     Box(
         modifier = modifier
             .size(size)
             .clip(RoundedCornerShape(dimensionResource(R.dimen.tools_tile_radius)))
-            .background(MaterialTheme.colorScheme.primaryContainer),
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            // Clickable after the clip, so the ripple stays inside the rounded square.
+            .then(
+                if (onClick == null) {
+                    Modifier
+                } else {
+                    Modifier.clickable(onClickLabel = clickLabel, onClick = onClick)
+                },
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -458,8 +468,18 @@ private fun IconTile(
 }
 
 private const val HERO_GLOW_RADIUS = 520f
+private const val HERO_GLOW_ALPHA = 0.35f
 private const val SCANLINE_MILLIS = 2400
 private const val SCANLINE_TRAVEL = 0.82f
+
+/**
+ * The quiet zone behind the hero's QR — fixed white, not a theme surface.
+ *
+ * The one colour on this screen that answers to the scanner rather than to the palette: a QR needs
+ * a light margin and high contrast to decode, and a dark-theme surface would leave a code that
+ * looks right and does not scan.
+ */
+private val QR_QUIET_ZONE = Color.White
 
 @Preview
 @Composable
