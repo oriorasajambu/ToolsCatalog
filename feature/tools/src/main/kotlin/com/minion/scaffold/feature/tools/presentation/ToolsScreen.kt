@@ -47,30 +47,68 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minion.scaffold.core.designsystem.component.AppButton
 import com.minion.scaffold.core.designsystem.component.QrCodeImage
 import com.minion.scaffold.core.designsystem.theme.AppTheme
 import com.minion.scaffold.core.navigation.AppRoute
+import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
 import com.minion.scaffold.feature.tools.R
 
 /**
  * The tool catalog — the Midnight Pro home.
  *
- * Stateless by construction: it renders [ToolCatalog] and reports clicks upward. There is no
- * ViewModel because there is no state — the list is a compile-time constant, nothing loads, and
- * nothing can fail.
+ * The thin stateful half: it collects which tools are on show and forwards a selection outward.
+ * There *is* a ViewModel now — the catalog stopped being a compile-time constant when the Firebase
+ * console gained the ability to withhold entries from it — but everything that draws is in
+ * [ToolsContent], which takes a [ToolsState] and can therefore be previewed without Hilt.
+ *
+ * @param onOpenTool Called with the route of the tool the user selected.
+ * @param modifier   The [Modifier] for the screen.
+ * @param viewModel  The screen's ViewModel; defaults to a Hilt-provided instance.
+ */
+@Composable
+internal fun ToolsScreen(
+    onOpenTool: (AppRoute) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: ToolsViewModel = hiltViewModel(),
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    ObserveAsEvents(viewModel.effect) { effect ->
+        when (effect) {
+            is ToolsEffect.OpenTool -> onOpenTool(effect.route)
+        }
+    }
+
+    ToolsContent(
+        state = state,
+        onIntent = viewModel::onIntent,
+        modifier = modifier,
+    )
+}
+
+/**
+ * Everything the home screen draws.
  *
  * The layout is the imported design: a hero card promoting the scanner, a bordered **Create** list,
  * and a two-column **Utilities** grid. Colours come entirely from `MaterialTheme.colorScheme`, so
  * the whole screen is the Midnight palette without a single hex literal here — a hex outside the
  * design system is the bug the design system exists to prevent.
  *
- * @param onOpenTool Called with the route of the tool the user selected.
- * @param modifier   The [Modifier] for the screen.
+ * Every section is conditional on having something in it. A tool hidden from the Firebase console
+ * is simply absent, and a **CREATE** heading standing over nothing is worse than no heading — it
+ * reads as a screen that failed to load rather than one that was configured this way.
+ *
+ * @param state    Which tools are on show.
+ * @param onIntent Reports what the user did.
+ * @param modifier The [Modifier] for the screen.
  */
 @Composable
-internal fun ToolsScreen(
-    onOpenTool: (AppRoute) -> Unit,
+private fun ToolsContent(
+    state: ToolsState,
+    onIntent: (ToolsIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -88,26 +126,32 @@ internal fun ToolsScreen(
         ) {
             HomeHeader()
 
-            HeroCard(
-                tool = ToolCatalog.hero,
-                onClick = { onOpenTool(ToolCatalog.hero.route) },
-            )
-
-            ToolCatalog.secondaryReaders.forEach { tool ->
-                ToolRow(tool = tool, onClick = { onOpenTool(tool.route) })
+            state.hero?.let { hero ->
+                HeroCard(
+                    tool = hero,
+                    onClick = { onIntent(ToolsIntent.ToolSelected(hero)) },
+                )
             }
 
-            Section(title = stringResource(R.string.tools_section_create)) {
-                ToolCatalog.creators.forEach { tool ->
-                    ToolRow(tool = tool, onClick = { onOpenTool(tool.route) })
+            state.secondaryReaders.forEach { tool ->
+                ToolRow(tool = tool, onClick = { onIntent(ToolsIntent.ToolSelected(tool)) })
+            }
+
+            if (state.creators.isNotEmpty()) {
+                Section(title = stringResource(R.string.tools_section_create)) {
+                    state.creators.forEach { tool ->
+                        ToolRow(tool = tool, onClick = { onIntent(ToolsIntent.ToolSelected(tool)) })
+                    }
                 }
             }
 
-            Section(title = stringResource(R.string.tools_section_utilities)) {
-                UtilityGrid(
-                    tools = ToolCatalog.utilities,
-                    onOpenTool = onOpenTool,
-                )
+            if (state.utilities.isNotEmpty()) {
+                Section(title = stringResource(R.string.tools_section_utilities)) {
+                    UtilityGrid(
+                        tools = state.utilities,
+                        onSelect = { tool -> onIntent(ToolsIntent.ToolSelected(tool)) },
+                    )
+                }
             }
         }
     }
@@ -334,7 +378,7 @@ private fun ToolRow(
 @Composable
 private fun UtilityGrid(
     tools: List<Tool>,
-    onOpenTool: (AppRoute) -> Unit,
+    onSelect: (Tool) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val gap = dimensionResource(R.dimen.tools_row_gap)
@@ -346,7 +390,7 @@ private fun UtilityGrid(
                 pair.forEach { tool ->
                     UtilityCard(
                         tool = tool,
-                        onClick = { onOpenTool(tool.route) },
+                        onClick = { onSelect(tool) },
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -421,6 +465,24 @@ private const val SCANLINE_TRAVEL = 0.82f
 @Composable
 internal fun ToolsScreenPreview() {
     AppTheme {
-        ToolsScreen(onOpenTool = {})
+        ToolsContent(state = ToolsState(), onIntent = {})
+    }
+}
+
+/**
+ * The catalog as it looks with tools withheld from the Firebase console.
+ *
+ * Worth a preview of its own: this is the arrangement nobody sees while developing — no hero, one
+ * section gone entirely — and it is the one a misconfigured console produces.
+ */
+@Preview
+@Composable
+internal fun ToolsScreenFilteredPreview() {
+    val hidden = setOf("qr-scan", "wifi-create", "url-create", "vcard-create", "qr-create")
+    AppTheme {
+        ToolsContent(
+            state = ToolsState(tools = ToolCatalog.entries.filterNot { it.id in hidden }),
+            onIntent = {},
+        )
     }
 }

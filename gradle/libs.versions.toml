@@ -155,6 +155,9 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 firebase-config = { group = "com.google.firebase", name = "firebase-config" }
+# `Task.await()`, so a Remote Config fetch is a suspend call rather than a callback. Versioned with
+# the coroutines library, not with Play Services.
+coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
 
 # Lifecycle
 androidx-lifecycle-viewmodel ={ group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
@@ -299,7 +302,8 @@ instrumentation-test = [
 firebase = [
     "firebase-analytics",
     "firebase-crashlytics",
-    "firebase-config"
+    "firebase-config",
+    "coroutines-play-services"
 ]
 
 camera = [

@@ -1,19 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  In-app defaults for Remote Config, read once at startup by FirebaseModule.
+  In-app defaults for Remote Config, applied at startup by FirebaseModule.
 
-  These are what every `remoteConfig.getX(key)` returns before the first successful fetch — on a
-  cold start with no network, on the very first launch, and for any key the console does not
-  define. A key with no default here returns the type's static default ("" / 0 / false), which is
-  almost never the value the app wants, so every key the console serves should be listed here too.
+  ONE ENTRY PER TOOL IN ToolCatalog. The key is the tool's id with hyphens turned into
+  underscores, wrapped as `feature_<id>_enabled` — the rule lives in
+  RemoteConfigFeatureFlagRepository, and this file is the readable copy of what it produces.
 
-  Format (one <entry> per key):
+  These values are what the app uses before the first successful fetch, and for any key the
+  Firebase console does not define. Every one is `true`, which is what makes the switches
+  fail-open: no network, no Firebase project, or a key nobody created in the console all leave the
+  full catalog visible. Hiding a tool is therefore always a deliberate act in the console, never
+  something an outage can do by accident.
 
-      <entry>
-          <key>show_new_tool_badge</key>
-          <value>false</value>
-      </entry>
+  To hide a tool: Firebase console -> Remote Config -> add a Boolean parameter with the key below,
+  set it to false, and publish. To bring it back, set it to true (or delete the parameter).
 
-  Empty for now — nothing reads Remote Config yet.
+  Adding a tool to ToolCatalog means adding its entry here too. A missing entry still fails open —
+  an unknown id reads as enabled — but the tool then cannot be switched off from the console until
+  someone creates the parameter by hand.
 -->
-<defaultsMap />
+<defaultsMap>
+
+    <!-- Scan a QR code (the home screen's hero card) -->
+    <entry>
+        <key>feature_qr_scan_enabled</key>
+        <value>true</value>
+    </entry>
+
+    <!-- Scan a code to edit its payload -->
+    <entry>
+        <key>feature_qr_edit_enabled</key>
+        <value>true</value>
+    </entry>
+
+    <!-- Build an EMV / QRIS payment code -->
+    <entry>
+        <key>feature_qr_create_enabled</key>
+        <value>true</value>
+    </entry>
+
+    <!-- Build a Wi-Fi credential code -->
+    <entry>
+        <key>feature_wifi_create_enabled</key>
+        <value>true</value>
+    </entry>
+
+    <!-- Build a link code -->
+    <entry>
+        <key>feature_url_create_enabled</key>
+        <value>true</value>
+    </entry>
+
+    <!-- Build a vCard contact code -->
+    <entry>
+        <key>feature_vcard_create_enabled</key>
+        <value>true</value>
+    </entry>
+
+    <!-- Text and developer transforms -->
+    <entry>
+        <key>feature_text_tools_enabled</key>
+        <value>true</value>
+    </entry>
+
+    <!-- Random string / password generator -->
+    <entry>
+        <key>feature_generate_enabled</key>
+        <value>true</value>
+    </entry>
+
+    <!-- Weather lookup -->
+    <entry>
+        <key>feature_weather_enabled</key>
+        <value>true</value>
+    </entry>
+
+    <!-- Bubble level and clinometer -->
+    <entry>
+        <key>feature_level_enabled</key>
+        <value>true</value>
+    </entry>
+
+    <!-- Sound level meter -->
+    <entry>
+        <key>feature_sound_meter_enabled</key>
+        <value>true</value>
+    </entry>
+
+    <!-- GPS speedometer -->
+    <entry>
+        <key>feature_speedometer_enabled</key>
+        <value>true</value>
+    </entry>
+
+    <!-- EXIF metadata stripper -->
+    <entry>
+        <key>feature_exif_strip_enabled</key>
+        <value>true</value>
+    </entry>
+
+    <!-- On-device text recognition -->
+    <entry>
+        <key>feature_ocr_enabled</key>
+        <value>true</value>
+    </entry>
+
+</defaultsMap>

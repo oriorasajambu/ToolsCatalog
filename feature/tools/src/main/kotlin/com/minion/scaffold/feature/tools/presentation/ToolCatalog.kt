@@ -1,6 +1,7 @@
 package com.minion.scaffold.feature.tools.presentation
 
 import androidx.annotation.StringRes
+import androidx.compose.runtime.Immutable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Architecture
 import androidx.compose.material.icons.filled.Casino
@@ -45,6 +46,10 @@ import com.minion.scaffold.feature.tools.R
  * Titles are `@StringRes`, not `String`: this list is built once at class-init time, and a `String`
  * resolved then would not follow a locale change.
  *
+ * `@Immutable` because [route] is typed as the `AppRoute` interface, which Compose cannot infer
+ * stability for. Without the annotation every `Tool` reads as unstable and the whole catalog
+ * recomposes whenever anything above it does — the promise is real: nothing here is ever mutated.
+ *
  * @property id             A stable identifier for the tool.
  * @property titleRes       The string resource for the tool's title.
  * @property descriptionRes The string resource for the tool's description.
@@ -52,6 +57,7 @@ import com.minion.scaffold.feature.tools.R
  * @property route          The route that opens the tool.
  * @property category       Which home-screen section the tool belongs to.
  */
+@Immutable
 internal data class Tool(
     val id: String,
     @param:StringRes val titleRes: Int,
@@ -80,7 +86,17 @@ internal enum class ToolCategory {
     Utility,
 }
 
-/** Every tool the app offers. */
+/**
+ * Every tool the app offers, as it ships in the binary.
+ *
+ * This is the full list, not the visible one — nothing here consults the remote switches. What the
+ * user is actually offered is [ToolsState.tools], which is this list filtered by whatever
+ * `FeatureFlagRepository` last reported.
+ *
+ * [Tool.id] is doing double duty as of the remote-switch work: it is the key the Firebase console
+ * hides a tool by (`feature_<id>_enabled`, hyphens turned to underscores). Renaming an id is
+ * therefore a breaking change to a published configuration, not a local rename.
+ */
 internal object ToolCatalog {
 
     val entries: List<Tool> = listOf(
@@ -198,16 +214,13 @@ internal object ToolCatalog {
         ),
     )
 
-    /** The scan tool, promoted to the home's hero card. */
-    val hero: Tool = entries.first { it.id == HERO_ID }
-
-    /** Reader tools other than the hero — the edit entry, shown as a slim card beneath it. */
-    val secondaryReaders: List<Tool> =
-        entries.filter { it.category == ToolCategory.Reader && it.id != HERO_ID }
-
-    val creators: List<Tool> = entries.filter { it.category == ToolCategory.Create }
-
-    val utilities: List<Tool> = entries.filter { it.category == ToolCategory.Utility }
-
-    private const val HERO_ID = "qr-scan"
+    /**
+     * The tool promoted to the home's hero card.
+     *
+     * An id rather than a resolved [Tool], because the hero is not guaranteed to be on show: the
+     * catalog is filtered by [com.minion.scaffold.core.domain.featureflag.FeatureFlags] before the
+     * screen groups it, and the scanner can be switched off from the console like anything else.
+     * The grouping — and the decision about what a missing hero means — belongs to [ToolsState].
+     */
+    const val HERO_ID: String = "qr-scan"
 }
