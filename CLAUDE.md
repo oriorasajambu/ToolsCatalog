@@ -170,6 +170,43 @@ Routes belong in `:core:navigation`, never the feature itself, so other features
 it without depending on the module. Pass navigation down as lambdas — never hand a feature the
 `NavController`.
 
+## UI tokens — no literals in a screen
+
+Nothing a screen draws is written as a literal. Four kinds of value, four homes, no exceptions:
+
+| Value | Belongs in | Read with |
+|---|---|---|
+| Any user-visible text | the feature's `res/values/strings.xml` | `stringResource(R.string.x)` |
+| Any `dp` / `sp` — padding, size, gap, radius, border, thickness | the feature's `res/values/dimens.xml` | `dimensionResource(R.dimen.x)` |
+| Any colour | `MaterialTheme.colorScheme` | the scheme, never `Color(0xFF…)` |
+| Any `TextStyle` — including `letterSpacing`, `fontSize`, `fontWeight` | `:core:designsystem`'s `AppTypography` or `AppTextStyles` | `MaterialTheme.typography.x` / `AppTextStyles.x` |
+
+The rules that are easy to get wrong:
+
+- **`1.dp` is not too small to tokenize.** A border width repeated at three call sites is three
+  values that drift the moment one card gets nudged; `tools_border` is one. The same goes for a
+  `2.dp` scanline and a `6.dp` gap — "it's only used here" is how the second use gets pasted in.
+- **Derive small spacings, don't re-type them.** `:feature:weather` keeps a single
+  `weather_spacing` and writes `spacing / 2` and `spacing / 4`; that is why the whole forecast
+  re-spaces from one number. Pass the `Dp` down to private composables rather than letting a leaf
+  reach for `8.dp` because it wasn't given one.
+- **Never widen a shared Material type slot to suit one screen.** `labelMedium` and `labelLarge`
+  have two dozen call sites, so a `letterSpacing` baked into the slot re-tracks all of them. A
+  treatment the Material scale has no name for — an eyebrow, a section heading — becomes a new
+  entry in `AppTextStyles`, not a `.copy(letterSpacing = 1.6.sp)` at the call site.
+- **A fixed colour needs a named `private val` and a reason.** Some colours genuinely answer to
+  something other than the palette — a QR quiet zone answers to the scanner, camera-overlay
+  colours answer to the image behind them (see the note in *Things that will bite you*). Those are
+  legitimate, but inline they read as an oversight. Hoist to `private val QR_QUIET_ZONE =
+  Color.White` with the one-line reason, the way `ScanReticle` and `BlockOverlay` already do.
+- **String interpolation in a composable is hardcoded text.** `"${temp.roundToInt()}°"` and
+  `"$day - $date"` look like formatting, not copy — but the degree mark, the separator and their
+  placement are all translatable. Use a `%1$d`/`%1$s` template in `strings.xml`.
+
+A literal that survives review because it "isn't user-facing" or "is only a number": `testTag`
+identifiers, log tags, and `@Preview` sample data are genuinely exempt, and so is `0.dp`. Nothing
+else is.
+
 ## Testing
 
 `:core:testing` re-exports JUnit, MockK, Turbine and `kotlinx-coroutines-test` as `api`, added
