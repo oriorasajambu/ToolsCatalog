@@ -44,6 +44,9 @@ mlkit-barcode = "17.3.0"
 mlkit-text = "16.0.1"
 onnxruntime = "1.27.0"
 zxing = "3.5.3"
+firebase-bom = "34.18.0"
+google-services = "4.5.0"
+firebase-crashlytics-plugin = "3.0.8"
 
 [libraries]
 desugar-jdk = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }
@@ -142,6 +145,17 @@ zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" 
 # `Task.await()` both ML Kit consumers share, rather than each keeping its own copy.
 play-services-tasks = { group = "com.google.android.gms", name = "play-services-tasks", version = "18.3.0" }
 
+# Firebase
+# The BOM is the only place a Firebase version is written; the product artifacts below are declared
+# without one and take theirs from it, so the set can never be mixed across releases.
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
+# Analytics is not optional here even though nothing calls it: Crashlytics uses its session
+# information for crash-free-user metrics, and Remote Config uses its user properties for
+# targeting. Dropping it silently degrades both.
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
+firebase-config = { group = "com.google.firebase", name = "firebase-config" }
+
 # Lifecycle
 androidx-lifecycle-viewmodel ={ group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-livedata = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "lifecycle" }
@@ -176,6 +190,8 @@ kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-pl
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 hilt-gradlePlugin = { group = "com.google.dagger", name = "hilt-android-gradle-plugin", version.ref = "hilt" }
 compose-gradlePlugin = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
+google-services-gradlePlugin = { group = "com.google.gms", name = "google-services", version.ref = "google-services" }
+firebase-crashlytics-gradlePlugin = { group = "com.google.firebase", name = "firebase-crashlytics-gradle", version.ref = "firebase-crashlytics-plugin" }
 
 # DataStore
 datastore-preferences-rxjava3 = { group = "androidx.datastore", name = "datastore-preferences-rxjava3", version.ref = "datastore" }
@@ -194,6 +210,8 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 kotlin-serializable = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics-plugin" }
 
 # Plugins defined by this project
 minion-android-library = { id = "minion.android.library" }
@@ -276,6 +294,14 @@ instrumentation-test = [
 
 # Consumed only by :feature:qrscan. Deliberately not in the feature convention plugin — one
 # consumer does not justify putting CameraX on every future feature's classpath.
+# Applied only to :app — Firebase reads google-services.json, which is application identity, so a
+# library module depending on it would be depending on which app it is built into.
+firebase = [
+    "firebase-analytics",
+    "firebase-crashlytics",
+    "firebase-config"
+]
+
 camera = [
     "camera-core",
     "camera-camera2",

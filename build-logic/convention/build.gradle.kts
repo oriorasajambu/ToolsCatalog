@@ -28,4 +28,6 @@ dependencies {
     compileOnly(libs.ksp.gradlePlugin)
     compileOnly(libs.hilt.gradlePlugin)
     compileOnly(libs.compose.gradlePlugin)
+    compileOnly(libs.google.services.gradlePlugin)
+    compileOnly(libs.firebase.crashlytics.gradlePlugin)
 }

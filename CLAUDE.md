@@ -89,7 +89,7 @@ files apply exactly one plugin and set a namespace; everything else is centraliz
 
 | Plugin | Applies to | Provides |
 |---|---|---|
-| `minion.android.application` | `:app` | Android app plugin, SDK levels, desugaring, Compose, Hilt, Showkase, test wiring |
+| `minion.android.application` | `:app` | Android app plugin, SDK levels, desugaring, Compose, Hilt, Showkase, Firebase, test wiring |
 | `minion.android.library` | Android library modules | same, minus Compose, plus the androidTest-compile guard |
 | `minion.android.library.compose` | modules that draw | Compose BOM + bundles, Showkase processor |
 | `minion.android.hilt` | data-layer modules | Hilt + KSP without Compose |
@@ -184,6 +184,20 @@ Everything is under `com.minion.scaffold`; see [README.md § 7](README.md) for t
 (package rename, `settings.gradle.kts` root name, `applicationId`, `app_name`/theme name,
 designsystem palette + launcher icons, `dev.properties`/`prod.properties`, keystore).
 
+## Firebase
+
+Analytics, Crashlytics and Remote Config, applied only by `minion.android.application` — the config
+is `app/google-services.json`, which is application identity, so no library module may depend on
+it. Versions come entirely from the Firebase BOM (`libs.versions.toml`); the product artifacts are
+declared without one. `FirebaseModule` (`app/.../di/`) binds the three singletons so callers take
+them as constructor parameters instead of reaching for `Firebase.analytics`, and seeds Remote Config
+from `app/src/main/res/xml/remote_config_defaults.xml` — every key the console serves belongs in
+that file too, or it reads as `""`/`0`/`false` before the first fetch.
+
+Collection is off in debug builds (`<meta-data>` in `app/src/debug/AndroidManifest.xml`); release
+builds keep the SDK defaults. The release build type uploads its R8 mapping, which is why
+`-keepattributes SourceFile, LineNumberTable` in `app/proguard-rules.pro` must stay.
+
 ## Things that will bite you
 
 - `@ShowkaseRoot` must live in `src/main`, not `src/debug` — KSP doesn't scan the debug source
@@ -217,6 +231,11 @@ designsystem palette + launcher icons, `dev.properties`/`prod.properties`, keyst
   is why `PaddleModelAssets` extracts to `filesDir` first. Its digests are documented, so
   `ppocrv5_dict.txt` is pinned `-text` in `.gitattributes` — a Windows checkout converting it to
   CRLF breaks the digest and gives every dictionary entry a trailing carriage return.
+- `google-services.json` must list **every** applicationId, and the `development` flavor's is
+  `com.minion.scaffold.dev` because of its `applicationIdSuffix`. The plugin fails configuration
+  with "No matching client found for package name" rather than falling back to the base id, so a
+  Firebase console that only registers `com.minion.scaffold` breaks development builds while
+  production ones pass.
 - Text that can overflow uses `Modifier.basicMarquee()` with `maxLines = 1` and **no**
   `TextOverflow.Ellipsis`. Marquee measures its content with an infinite width constraint, so the
   ellipsis can never trigger and the two are not complementary — leaving it in is dead config.

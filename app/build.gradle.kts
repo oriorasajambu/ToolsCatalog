@@ -6,6 +6,7 @@
  * `minion.android.library` cannot drift apart. What stays here is what is genuinely unique to
  * the application: identity, versioning, environment constants, and the module graph.
  */
+import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.util.Properties
 
 plugins {
@@ -119,6 +120,15 @@ android {
     }
 
     buildTypes {
+        debug {
+            configure<CrashlyticsExtension> {
+                // A debug build is not minified, so R8 writes no mapping file. Leaving the upload
+                // on attaches a task to every debug assemble that looks for a file that is never
+                // produced.
+                mappingFileUploadEnabled = false
+            }
+        }
+
         release {
             // Signed with the `toolbox` release key when keystore.properties supplies the
             // credentials; otherwise left unsigned (see the signing note above).
@@ -135,6 +145,17 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+
+            configure<CrashlyticsExtension> {
+                // Uploads the R8 mapping so release traces de-obfuscate in the console. Without it
+                // every release crash reads as `a.b.c(SourceFile:1)`, which is the state the
+                // -keepattributes SourceFile,LineNumberTable in proguard-rules.pro exists to avoid.
+                mappingFileUploadEnabled = true
+                // The app ships native code (ONNX Runtime), but symbolicating a crash inside it
+                // needs the firebase-crashlytics-ndk artifact as well; without that this flag only
+                // uploads symbols nothing consumes.
+                nativeSymbolUploadEnabled = false
+            }
         }
     }
 }

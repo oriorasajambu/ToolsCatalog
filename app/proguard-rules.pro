@@ -93,6 +93,19 @@
 -keep class ai.onnxruntime.** { *; }
 -dontwarn ai.onnxruntime.**
 
+# --- Firebase / Crashlytics ------------------------------------------------------------------
+# The Firebase SDKs ship consumer rules, and the ComponentRegistrar keep above (written for ML Kit)
+# already covers Firebase's own registrars — the two libraries share that discovery mechanism.
+# What is left is Crashlytics' de-obfuscation contract: it symbolicates a release trace by matching
+# it against the uploaded mapping file, which only works if the frames still carry a file and a
+# line. `-keepattributes SourceFile, LineNumberTable` at the top of this file supplies both, so do
+# not remove it while Crashlytics is in the build.
+#
+# The Crashlytics build tools reflect over their own generated build-id class, and the SDK reads
+# some model fields reflectively when writing a report.
+-keep class com.google.firebase.crashlytics.** { *; }
+-dontwarn com.google.firebase.crashlytics.**
+
 # --- OkHttp: optional runtime providers it references but does not require -------------------
 -dontwarn org.bouncycastle.**
 -dontwarn org.conscrypt.**

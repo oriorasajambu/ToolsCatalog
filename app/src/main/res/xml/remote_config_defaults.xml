@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  In-app defaults for Remote Config, read once at startup by FirebaseModule.
+
+  These are what every `remoteConfig.getX(key)` returns before the first successful fetch — on a
+  cold start with no network, on the very first launch, and for any key the console does not
+  define. A key with no default here returns the type's static default ("" / 0 / false), which is
+  almost never the value the app wants, so every key the console serves should be listed here too.
+
+  Format (one <entry> per key):
+
+      <entry>
+          <key>show_new_tool_badge</key>
+          <value>false</value>
+      </entry>
+
+  Empty for now — nothing reads Remote Config yet.
+-->
+<defaultsMap />

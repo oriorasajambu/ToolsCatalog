@@ -9,6 +9,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
+
+        <!--
+          Firebase reporting is off in debug builds. A developer running the app on their desk is
+          not a user: their crashes are usually deliberate and their screen views would skew the
+          production funnel. Declared in the debug source set only, so a release build keeps the
+          SDK defaults (both enabled) without anything having to remember to flip them back.
+        -->
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+
         <activity
             android:name=".showkase.ShowkaseLauncherActivity"
             android:exported="true"

@@ -19,6 +19,13 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.parcelize")
+    // Reads app/google-services.json and generates the resources the Firebase SDKs initialise
+    // themselves from. Only the application module can apply it — the file it reads is application
+    // identity, so there is nothing for a library module to match against.
+    id("com.google.gms.google-services")
+    // Uploads the R8 mapping file so release stack traces de-obfuscate in the console. Requires
+    // the google-services plugin above to have run first.
+    id("com.google.firebase.crashlytics")
 }
 
 // Precompiled script plugins get no type-safe `libs` accessor, so the catalog is resolved by hand.
@@ -79,6 +86,11 @@ dependencies {
     add("implementation", libs.findLibrary("showkase-annotation").get())
     add("debugImplementation", libs.findLibrary("showkase").get())
     add("kspDebug", libs.findLibrary("showkase-processor").get())
+
+    // Firebase, versioned entirely by the BOM — see the catalog. `platform(...)`, so the BOM
+    // contributes constraints rather than an artifact.
+    add("implementation", platform(libs.findLibrary("firebase-bom").get()))
+    add("implementation", libs.findBundle("firebase").get())
 
     add("testImplementation", libs.findBundle("unit-test").get())
     add("androidTestImplementation", libs.findBundle("instrumentation-test").get())

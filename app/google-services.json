@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "140918137056",
+    "project_id": "toolbox-7ad74",
+    "storage_bucket": "toolbox-7ad74.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:140918137056:android:fe10bc107caff25bb8f085",
+        "android_client_info": {
+          "package_name": "com.minion.scaffold"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOjqMQDx0Nw-GVgL-Ay0A1mTN7IFG1pek"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:140918137056:android:50dd6015f1d9d333b8f085",
+        "android_client_info": {
+          "package_name": "com.minion.scaffold.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOjqMQDx0Nw-GVgL-Ay0A1mTN7IFG1pek"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
