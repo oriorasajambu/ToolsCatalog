@@ -38,6 +38,15 @@
     <!-- L / H = low / high, the day's min and max temperature. -->
     <string name="weather_daily_min_max">L %1$d° · H %2$d°</string>
 
+    <!-- A bare temperature, as shown under each hour of the strip. The degree mark is part of the
+         translation: a locale that spaces or places it differently cannot be served from a
+         template built in Kotlin. -->
+    <string name="weather_temperature_degrees">%1$d°</string>
+
+    <!-- Day and date on a daily row, e.g. "Mon - 12/Aug". The separator is translatable for the
+         same reason. -->
+    <string name="weather_daily_day_date">%1$s - %2$s</string>
+
     <string name="weather_condition_clear">Clear</string>
     <string name="weather_condition_partly_cloudy">Partly cloudy</string>
     <string name="weather_condition_cloudy">Cloudy</string>

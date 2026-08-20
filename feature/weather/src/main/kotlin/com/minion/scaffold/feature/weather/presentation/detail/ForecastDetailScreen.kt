@@ -191,7 +191,7 @@ private fun ForecastList(forecast: Forecast, staleHoursAgo: Long?, unit: Weather
         }
 
         items(forecast.daily, key = { it.date.toString() }) { day ->
-            DailyRow(day = day)
+            DailyRow(day = day, spacing = spacing)
         }
     }
 }
@@ -379,7 +379,7 @@ private const val HOURLY_WINDOW_SIZE = 24
 private fun HourlyStrip(hourly: List<HourlyEntry>, spacing: Dp) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(spacing / 2)) {
         itemsIndexed(hourly, key = { _, hour -> hour.time.toEpochMilli() }) { index, hour ->
-            HourlyCell(hour = hour, emphasis = HourEmphasis.fromIndex(index))
+            HourlyCell(hour = hour, emphasis = HourEmphasis.fromIndex(index), spacing = spacing)
         }
     }
 }
@@ -403,7 +403,7 @@ private enum class HourEmphasis {
 }
 
 @Composable
-private fun HourlyCell(hour: HourlyEntry, emphasis: HourEmphasis) {
+private fun HourlyCell(hour: HourlyEntry, emphasis: HourEmphasis, spacing: Dp) {
     val hourLabel = DateTimeFormatter.ofPattern("HH:mm")
         .format(ZonedDateTime.ofInstant(hour.time, ZoneId.systemDefault()))
 
@@ -423,9 +423,9 @@ private fun HourlyCell(hour: HourlyEntry, emphasis: HourEmphasis) {
         colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = contentColor),
     ) {
         Column(
-            modifier = Modifier.padding(8.dp).fillMaxWidth(),
+            modifier = Modifier.padding(spacing / 2).fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(spacing / 4),
         ) {
             Text(
                 text = if (emphasis == HourEmphasis.CURRENT) stringResource(R.string.weather_now) else hourLabel,
@@ -448,7 +448,13 @@ private fun HourlyCell(hour: HourlyEntry, emphasis: HourEmphasis) {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.basicMarquee(),
             )
-            Text(text = "${hour.temperature.roundToInt()}°", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = stringResource(
+                    R.string.weather_temperature_degrees,
+                    hour.temperature.roundToInt(),
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
     }
 }
@@ -456,7 +462,7 @@ private fun HourlyCell(hour: HourlyEntry, emphasis: HourEmphasis) {
 private const val SOFT_HIGHLIGHT_ALPHA = 0.4f
 
 @Composable
-private fun DailyRow(day: DailyEntry) {
+private fun DailyRow(day: DailyEntry, spacing: Dp) {
     val locale = LocalLocale.current.platformLocale
     val isToday = day.date == LocalDate.now()
     val dayOfWeekLabel = day.date.dayOfWeek.getDisplayName(TextStyle.SHORT, locale)
@@ -481,19 +487,19 @@ private fun DailyRow(day: DailyEntry) {
         modifier = Modifier
             .fillMaxWidth()
             .background(color = containerColor, shape = MaterialTheme.shapes.small)
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .padding(spacing / 2),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "$dayOfWeekLabel - $dateLabel",
+            text = stringResource(R.string.weather_daily_day_date, dayOfWeekLabel, dateLabel),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (isToday) FontWeight.SemiBold else null,
             color = contentColor,
             modifier = Modifier.weight(1f),
         )
         Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(spacing / 4),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f),
         ) {
@@ -501,7 +507,7 @@ private fun DailyRow(day: DailyEntry) {
                 imageVector = day.condition.toIcon(),
                 contentDescription = null,
                 tint = if (isToday) contentColor else LocalContentColor.current,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(dimensionResource(R.dimen.weather_daily_icon)),
             )
             Text(
                 text = stringResource(day.condition.toLabelRes()),

@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- The screen's one spacing unit. Everything smaller is derived from it in code as
+         `spacing / 2` and `spacing / 4`, so the whole forecast re-spaces from this single value
+         rather than from a scatter of 8dp and 4dp literals. -->
     <dimen name="weather_spacing">16dp</dimen>
+
+    <!-- The condition glyph in a daily row: smaller than the default icon slot, and not a
+         multiple of the spacing unit, so it is a token of its own. -->
+    <dimen name="weather_daily_icon">20dp</dimen>
 </resources>
