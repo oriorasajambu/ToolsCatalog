@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -78,10 +79,12 @@ import com.minion.scaffold.core.emv.model.PayloadSpan
 import com.minion.scaffold.core.emv.model.QrParseError
 import com.minion.scaffold.core.emv.model.SegmentTrace
 import com.minion.scaffold.core.navigation.AppRoute
+import com.minion.scaffold.core.navigation.QrScanSettingsRoute
 import com.minion.scaffold.core.vcard.model.ContactCard
 import com.minion.scaffold.feature.qrscan.domain.ScannedContent
 import com.minion.scaffold.feature.qrscan.presentation.compare.CompareBanner
 import com.minion.scaffold.feature.qrscan.presentation.export.ShareFormatSheet
+import com.minion.scaffold.feature.qrscan.presentation.settings.describe
 import com.minion.scaffold.feature.qrscan.presentation.compare.CompareView
 import com.minion.scaffold.feature.qrscan.presentation.compare.describe
 import com.minion.scaffold.feature.qrscan.presentation.compare.toPlainText
@@ -108,6 +111,7 @@ import kotlinx.coroutines.launch
 internal fun QrScanScreen(
     onNavigateBack: () -> Unit,
     onEditPayload: (AppRoute) -> Unit,
+    onNavigateToSettings: (QrScanSettingsRoute) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: QrScanViewModel = hiltViewModel(),
 ) {
@@ -227,6 +231,10 @@ internal fun QrScanScreen(
                 context.startActivity(Intent.createChooser(share, null))
             }
 
+            is QrScanEffect.SchemaRefused -> coroutineScope.launch {
+                snackbarHostState.showSnackbar(effect.reason.describe(resources))
+            }
+
             is QrScanEffect.CompareRejected -> coroutineScope.launch {
                 snackbarHostState.showSnackbar(effect.reason.describe(resources))
             }
@@ -244,6 +252,7 @@ internal fun QrScanScreen(
         state = state,
         onIntent = viewModel::onIntent,
         onNavigateBack = onNavigateBack,
+        onNavigateToSettings = onNavigateToSettings,
         snackbarHostState = snackbarHostState,
         onRequestPermission = { permissionLauncher.launch(Manifest.permission.CAMERA) },
         onPickImage = {
@@ -267,6 +276,7 @@ private fun QrScanContent(
     state: QrScanState,
     onIntent: (QrScanIntent) -> Unit,
     onNavigateBack: () -> Unit,
+    onNavigateToSettings: (QrScanSettingsRoute) -> Unit,
     snackbarHostState: SnackbarHostState,
     onRequestPermission: () -> Unit,
     onPickImage: () -> Unit,
@@ -305,6 +315,20 @@ private fun QrScanContent(
 
     if (shareFormatVisible) {
         ShareFormatSheet(
+            schemaSource = state.schemaSource,
+            schemaLabel = state.schemaLabel,
+            onOpenSchema = {
+                shareFormatVisible = false
+                // Carries the code on screen, so the placeholder reference can show what each name
+                // is worth for it rather than only what each name means.
+                onNavigateToSettings(
+                    QrScanSettingsRoute(
+                        payload = (state.content as? QrScanState.ContentState.Success)
+                            ?.content
+                            ?.payload,
+                    ),
+                )
+            },
             onShareText = {
                 shareFormatVisible = false
                 onIntent(QrScanIntent.ShareReportRequested)
@@ -347,6 +371,17 @@ private fun QrScanContent(
                     }
                     if (state.content is QrScanState.ContentState.Idle) {
                         InputModeAction(mode = state.mode, onIntent = onIntent)
+                        // Only on the scanner. A report's bar already carries four actions, and
+                        // the schema is reachable from the share sheet at exactly the moment it
+                        // matters there.
+                        IconButton(onClick = { onNavigateToSettings(QrScanSettingsRoute()) }) {
+                            Icon(
+                                imageVector = Icons.Filled.Settings,
+                                contentDescription = stringResource(
+                                    R.string.qrscan_schema_settings,
+                                ),
+                            )
+                        }
                     }
                     // Only offered once there is a report. An always-present copy button that
                     // silently does nothing is worse than one that appears when it works.
@@ -867,6 +902,7 @@ private fun QrScanContentPreview(state: QrScanState) {
             state = state,
             onIntent = {},
             onNavigateBack = {},
+            onNavigateToSettings = {},
             snackbarHostState = SnackbarHostState(),
             onRequestPermission = {},
             onPickImage = {},

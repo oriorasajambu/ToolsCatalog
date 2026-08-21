@@ -1,0 +1,44 @@
+{
+  "transaction_id": "000000012687",
+  "tran_code": "6012",
+  "qr_type": "{{scheme_type}}",
+  "qr_data": {
+    "qr_type": "{{initiation_type}}",
+    "tran_merchant_data": {
+      "tips": "{{tips}}",
+      "tips_type": "{{tips_type}}",
+      "tips_currency": "{{amount_currency}}",
+      "merchant_name": "{{merchant_name}}",
+      "merchant_country_code": "{{merchant_country_code}}",
+      "merchant_city": "{{merchant_city}}",
+      "merchant_postal_code": "{{merchant_postal_code}}",
+      "merchant_payment_provider_name": "{{merchant_payment_provider_name}}",
+      "merchant_pan": "{{merchant_pan}}",
+      "amount": "{{amount}}",
+      "amount_type": "{{amount_type}}",
+      "amount_currency": "{{amount_currency}}",
+      "dynamic_qr": {
+        "payment_type": "Payment with QR",
+        "total_payment": "{{total_payment}}",
+        "total_payment_currency": "{{amount_currency}}"
+      },
+      "merchant_id": "{{merchant_id}}",
+      "merchant_id_national": "{{merchant_id_national}}",
+      "is_amount_allowed_decimal": false
+    }
+  },
+  "qr_template_type": "QRMerchant",
+  "limit": {
+    "limit_per_daily": "25000000.00",
+    "remaining_limit_per_daily": "25000000.00",
+    "limit_per_transaction": "10000000.00"
+  },
+  "sof_allowed": [
+    "CASA",
+    "CC",
+    "RPN",
+    "LOCRC"
+  ],
+  "currency_allowed": "{{currency_allowed}}",
+  "banked_status": "CASA"
+}

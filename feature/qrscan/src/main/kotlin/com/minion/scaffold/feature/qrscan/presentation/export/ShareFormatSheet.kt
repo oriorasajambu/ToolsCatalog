@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -17,39 +18,52 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.minion.scaffold.core.designsystem.theme.AppTheme
 import com.minion.scaffold.feature.qrscan.R
+import com.minion.scaffold.feature.qrscan.domain.export.PaymentSchemaSource
 
 /**
- * Which of the two shapes a scanned payment code leaves in.
+ * Which of the two shapes a scanned payment code leaves in, and which contract the JSON follows.
  *
  * A sheet rather than a dialog, and rows rather than buttons, because each choice needs a sentence
- * under it. The text export is the report as read; the JSON export is a payment API response whose
- * unmappable third is filled with sample values — and this is the last screen before the document
- * goes to another app, so it is the last chance to say so. Two bare buttons would have nowhere to
- * put that.
+ * under it. This is the last screen before a document goes to another app, so it is the last chance
+ * to say what that document will contain — which is why the JSON row's wording depends on whether
+ * the built-in schema or an imported one is active. Under the default it can promise exactly which
+ * fields are sample values; under a custom template it must not, because the app no longer knows.
  *
  * Offered only for payment codes. The other three formats share in one tap, with no sheet at all.
  *
- * @param onShareText Share the decoded report as plain text.
- * @param onShareJson Share the payment response document.
- * @param onDismiss   Leave without sharing anything. Back and an outside tap both land here.
+ * @param schemaSource Which schema the JSON export will use.
+ * @param schemaLabel  The imported file's name, or empty under the built-in.
+ * @param onShareText  Share the decoded report as plain text.
+ * @param onShareJson  Share the payment response document.
+ * @param onOpenSchema Open the schema settings, carrying this code so the reference can resolve.
+ * @param onDismiss    Leave without sharing anything. Back and an outside tap both land here.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ShareFormatSheet(
+    schemaSource: PaymentSchemaSource,
+    schemaLabel: String,
     onShareText: () -> Unit,
     onShareJson: () -> Unit,
+    onOpenSchema: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         // Fully expanded on open. At its partial height a landscape phone shows the first
-        // option and hides the second below the fold, so the JSON export could only be
+        // option and hides the rest below the fold, so the JSON export could only be
         // reached by dragging the sheet up — a choice you cannot see is not a choice.
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         modifier = modifier,
     ) {
-        ShareFormatOptions(onShareText = onShareText, onShareJson = onShareJson)
+        ShareFormatOptions(
+            schemaSource = schemaSource,
+            schemaLabel = schemaLabel,
+            onShareText = onShareText,
+            onShareJson = onShareJson,
+            onOpenSchema = onOpenSchema,
+        )
     }
 }
 
@@ -61,11 +75,20 @@ internal fun ShareFormatSheet(
  */
 @Composable
 internal fun ShareFormatOptions(
+    schemaSource: PaymentSchemaSource,
+    schemaLabel: String,
     onShareText: () -> Unit,
     onShareJson: () -> Unit,
+    onOpenSchema: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = dimensionResource(R.dimen.qrscan_spacing)
+
+    val schemaName = when (schemaSource) {
+        PaymentSchemaSource.BuiltIn -> stringResource(R.string.qrscan_schema_source_built_in)
+        PaymentSchemaSource.Custom ->
+            schemaLabel.ifBlank { stringResource(R.string.qrscan_schema_source_custom) }
+    }
 
     Column(
         modifier = modifier
@@ -87,8 +110,25 @@ internal fun ShareFormatOptions(
 
         ShareFormatRow(
             title = stringResource(R.string.qrscan_share_as_json),
-            summary = stringResource(R.string.qrscan_share_as_json_summary),
+            summary = when (schemaSource) {
+                PaymentSchemaSource.BuiltIn ->
+                    stringResource(R.string.qrscan_share_as_json_summary)
+
+                PaymentSchemaSource.Custom ->
+                    stringResource(R.string.qrscan_share_as_json_summary_custom)
+            },
             onClick = onShareJson,
+        )
+
+        HorizontalDivider()
+
+        // Configuring rather than sharing, hence the rule above it. It is here because this is
+        // where somebody finds out which contract they are about to send — and discovering it is
+        // the wrong one should not mean backing out of the report to fix it.
+        ShareFormatRow(
+            title = stringResource(R.string.qrscan_share_schema_row, schemaName),
+            summary = stringResource(R.string.qrscan_share_schema_row_summary),
+            onClick = onOpenSchema,
         )
     }
 }
@@ -125,6 +165,26 @@ private fun ShareFormatRow(
 @Composable
 internal fun ShareFormatOptionsPreview() {
     AppTheme {
-        ShareFormatOptions(onShareText = {}, onShareJson = {})
+        ShareFormatOptions(
+            schemaSource = PaymentSchemaSource.BuiltIn,
+            schemaLabel = "",
+            onShareText = {},
+            onShareJson = {},
+            onOpenSchema = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+internal fun ShareFormatOptionsCustomPreview() {
+    AppTheme {
+        ShareFormatOptions(
+            schemaSource = PaymentSchemaSource.Custom,
+            schemaLabel = "acquirer-v2.json",
+            onShareText = {},
+            onShareJson = {},
+            onOpenSchema = {},
+        )
     }
 }

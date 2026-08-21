@@ -185,7 +185,51 @@
     <string name="qrscan_share_as_text">Share as text</string>
     <string name="qrscan_share_as_text_summary">The decoded report, exactly as shown.</string>
     <string name="qrscan_share_as_json">Share as JSON</string>
+    <!--
+      Two summaries, because the promise about sample values is a statement about the *default*
+      template. Once somebody imports their own it would simply be false, in a tool whose whole
+      value is being trustworthy about payment data.
+    -->
     <string name="qrscan_share_as_json_summary">A payment API response. Fields no QR code carries — the transaction id, limits and allowed funding sources — are filled with sample values.</string>
+    <string name="qrscan_share_as_json_summary_custom">Built from your imported schema.</string>
+    <string name="qrscan_share_schema_row">JSON schema: %1$s</string>
+    <string name="qrscan_share_schema_row_summary">Change which contract the JSON export follows, or see what a template can refer to.</string>
+
+    <!--
+      The JSON schema template. Placeholder tokens and the vocabulary's descriptions are NOT here:
+      they are protocol, read beside the JSON a template author is writing, and translating half of
+      that pairing would make it harder to use rather than easier.
+    -->
+    <string name="qrscan_schema_title">JSON schema</string>
+    <string name="qrscan_schema_settings">JSON schema settings</string>
+    <string name="qrscan_schema_active_heading">Active schema</string>
+    <string name="qrscan_schema_source_built_in">Default schema</string>
+    <string name="qrscan_schema_source_custom">Custom schema</string>
+    <string name="qrscan_schema_built_in_summary">The payment API response this app ships with. Fields no QR code carries — the transaction id, limits and allowed funding sources — are filled with sample values.</string>
+    <string name="qrscan_schema_custom_summary">Your own template. This app makes no claim about what it contains.</string>
+    <string name="qrscan_schema_outdated">Written for an older template format. Import it again to use it.</string>
+    <string name="qrscan_schema_import">Import a schema…</string>
+    <string name="qrscan_schema_export">Export the active schema</string>
+    <string name="qrscan_schema_reset_action">Back to the default schema</string>
+    <string name="qrscan_schema_imported">Schema imported</string>
+    <string name="qrscan_schema_reset">Default schema restored</string>
+    <string name="qrscan_schema_clipboard_label">Placeholder</string>
+
+    <!-- The placeholder reference. -->
+    <string name="qrscan_schema_reference_heading">Placeholders</string>
+    <string name="qrscan_schema_reference_note">Write these in a template between double braces. Use tag:26.01 to reach a tag that has no name here — but prefer a name where one exists, because the primary account sits at tag 26 on a QRIS code and tag 32 on a cross-border one.</string>
+    <string name="qrscan_schema_token">{{%1$s}}</string>
+
+    <!-- Import failures. Nothing is stored unless the whole document passes. -->
+    <string name="qrscan_schema_error_not_json">That file is not JSON. Nothing was changed.</string>
+    <string name="qrscan_schema_error_unreadable">That file could not be read. Nothing was changed.</string>
+    <string name="qrscan_schema_error_unknown">That template names placeholders this app does not have: %1$s. Nothing was changed.</string>
+    <string name="qrscan_schema_error_dismiss">Dismiss</string>
+
+    <!-- Export refused because of the template, never because of the scanned code. -->
+    <string name="qrscan_schema_refused_unknown">The active schema names %1$s, which this app does not have. Import it again or go back to the default.</string>
+    <string name="qrscan_schema_refused_outdated">The active schema was written for an older template format. Import it again or go back to the default.</string>
+    <string name="qrscan_schema_refused_unusable">The active schema could not be read. Go back to the default.</string>
 
     <!--
       Comparison. Two codes read against each other: the first scanned is pinned as the baseline,

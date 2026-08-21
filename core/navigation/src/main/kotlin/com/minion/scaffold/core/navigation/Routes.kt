@@ -67,6 +67,30 @@ data class QrScanRoute(val purpose: ScanPurpose = ScanPurpose.Inspect) : AppRout
 }
 
 /**
+ * The scan tool's settings: which JSON schema template the export renders through.
+ *
+ * [payload] is optional and changes what the placeholder reference can say rather than what the
+ * screen is. Opened from the scanner it is null and the reference lists each placeholder with its
+ * description; opened from a report it carries that code, and the same list shows what each
+ * placeholder is actually worth for it — which is the only way to discover which raw tags a given
+ * payload even has.
+ *
+ * Capped by the caller at [QrCreateRoute]'s size, for the reason [TextToolsRoute.MAX_TEXT_LENGTH]
+ * gives: a route argument rides in the saved-state `Bundle`.
+ *
+ * @property payload The scanned payload to resolve the reference against, or null for the plain
+ *   reference.
+ */
+@Serializable
+data class QrScanSettingsRoute(val payload: String? = null) : AppRoute {
+
+    companion object {
+        /** See [QrScanRoute.ARG_PURPOSE] for why this is read by name. */
+        const val ARG_PAYLOAD = "payload"
+    }
+}
+
+/**
  * Why the scanner was opened.
  *
  * `@Keep` because R8 renames enum entry fields, and this enum's generated serializer resolves

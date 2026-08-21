@@ -23,8 +23,12 @@ import com.minion.scaffold.feature.qrscan.domain.compare.CompareScannedContentUs
 import com.minion.scaffold.feature.qrscan.domain.compare.DiffPayloadCharactersUseCase
 import com.minion.scaffold.feature.qrscan.domain.compare.QrComparison
 import com.minion.scaffold.feature.qrscan.domain.export.ExportPaymentJsonUseCase
+import com.minion.scaffold.feature.qrscan.domain.export.PaymentJsonExport
+import com.minion.scaffold.feature.qrscan.domain.export.PaymentSchemaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -37,6 +41,7 @@ internal class QrScanViewModel @Inject constructor(
     private val compareScannedContent: CompareScannedContentUseCase,
     private val diffPayloadCharacters: DiffPayloadCharactersUseCase,
     private val exportPaymentJson: ExportPaymentJsonUseCase,
+    private val schemaRepository: PaymentSchemaRepository,
     @param:DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : MviViewModel<QrScanState, QrScanIntent, QrScanEffect>(QrScanState()) {
 
@@ -61,6 +66,14 @@ internal class QrScanViewModel @Inject constructor(
             ?.let { restored -> reduce { copy(manualPayload = restored) } }
 
         restoreComparison()
+
+        // Watched rather than read once: the settings screen sits in front of this one, and coming
+        // back from it with a different schema must change what the share sheet says it will send.
+        schemaRepository.activeSchema
+            .onEach { schema ->
+                reduce { copy(schemaSource = schema.source, schemaLabel = schema.label) }
+            }
+            .launchIn(viewModelScope)
     }
 
     override fun onIntent(intent: QrScanIntent) {
@@ -288,15 +301,30 @@ internal class QrScanViewModel @Inject constructor(
      * needs string resources and has to follow a locale change — a JSON contract has neither, and
      * resolving its field names through resources would let a language setting rename them.
      *
-     * Silent for anything that is not a payment code, and for the unreachable case of a report
-     * whose payload will not read back: an export that cannot be built is not an error to report,
-     * because the button that starts it is only offered where it works.
+     * Suspending now that the contract is a template the user can replace: the active one comes
+     * from DataStore, and the first read of the built-in comes from an asset.
+     *
+     * A template that cannot produce a document is reported rather than swallowed, and never
+     * quietly replaced by the built-in — an export that silently emits a *different contract* from
+     * the one configured looks like it worked, which is worse than failing.
      */
     private fun shareJson() {
         val payment = scannedContent as? ScannedContent.Payment ?: return
-        val json = exportPaymentJson(payment.report) ?: return
 
-        emit(QrScanEffect.ShareJson(json))
+        viewModelScope.launch {
+            when (val export = exportPaymentJson(payment.report)) {
+                is PaymentJsonExport.Ready -> emitEffect(QrScanEffect.ShareJson(export.json))
+
+                is PaymentJsonExport.UnknownPlaceholder ->
+                    emitEffect(QrScanEffect.SchemaRefused(SchemaRefusal.Unknown(export.token)))
+
+                PaymentJsonExport.Outdated ->
+                    emitEffect(QrScanEffect.SchemaRefused(SchemaRefusal.Outdated))
+
+                PaymentJsonExport.Unusable ->
+                    emitEffect(QrScanEffect.SchemaRefused(SchemaRefusal.Unusable))
+            }
+        }
     }
 
     /** Pins whatever is on screen and re-arms the camera to look for its counterpart. */
