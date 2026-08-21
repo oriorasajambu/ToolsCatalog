@@ -22,6 +22,7 @@ internal fun WebReportView(
     url: String,
     onCopy: (String) -> Unit,
     onOpenLink: () -> Unit,
+    onCompare: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
@@ -29,22 +30,28 @@ internal fun WebReportView(
 
     ReportRowList(
         heading = resources.getString(R.string.qrscan_web_heading),
-        rows = url.rows(resources),
+        rows = webLinkRows(url, resources),
         onCopy = onCopy,
         modifier = modifier,
         contentPadding = contentPadding,
         footer = {
-            AppButton(
-                text = stringResource(R.string.qrscan_web_open),
-                onClick = onOpenLink,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            ReportFooter(onCompare = onCompare) {
+                AppButton(
+                    text = stringResource(R.string.qrscan_web_open),
+                    onClick = onOpenLink,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         },
     )
 }
 
-private fun String.rows(resources: Resources): List<ReportRow> =
-    listOf(ReportRow(resources.getString(R.string.qrscan_web_url), this))
+/**
+ * Named rather than an extension on `String`, because `internal` puts it in reach of the whole
+ * module and `String.rows()` is far too broad a claim on a type this feature does not own.
+ */
+internal fun webLinkRows(url: String, resources: Resources): List<ReportRow> =
+    listOf(ReportRow(resources.getString(R.string.qrscan_web_url), url))
 
 internal fun webLinkPlainText(url: String, resources: Resources): String =
-    url.rows(resources).toPlainText(resources.getString(R.string.qrscan_web_heading))
+    webLinkRows(url, resources).toPlainText(resources.getString(R.string.qrscan_web_heading))

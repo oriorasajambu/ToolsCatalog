@@ -20,6 +20,7 @@ import com.minion.scaffold.feature.qrscan.R
 internal fun WifiReportView(
     credentials: WifiCredentials,
     onCopy: (String) -> Unit,
+    onCompare: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
@@ -31,6 +32,7 @@ internal fun WifiReportView(
         onCopy = onCopy,
         modifier = modifier,
         contentPadding = contentPadding,
+        footer = { ReportFooter(onCompare = onCompare) },
     )
 }
 
@@ -40,7 +42,7 @@ internal fun WifiReportView(
  * The security type and the hidden flag are not copyable: they are this app's words for a code's
  * contents, not values anyone would paste anywhere.
  */
-private fun WifiCredentials.rows(resources: Resources): List<ReportRow> = buildList {
+internal fun WifiCredentials.rows(resources: Resources): List<ReportRow> = buildList {
     add(ReportRow(resources.getString(R.string.qrscan_wifi_network), ssid))
     add(
         ReportRow(

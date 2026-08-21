@@ -60,6 +60,30 @@ internal sealed interface ScannedContent {
 }
 
 /**
+ * Which of the four kinds a code is, without its contents.
+ *
+ * Exists because comparing two codes has to ask "are these even the same sort of thing?" and name
+ * the answer in a sentence — and `is ScannedContent.Wifi` is a check, not a noun. Keeping the
+ * question separate from the data also means the rejection message needs no payload to talk about
+ * a format.
+ */
+internal enum class ScannedFormat {
+    Payment,
+    Wifi,
+    Web,
+    Contact,
+}
+
+/** Which kind of code this is. */
+internal val ScannedContent.format: ScannedFormat
+    get() = when (this) {
+        is ScannedContent.Payment -> ScannedFormat.Payment
+        is ScannedContent.Wifi -> ScannedFormat.Wifi
+        is ScannedContent.Web -> ScannedFormat.Web
+        is ScannedContent.Contact -> ScannedFormat.Contact
+    }
+
+/**
  * What came of trying to read a scanned string.
  *
  * [Malformed] and [Unrecognised] are separate on purpose. "This is a URL" and "this payment code

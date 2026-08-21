@@ -24,6 +24,7 @@ internal fun ContactReportView(
     card: ContactCard,
     onCopy: (String) -> Unit,
     onAddContact: () -> Unit,
+    onCompare: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
@@ -36,11 +37,13 @@ internal fun ContactReportView(
         modifier = modifier,
         contentPadding = contentPadding,
         footer = {
-            AppButton(
-                text = stringResource(R.string.qrscan_contact_add),
-                onClick = onAddContact,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            ReportFooter(onCompare = onCompare) {
+                AppButton(
+                    text = stringResource(R.string.qrscan_contact_add),
+                    onClick = onAddContact,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         },
     )
 }
@@ -51,7 +54,7 @@ internal fun ContactReportView(
  * A row reading "Organisation: (blank)" tells the reader nothing except that this app has a slot for
  * one — and a card scanned from a business card usually leaves several of these empty.
  */
-private fun ContactCard.rows(resources: Resources): List<ReportRow> = buildList {
+internal fun ContactCard.rows(resources: Resources): List<ReportRow> = buildList {
     add(
         ReportRow(
             label = resources.getString(R.string.qrscan_contact_name),

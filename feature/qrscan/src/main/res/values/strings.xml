@@ -173,4 +173,94 @@
       it as damage would train people to ignore it.
     -->
     <string name="qrscan_report_unframed_template">Read as a plain value — its contents do not frame as sub-segments.</string>
+
+    <!--
+      The share-format chooser. Only the payment report offers it; the other three formats have no
+      response contract to export, so their share goes straight to the system sheet.
+
+      The JSON summary states the sample-value caveat because this is the last screen before the
+      document leaves the device, and the only one with room for a sentence.
+    -->
+    <string name="qrscan_share_format_title">Share this code</string>
+    <string name="qrscan_share_as_text">Share as text</string>
+    <string name="qrscan_share_as_text_summary">The decoded report, exactly as shown.</string>
+    <string name="qrscan_share_as_json">Share as JSON</string>
+    <string name="qrscan_share_as_json_summary">A payment API response. Fields no QR code carries — the transaction id, limits and allowed funding sources — are filled with sample values.</string>
+
+    <!--
+      Comparison. Two codes read against each other: the first scanned is pinned as the baseline,
+      the second is the candidate. The wording says "first" and "second" rather than "A" and "B"
+      because the letters need a legend and the ordinals do not.
+    -->
+    <string name="qrscan_compare">Compare with another code</string>
+    <string name="qrscan_compare_banner">Comparing against %1$s</string>
+    <string name="qrscan_compare_cancel">Cancel comparison</string>
+    <string name="qrscan_compare_hint">Scan the second code</string>
+    <string name="qrscan_compare_heading">Comparison</string>
+    <string name="qrscan_compare_side_baseline">First</string>
+    <string name="qrscan_compare_side_candidate">Second</string>
+
+    <!--
+      Three verdicts, not two. Acquirers re-encode the same merchant with the tags in a different
+      order, which changes every byte and nothing that matters; calling that "different" is the
+      false alarm a payment engineer would not forgive.
+    -->
+    <string name="qrscan_compare_verdict_identical">Identical — byte for byte</string>
+    <string name="qrscan_compare_verdict_equivalent">Equivalent — same values, different bytes</string>
+    <plurals name="qrscan_compare_verdict_different">
+        <item quantity="one">Different — %1$d field differs</item>
+        <item quantity="other">Different — %1$d fields differ</item>
+    </plurals>
+    <string name="qrscan_compare_same_payload_note">Both sides read the same payload — this may be the same code scanned twice.</string>
+
+    <!-- Per-row status. -->
+    <string name="qrscan_compare_status_same">Unchanged</string>
+    <string name="qrscan_compare_status_changed">Changed</string>
+    <string name="qrscan_compare_status_only_baseline">Only in the first</string>
+    <string name="qrscan_compare_status_only_candidate">Only in the second</string>
+    <string name="qrscan_compare_moved">Moved from tag %1$s</string>
+    <!-- Stands where a field is absent on one side, so the two values stay vertically aligned. -->
+    <string name="qrscan_compare_absent">—</string>
+
+    <!--
+      A subtag inside a template. Unlike the single-code report this carries no declared length:
+      the two sides can declare different ones, and a heading that had to pick would be wrong half
+      the time.
+    -->
+    <string name="qrscan_compare_subtag">Subtag %1$s</string>
+    <!-- One value becoming another. The arrow is translatable because its direction is. -->
+    <string name="qrscan_compare_change">%1$s → %2$s</string>
+    <!-- A value that exists on one side only, with which side in the brackets. -->
+    <string name="qrscan_compare_line_only">%1$s (%2$s)</string>
+
+    <!-- One side of the comparison and what it says: "First: CRC checksum: passed". -->
+    <string name="qrscan_compare_side_value">%1$s: %2$s</string>
+
+    <!-- Tabs. -->
+    <string name="qrscan_compare_tab_fields">Fields</string>
+    <string name="qrscan_compare_tab_raw">Raw</string>
+    <string name="qrscan_compare_raw_computing">Lining the payloads up…</string>
+    <string name="qrscan_compare_raw_truncated">These payloads have too little in common to line up character by character, so each is shown as one replaced run.</string>
+    <string name="qrscan_compare_raw_identical">Both payloads are the same string.</string>
+
+    <!-- Actions on a finished comparison. -->
+    <string name="qrscan_compare_rescan">Scan another</string>
+    <string name="qrscan_compare_swap">Swap the two</string>
+    <string name="qrscan_compare_copy">Copy comparison</string>
+    <string name="qrscan_compare_share">Share comparison</string>
+
+    <!--
+      Rejections. The camera is still running and the pinned code is untouched, so these say what
+      to do next rather than what went wrong.
+    -->
+    <string name="qrscan_compare_reject_format">That is a %1$s code — the first one was a %2$s code. Scan another %2$s code.</string>
+    <string name="qrscan_compare_reject_unreadable">That code could not be read. Try another.</string>
+
+    <!-- Format names, for the banner summary and the rejection wording. -->
+    <string name="qrscan_format_payment">payment</string>
+    <string name="qrscan_format_wifi">Wi-Fi</string>
+    <string name="qrscan_format_web">link</string>
+    <string name="qrscan_format_contact">contact</string>
+    <!-- The pinned code, named: its kind and the one field that tells it apart from another. -->
+    <string name="qrscan_compare_summary">%1$s · %2$s</string>
 </resources>

@@ -71,6 +71,7 @@ import com.minion.scaffold.core.emv.usecase.highlightTags
 internal fun QrInquiryReportView(
     report: QrInquiryReport,
     onCopy: (String) -> Unit,
+    onCompare: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
@@ -142,6 +143,10 @@ internal fun QrInquiryReportView(
 
         item(key = INTEGRITY_KEY) {
             IntegrityCard(report = report, onCopy = onCopy)
+        }
+
+        item(key = FOOTER_KEY) {
+            ReportFooter(onCompare = onCompare)
         }
     }
 }
@@ -493,3 +498,4 @@ private const val PAYLOAD_KEY = "payload"
 private const val SEGMENTS_HEADER_KEY = "segments-header"
 private const val INTEGRITY_HEADER_KEY = "integrity-header"
 private const val INTEGRITY_KEY = "integrity"
+private const val FOOTER_KEY = "footer"
