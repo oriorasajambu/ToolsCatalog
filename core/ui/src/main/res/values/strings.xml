@@ -17,4 +17,10 @@
     <string name="error_invalid_password">Your password doesn\'t meet the requirements.</string>
     <string name="error_invalid_name">Enter a name.</string>
     <string name="error_unknown">Something went wrong. Try again.</string>
+
+    <!--
+      Shown after a copy, by rememberClipboardCopy. Here rather than per-feature because copying
+      means the same thing on every screen, and six features do it.
+    -->
+    <string name="copied_to_clipboard">Copied to clipboard</string>
 </resources>
