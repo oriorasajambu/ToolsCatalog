@@ -13,13 +13,35 @@ config:
   validation: true
   warningsAsErrors: false
 
+# LongMethod / LongParameterList / CyclomaticComplexMethod / NestedBlockDepth: a ceiling on the
+# natural complexity magnets in this codebase — ViewModels, use cases, and parsers (EMV framing,
+# OCR reading-order reconstruction). Left at their own default thresholds for a first pass.
+complexity:
+  active: true
+  LongMethod:
+    active: true
+  LongParameterList:
+    active: true
+  CyclomaticComplexMethod:
+    active: true
+  NestedBlockDepth:
+    active: true
+
 # ElseCaseInsteadOfExhaustiveWhen: flags a when-expression that falls back to `else` instead of
 # being exhaustive over a sealed type. The MVI contract depends on `onIntent`'s `when` and every
 # `DomainError` handler staying exhaustive — an `else` branch is exactly how a new UiIntent or a
 # new DomainError case goes unhandled without the compiler ever objecting.
+#
+# UnsafeCallOnNullableType / UnsafeCast: ban `!!` and an unchecked `as` cast. General null-safety
+# and type-safety hygiene, and directly relevant wherever the sealed `ScannedContent`/comparison
+# hierarchies do type dispatch.
 potential-bugs:
   active: true
   ElseCaseInsteadOfExhaustiveWhen:
+    active: true
+  UnsafeCallOnNullableType:
+    active: true
+  UnsafeCast:
     active: true
 
 # TooGenericExceptionCaught: flags `catch (e: Exception)` / `catch (e: Throwable)`. safeCall
@@ -27,9 +49,15 @@ potential-bugs:
 # CancellationException first — see CLAUDE.md's Error handling section. A bare catch anywhere else
 # is the pattern that section warns against: it turns a cancelled screen's request into a spurious
 # failure.
+#
+# NotImplementedDeclaration: flags a leftover TODO()/error("not implemented") — the state a
+# feature scaffolded by scripts/scaffold_feature.py is in until its use cases are filled in.
+# Catches one left behind before it merges.
 exceptions:
   active: true
   TooGenericExceptionCaught:
+    active: true
+  NotImplementedDeclaration:
     active: true
 
 coroutines:
@@ -48,13 +76,79 @@ coroutines:
   # and the injected-dispatcher convention InjectDispatcher enforces above.
   GlobalCoroutineUsage:
     active: true
+  # SleepInsteadOfDelay: Thread.sleep() inside a coroutine blocks the underlying thread instead of
+  # suspending. Worth watching given the sensor-timing code in level/soundmeter/speedometer.
+  SleepInsteadOfDelay:
+    active: true
+  # RedundantSuspendModifier: a `suspend fun` that never actually suspends. Hygiene.
+  RedundantSuspendModifier:
+    active: true
+
+# EmptyCatchBlock: an empty catch body silently swallows whatever it caught — the exact opposite
+# of the DomainError pipeline, where every failure is meant to reach the screen as something.
+# EmptyFunctionBlock / EmptyWhenBlock: stub bodies left behind, most likely from a scaffolded
+# feature whose use cases were never filled in.
+empty-blocks:
+  active: true
+  EmptyCatchBlock:
+    active: true
+  EmptyFunctionBlock:
+    active: true
+  EmptyWhenBlock:
+    active: true
+
+# SpreadOperator / ForEachOnRange / CouldBeSequence: allocation-heavy patterns that matter most in
+# this repo's hot numeric paths — :core:gnss's geoid interpolation (checked at a hundred thousand
+# points), :core:sound's per-sample weighting filters, :core:emv's byte-level CRC work.
+performance:
+  active: true
+  SpreadOperator:
+    active: true
+  ForEachOnRange:
+    active: true
+  CouldBeSequence:
+    active: true
+
+# UndocumentedPublicClass / UndocumentedPublicFunction: guards the KDoc coverage this repo already
+# built up module by module (see the `docs(...)` commit history) against regression. Low noise
+# given how little is actually public — everything in a feature module is `internal` except its
+# navigation entry point, so this only ever touches genuine public API surface.
+comments:
+  active: true
+  UndocumentedPublicClass:
+    active: true
+  UndocumentedPublicFunction:
+    active: true
 
 # MagicNumber: flags an unnamed numeric literal. Left at its own defaults deliberately — property
 # declarations, constants, companion object properties, hashCode() bodies and named arguments are
 # already excluded out of the box, which is a reasonable starting point for a first pass. Most
 # valuable in the pure-Kotlin algorithm modules (:core:emv, :core:gnss, :core:sound, ...), where an
 # unnamed constant in a checksum or a threshold is a correctness risk, not just a style nit.
+#
+# UnusedImports / UnusedParameter / UnusedPrivateProperty / UnusedPrivateMember: plain dead-code
+# hygiene, near-zero false-positive risk. UnusedPrivateMember stands in for "unused private
+# function" — detekt 1.23.8 has no separate UnusedPrivateFunction rule; UnusedPrivateMember is the
+# one that needs type resolution to catch an unused private function, and detekt's own shipped
+# defaults run it alongside UnusedPrivateProperty rather than instead of it, so this does the same.
+# UnusedImports itself ships inactive in detekt's own defaults; turned on here deliberately.
+#
+# WildcardImport / VarCouldBeVal / UseDataClass: idiomatic-Kotlin nudges, cheap.
 style:
   active: true
   MagicNumber:
+    active: true
+  UnusedImports:
+    active: true
+  UnusedParameter:
+    active: true
+  UnusedPrivateProperty:
+    active: true
+  UnusedPrivateMember:
+    active: true
+  WildcardImport:
+    active: true
+  VarCouldBeVal:
+    active: true
+  UseDataClass:
     active: true

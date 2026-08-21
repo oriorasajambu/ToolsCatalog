@@ -133,13 +133,23 @@ something different in `:core:gnss` than in `:feature:qrscan` is a rule that sho
 `buildUponDefaultConfig` is `false`: detekt ships roughly 150 rules active out of the box, and
 turning all of them on at once against a codebase that has never run it would produce a wall of
 unreviewed findings rather than a usable first pass. Only the rules `detekt.yml` lists explicitly
-are active, and each one is there because it mechanically enforces a convention this file already
-states in prose — `ElseCaseInsteadOfExhaustiveWhen` for the MVI contract's exhaustive `when`s,
-`TooGenericExceptionCaught` and `SuspendFunSwallowedCancellation` for the `safeCall`
-`CancellationException`-first rule, `InjectDispatcher` for `:core:common`'s dispatcher qualifiers,
-`GlobalCoroutineUsage` against unstructured concurrency, and `MagicNumber`. Add to the set the same
-way: a rule earns its place by encoding something already true of the codebase, not because it is
-a detekt default.
+are active, across eight rule sets — `complexity`, `potential-bugs`, `exceptions`, `coroutines`,
+`empty-blocks`, `performance`, `comments`, `style` — and each one is there because it mechanically
+enforces a convention this file already states in prose: `ElseCaseInsteadOfExhaustiveWhen` for the
+MVI contract's exhaustive `when`s, `TooGenericExceptionCaught` and `SuspendFunSwallowedCancellation`
+for the `safeCall` `CancellationException`-first rule, `InjectDispatcher` for `:core:common`'s
+dispatcher qualifiers, `GlobalCoroutineUsage` against unstructured concurrency, `NotImplementedDeclaration`
+against a scaffolded feature's `TODO()` surviving to merge, `EmptyCatchBlock` against silently
+swallowing what the `DomainError` pipeline exists to surface, and `MagicNumber`. The rest —
+`UnsafeCallOnNullableType`/`UnsafeCast`, `SleepInsteadOfDelay`/`RedundantSuspendModifier`, the dead-code
+group (`UnusedImports`/`UnusedParameter`/`UnusedPrivateProperty`/`UnusedPrivateMember`/`WildcardImport`),
+`VarCouldBeVal`/`UseDataClass`, the complexity ceiling (`LongMethod`/`LongParameterList`/
+`CyclomaticComplexMethod`/`NestedBlockDepth`), the allocation-hygiene set (`SpreadOperator`/
+`ForEachOnRange`/`CouldBeSequence`), and the public-API doc guard (`UndocumentedPublicClass`/
+`UndocumentedPublicFunction`) — round out the same idea: general-purpose, low-noise rules rather
+than project-specific ones. Add to the set the same way: a rule earns its place by encoding
+something already true of the codebase or by being a cheap, high-confidence catch, not because it
+is a detekt default.
 
 `check` depends on the `detekt` task the same way it depends on the androidTest-compile guard
 above — a finding fails the build rather than sitting in a report nobody opens.
@@ -149,6 +159,17 @@ line, even though 1.23.8 is built against older Kotlin metadata than this projec
 and there is a known issue reading Kotlin 2.3+ metadata (detekt/detekt#8865) — the 2.x line matches
 the Kotlin version but is pre-1.0, and every other dependency in this repo is pinned to a stable
 release. If `./gradlew detekt` fails on metadata rather than a real finding, that tradeoff is why.
+
+**Rule names drift between detekt versions — verify against the actual pinned tag, not detekt's
+own `main`-branch docs.** Found while writing this config: `main` (already tracking the 2.x line)
+spells three of these rules differently than 1.23.8 does — `EmptyKotlinFile` there is `EmptyKtFile`
+here, `DocumentationOverPrivateFunction` is `CommentOverPrivateFunction`, and
+`RedundantVisibilityModifier` is `RedundantVisibilityModifierRule`. There is also no
+`UnusedPrivateFunction` rule in 1.23.8 at all — `UnusedPrivateMember` is the one that catches an
+unused private function (it needs type resolution the way `UnusedPrivateProperty` doesn't), and
+detekt's own shipped defaults run both simultaneously rather than one instead of the other, which
+`detekt.yml` follows. `config.validation: true` turns any of these mistakes into a hard failure
+rather than a silently-ignored key, which is what caught them here.
 
 ## Build variants & environment
 
