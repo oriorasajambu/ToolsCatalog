@@ -12,4 +12,9 @@ plugins {
     // configure the Crashlytics extension by type.
     alias(libs.plugins.google.services) apply false
     alias(libs.plugins.firebase.crashlytics) apply false
+    // Applied by the base module conventions (minion.android.application, minion.android.library,
+    // minion.jvm.library) via the minion.detekt convention, not here — declaring it at the root
+    // with `apply false` is what lets every module request it by bare id without repeating a
+    // version, the same reason every other plugin in this block is listed.
+    alias(libs.plugins.detekt) apply false
 }

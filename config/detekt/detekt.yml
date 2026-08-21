@@ -1,0 +1,60 @@
+# detekt's shared config, applied by every module through the `minion.detekt` convention plugin
+# (build-logic/convention/src/main/kotlin/minion.detekt.gradle.kts).
+#
+# buildUponDefaultConfig is false, so ONLY the rules listed below are active — detekt's ~150
+# default-active rules stay off. This is a deliberate first pass, not the full rule set: each
+# addition below is chosen because it enforces a convention this repo already states in writing
+# (see CLAUDE.md), not because it is a detekt default. Add to it deliberately, the same way.
+
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+# ElseCaseInsteadOfExhaustiveWhen: flags a when-expression that falls back to `else` instead of
+# being exhaustive over a sealed type. The MVI contract depends on `onIntent`'s `when` and every
+# `DomainError` handler staying exhaustive — an `else` branch is exactly how a new UiIntent or a
+# new DomainError case goes unhandled without the compiler ever objecting.
+potential-bugs:
+  active: true
+  ElseCaseInsteadOfExhaustiveWhen:
+    active: true
+
+# TooGenericExceptionCaught: flags `catch (e: Exception)` / `catch (e: Throwable)`. safeCall
+# (:core:network) is the one sanctioned place that catches broadly, and only because it rethrows
+# CancellationException first — see CLAUDE.md's Error handling section. A bare catch anywhere else
+# is the pattern that section warns against: it turns a cancelled screen's request into a spurious
+# failure.
+exceptions:
+  active: true
+  TooGenericExceptionCaught:
+    active: true
+
+coroutines:
+  active: true
+  # InjectDispatcher: flags a hardcoded Dispatchers.IO/.Default/etc. call site instead of an
+  # injected dispatcher. :core:common exists specifically to provide dispatcher qualifiers for
+  # this reason.
+  InjectDispatcher:
+    active: true
+  # SuspendFunSwallowedCancellation: flags a suspend function that catches broadly without
+  # rethrowing CancellationException. The exact mistake safeCall and
+  # RemoteConfigFeatureFlagRepository are both written to avoid.
+  SuspendFunSwallowedCancellation:
+    active: true
+  # GlobalCoroutineUsage: flags GlobalScope.launch/.async. Bypasses both structured concurrency
+  # and the injected-dispatcher convention InjectDispatcher enforces above.
+  GlobalCoroutineUsage:
+    active: true
+
+# MagicNumber: flags an unnamed numeric literal. Left at its own defaults deliberately — property
+# declarations, constants, companion object properties, hashCode() bodies and named arguments are
+# already excluded out of the box, which is a reasonable starting point for a first pass. Most
+# valuable in the pure-Kotlin algorithm modules (:core:emv, :core:gnss, :core:sound, ...), where an
+# unnamed constant in a checksum or a threshold is a correctness risk, not just a style nit.
+style:
+  active: true
+  MagicNumber:
+    active: true

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("org.jetbrains.kotlin.jvm")
+    id("minion.detekt")
 }
 
 val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")

@@ -26,6 +26,7 @@ plugins {
     // Uploads the R8 mapping file so release stack traces de-obfuscate in the console. Requires
     // the google-services plugin above to have run first.
     id("com.google.firebase.crashlytics")
+    id("minion.detekt")
 }
 
 // Precompiled script plugins get no type-safe `libs` accessor, so the catalog is resolved by hand.
