@@ -3,6 +3,7 @@ package com.minion.scaffold.feature.qrscan.presentation
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.minion.scaffold.core.common.dispatcher.DefaultDispatcher
 import com.minion.scaffold.core.navigation.AppRoute
 import com.minion.scaffold.core.navigation.QrCreateRoute
 import com.minion.scaffold.core.navigation.QrScanRoute
@@ -17,8 +18,15 @@ import com.minion.scaffold.feature.qrscan.data.ImageDecodeResult
 import com.minion.scaffold.feature.qrscan.domain.DecodeScannedPayloadUseCase
 import com.minion.scaffold.feature.qrscan.domain.ScanResult
 import com.minion.scaffold.feature.qrscan.domain.ScannedContent
+import com.minion.scaffold.feature.qrscan.domain.format
+import com.minion.scaffold.feature.qrscan.domain.compare.CompareScannedContentUseCase
+import com.minion.scaffold.feature.qrscan.domain.compare.DiffPayloadCharactersUseCase
+import com.minion.scaffold.feature.qrscan.domain.compare.QrComparison
+import com.minion.scaffold.feature.qrscan.domain.export.ExportPaymentJsonUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -26,6 +34,10 @@ internal class QrScanViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val decodeScannedPayload: DecodeScannedPayloadUseCase,
     private val imageBarcodeDecoder: ImageBarcodeDecoder,
+    private val compareScannedContent: CompareScannedContentUseCase,
+    private val diffPayloadCharacters: DiffPayloadCharactersUseCase,
+    private val exportPaymentJson: ExportPaymentJsonUseCase,
+    @param:DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : MviViewModel<QrScanState, QrScanIntent, QrScanEffect>(QrScanState()) {
 
     /**
@@ -47,6 +59,8 @@ internal class QrScanViewModel @Inject constructor(
         savedStateHandle.get<String>(KEY_PAYLOAD)
             ?.takeIf { it.isNotEmpty() }
             ?.let { restored -> reduce { copy(manualPayload = restored) } }
+
+        restoreComparison()
     }
 
     override fun onIntent(intent: QrScanIntent) {
@@ -99,6 +113,20 @@ internal class QrScanViewModel @Inject constructor(
             }
 
             QrScanIntent.ShareReportRequested -> withContent(QrScanEffect::ShareReport)
+
+            QrScanIntent.ShareJsonRequested -> shareJson()
+
+            QrScanIntent.CompareRequested -> pinBaseline()
+            QrScanIntent.CompareCancelled -> cancelComparison()
+            QrScanIntent.CompareRescanRequested -> rearmForCandidate()
+            QrScanIntent.CompareSwapped -> swapComparison()
+            QrScanIntent.RawDiffRequested -> computeRawDiff()
+
+            QrScanIntent.CopyComparisonRequested ->
+                withComparison(QrScanEffect::CopyComparison)
+
+            QrScanIntent.ShareComparisonRequested ->
+                withComparison(QrScanEffect::ShareComparison)
         }
     }
 
@@ -116,7 +144,43 @@ internal class QrScanViewModel @Inject constructor(
     private fun decode(payload: String) {
         if (currentState.content.isBusyOrDone) return
 
-        applyContent(contentFor(payload))
+        val baseline = currentState.baseline
+        if (baseline != null) {
+            compareAgainst(baseline, payload)
+        } else {
+            applyContent(contentFor(payload))
+        }
+    }
+
+    /**
+     * Reads a second code against the pinned one.
+     *
+     * Anything that is not the same format, and anything that does not read at all, is a rejection
+     * rather than a result: the camera stays bound and the baseline stays pinned, so the next move
+     * is simply to point at a different code. Dropping into the failure screen here would silently
+     * abandon a baseline the user may have walked across a building to capture.
+     */
+    private fun compareAgainst(baseline: ScannedContent, payload: String) {
+        when (val result = decodeScannedPayload(payload)) {
+            is ScanResult.Recognised -> {
+                val comparison = compareScannedContent(baseline, result.content)
+                if (comparison == null) {
+                    emit(
+                        QrScanEffect.CompareRejected(
+                            CompareRejection.FormatMismatch(
+                                expected = baseline.format,
+                                found = result.content.format,
+                            ),
+                        ),
+                    )
+                } else {
+                    applyComparison(comparison)
+                }
+            }
+
+            is ScanResult.Malformed, ScanResult.Unrecognised ->
+                emit(QrScanEffect.CompareRejected(CompareRejection.Unreadable))
+        }
     }
 
     /**
@@ -155,17 +219,38 @@ internal class QrScanViewModel @Inject constructor(
             // this the result would land afterward and reopen a report they just closed.
             if (currentState.content !is QrScanState.ContentState.Decoding) return@launch
 
+            val baseline = currentState.baseline
+
             when (result) {
                 // Not routed through `decode`: that refuses to run while the state is Decoding,
                 // which is exactly the state this path is in.
-                is ImageDecodeResult.Found -> applyContent(contentFor(result.payload))
-
-                ImageDecodeResult.NoBarcode -> reduce {
-                    copy(content = QrScanState.ContentState.Failure(QrScanError.NoBarcodeInImage))
+                is ImageDecodeResult.Found -> if (baseline != null) {
+                    // Back to Idle first. A rejection leaves the content alone, and leaving it on
+                    // Decoding would strand the screen on a spinner with the camera unbound.
+                    reduce { copy(content = QrScanState.ContentState.Idle) }
+                    compareAgainst(baseline, result.payload)
+                } else {
+                    applyContent(contentFor(result.payload))
                 }
 
-                ImageDecodeResult.Unreadable -> reduce {
-                    copy(content = QrScanState.ContentState.Failure(QrScanError.ImageUnreadable))
+                // A picked image that holds no code is a rejection during a comparison for the same
+                // reason a damaged payload is: there is nothing to repair, only another to try.
+                ImageDecodeResult.NoBarcode -> if (baseline != null) {
+                    reduce { copy(content = QrScanState.ContentState.Idle) }
+                    emit(QrScanEffect.CompareRejected(CompareRejection.Unreadable))
+                } else {
+                    reduce {
+                        copy(content = QrScanState.ContentState.Failure(QrScanError.NoBarcodeInImage))
+                    }
+                }
+
+                ImageDecodeResult.Unreadable -> if (baseline != null) {
+                    reduce { copy(content = QrScanState.ContentState.Idle) }
+                    emit(QrScanEffect.CompareRejected(CompareRejection.Unreadable))
+                } else {
+                    reduce {
+                        copy(content = QrScanState.ContentState.Failure(QrScanError.ImageUnreadable))
+                    }
                 }
             }
         }
@@ -195,10 +280,156 @@ internal class QrScanViewModel @Inject constructor(
                 QrScanState.ContentState.Failure(QrScanError.UnrecognisedFormat)
         }
 
+    /**
+     * Shares the scanned payment code as a response document.
+     *
+     * Built here rather than by the screen, and the effect carries the finished string. The report
+     * and the comparison hand their domain object over instead, because turning either into text
+     * needs string resources and has to follow a locale change — a JSON contract has neither, and
+     * resolving its field names through resources would let a language setting rename them.
+     *
+     * Silent for anything that is not a payment code, and for the unreachable case of a report
+     * whose payload will not read back: an export that cannot be built is not an error to report,
+     * because the button that starts it is only offered where it works.
+     */
+    private fun shareJson() {
+        val payment = scannedContent as? ScannedContent.Payment ?: return
+        val json = exportPaymentJson(payment.report) ?: return
+
+        emit(QrScanEffect.ShareJson(json))
+    }
+
+    /** Pins whatever is on screen and re-arms the camera to look for its counterpart. */
+    private fun pinBaseline() {
+        val content = scannedContent ?: return
+
+        rememberComparison(baseline = content.payload, candidate = null)
+        reduce { copy(baseline = content, content = QrScanState.ContentState.Idle) }
+    }
+
+    /** Puts the comparison away and returns to the report the baseline came from. */
+    private fun cancelComparison() {
+        val baseline = currentState.baseline ?: return
+
+        rememberComparison(baseline = null, candidate = null)
+        reduce {
+            copy(baseline = null, content = QrScanState.ContentState.Success(baseline))
+        }
+    }
+
+    /** Keeps the baseline pinned and goes looking for another code to read against it. */
+    private fun rearmForCandidate() {
+        val baseline = currentState.baseline ?: return
+
+        rememberComparison(baseline = baseline.payload, candidate = null)
+        reduce { copy(content = QrScanState.ContentState.Idle) }
+    }
+
+    /**
+     * Reads the same two codes the other way round.
+     *
+     * The character alignment is dropped rather than reversed: what was a removal from A is now an
+     * addition to B, so the stored spans index the wrong payloads in both directions.
+     */
+    private fun swapComparison() {
+        val current = currentState.content as? QrScanState.ContentState.Comparison ?: return
+        val swapped = compareScannedContent(
+            baseline = current.comparison.candidate,
+            candidate = current.comparison.baseline,
+        ) ?: return
+
+        applyComparison(swapped)
+    }
+
+    /** Shows a finished comparison and remembers both of its sides. */
+    private fun applyComparison(comparison: QrComparison) {
+        rememberComparison(
+            baseline = comparison.baseline.payload,
+            candidate = comparison.candidate.payload,
+        )
+        reduce {
+            copy(
+                baseline = comparison.baseline,
+                content = QrScanState.ContentState.Comparison(comparison),
+            )
+        }
+    }
+
+    /**
+     * Aligns the two payloads character by character, once.
+     *
+     * The only work in this feature that leaves the main thread. Everything else here is a single
+     * pass over a few hundred characters; this is quadratic in the length of whatever the two
+     * payloads do not have in common, and a worst-case pair would drop frames.
+     */
+    private fun computeRawDiff() {
+        val current = currentState.content as? QrScanState.ContentState.Comparison ?: return
+        if (current.rawDiff !is RawDiffState.NotComputed) return
+
+        val baseline = current.comparison.baseline.payload
+        val candidate = current.comparison.candidate.payload
+
+        reduce { copy(content = current.copy(rawDiff = RawDiffState.Computing)) }
+
+        viewModelScope.launch {
+            val diff = withContext(defaultDispatcher) {
+                diffPayloadCharacters(baseline, candidate)
+            }
+
+            // Swapping or re-scanning while this ran replaced the comparison the result describes,
+            // and that replacement already reset the alignment to NotComputed.
+            val latest = currentState.content as? QrScanState.ContentState.Comparison ?: return@launch
+            if (latest.rawDiff !is RawDiffState.Computing) return@launch
+
+            reduce { copy(content = latest.copy(rawDiff = RawDiffState.Ready(diff))) }
+        }
+    }
+
+    /**
+     * Rebuilds a comparison interrupted by process death.
+     *
+     * Only the two payloads are kept, and both are decoded again on the way back. Storing the
+     * decoded reports instead would mean putting the whole of `:core:emv`'s model through the
+     * saved-state bundle, to save a parse that takes less time than reading the bundle did.
+     */
+    private fun restoreComparison() {
+        val baselinePayload = savedStateHandle.get<String>(KEY_COMPARE_BASELINE)
+            ?.takeIf { it.isNotEmpty() }
+            ?: return
+
+        val baseline = (decodeScannedPayload(baselinePayload) as? ScanResult.Recognised)
+            ?.content
+            ?: return
+
+        val candidate = savedStateHandle.get<String>(KEY_COMPARE_CANDIDATE)
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { decodeScannedPayload(it) as? ScanResult.Recognised }
+            ?.content
+
+        val comparison = candidate?.let { compareScannedContent(baseline, it) }
+
+        reduce {
+            copy(
+                baseline = baseline,
+                content = if (comparison == null) {
+                    QrScanState.ContentState.Idle
+                } else {
+                    QrScanState.ContentState.Comparison(comparison)
+                },
+            )
+        }
+    }
+
     /** Holds the payload in state and in saved state, which must not be allowed to disagree. */
     private fun rememberPayload(payload: String) {
         savedStateHandle[KEY_PAYLOAD] = payload
         reduce { copy(manualPayload = payload) }
+    }
+
+    /** Holds both sides of a comparison, so walking away from the app does not end it. */
+    private fun rememberComparison(baseline: String?, candidate: String?) {
+        savedStateHandle[KEY_COMPARE_BASELINE] = baseline.orEmpty()
+        savedStateHandle[KEY_COMPARE_CANDIDATE] = candidate.orEmpty()
     }
 
     /**
@@ -228,12 +459,20 @@ internal class QrScanViewModel @Inject constructor(
         emit(effect(content))
     }
 
+    /** Emits [effect] for the comparison on screen, or does nothing when there is none. */
+    private fun withComparison(effect: (QrComparison) -> QrScanEffect) {
+        val current = currentState.content as? QrScanState.ContentState.Comparison ?: return
+        emit(effect(current.comparison))
+    }
+
     private fun emit(effect: QrScanEffect) {
         viewModelScope.launch { emitEffect(effect) }
     }
 
     private companion object {
         const val KEY_PAYLOAD = "qrscan_payload"
+        const val KEY_COMPARE_BASELINE = "qrscan_compare_baseline"
+        const val KEY_COMPARE_CANDIDATE = "qrscan_compare_candidate"
     }
 }
 
@@ -242,6 +481,11 @@ internal class QrScanViewModel @Inject constructor(
  *
  * [QrScanState.ContentState.Failure] is deliberately absent: a failure is not a lock-out, and the
  * user has to be able to fix a typo or pick another photo without clearing first.
+ *
+ * [QrScanState.ContentState.Comparison] is present for the same reason `Success` is — a live camera
+ * pointed at a finished diff would otherwise replace it thirty times a second.
  */
 private val QrScanState.ContentState.isBusyOrDone: Boolean
-    get() = this is QrScanState.ContentState.Success || this is QrScanState.ContentState.Decoding
+    get() = this is QrScanState.ContentState.Success ||
+        this is QrScanState.ContentState.Decoding ||
+        this is QrScanState.ContentState.Comparison

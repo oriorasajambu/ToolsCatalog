@@ -18,6 +18,9 @@ android {
 
 dependencies {
     implementation(project(":core:emv"))
+    // The JSON export builds a JsonObject by hand and encodes it — the runtime only, no
+    // @Serializable types and so no compiler plugin, exactly as :core:text's JsonFormatter does.
+    implementation(libs.kotlin.serializable)
     implementation(project(":core:wifi"))
     implementation(project(":core:url"))
     implementation(project(":core:vcard"))

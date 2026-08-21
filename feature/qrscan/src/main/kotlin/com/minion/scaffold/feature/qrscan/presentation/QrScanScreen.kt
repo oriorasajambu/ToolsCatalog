@@ -46,8 +46,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -77,6 +80,11 @@ import com.minion.scaffold.core.emv.model.SegmentTrace
 import com.minion.scaffold.core.navigation.AppRoute
 import com.minion.scaffold.core.vcard.model.ContactCard
 import com.minion.scaffold.feature.qrscan.domain.ScannedContent
+import com.minion.scaffold.feature.qrscan.presentation.compare.CompareBanner
+import com.minion.scaffold.feature.qrscan.presentation.export.ShareFormatSheet
+import com.minion.scaffold.feature.qrscan.presentation.compare.CompareView
+import com.minion.scaffold.feature.qrscan.presentation.compare.describe
+import com.minion.scaffold.feature.qrscan.presentation.compare.toPlainText
 import com.minion.scaffold.feature.qrscan.presentation.camera.CameraPreview
 import com.minion.scaffold.feature.qrscan.presentation.report.ContactReportView
 import com.minion.scaffold.feature.qrscan.presentation.report.PayloadDiagnosticCard
@@ -198,6 +206,31 @@ internal fun QrScanScreen(
                 if (!opened) coroutineScope.launch { snackbarHostState.showSnackbar(noAppMessage) }
             }
 
+            is QrScanEffect.ShareJson -> {
+                val share = Intent(Intent.ACTION_SEND).apply {
+                    // application/json rather than text/plain: a receiver that filters on the type
+                    // gets the right hint, and the apps that only accept text still take it.
+                    type = MIME_TYPE_JSON
+                    putExtra(Intent.EXTRA_TEXT, effect.json)
+                }
+                context.startActivity(Intent.createChooser(share, null))
+            }
+
+            is QrScanEffect.CopyComparison ->
+                copyReportToClipboard(effect.comparison.toPlainText(resources))
+
+            is QrScanEffect.ShareComparison -> {
+                val share = Intent(Intent.ACTION_SEND).apply {
+                    type = MIME_TYPE_PLAIN_TEXT
+                    putExtra(Intent.EXTRA_TEXT, effect.comparison.toPlainText(resources))
+                }
+                context.startActivity(Intent.createChooser(share, null))
+            }
+
+            is QrScanEffect.CompareRejected -> coroutineScope.launch {
+                snackbarHostState.showSnackbar(effect.reason.describe(resources))
+            }
+
             QrScanEffect.OpenAppSettings -> context.startActivity(
                 Intent(
                     Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
@@ -250,11 +283,39 @@ private fun QrScanContent(
     // `Dismissed`, not `Cleared`. Back puts the result away and keeps the payload: on a failure
     // this screen is where a few hundred characters get repaired, and a mis-swipe wiping that is
     // data loss with no undo. Discarding stays on the explicit Clear button.
-    val onBack = { if (hasResult) onIntent(QrScanIntent.Dismissed) else onNavigateBack() }
+    //
+    // A comparison takes precedence over both, and covers two of its phases at once — the camera
+    // re-armed and the finished diff — because either way back means "put the comparison away and
+    // give me back the code I pinned", not "leave".
+    val onBack = {
+        when {
+            state.isComparing -> onIntent(QrScanIntent.CompareCancelled)
+            hasResult -> onIntent(QrScanIntent.Dismissed)
+            else -> onNavigateBack()
+        }
+    }
 
     // The system gesture and the arrow have to agree; handling only the arrow leaves the swipe
     // still exiting the feature.
-    BackHandler(enabled = hasResult) { onIntent(QrScanIntent.Dismissed) }
+    BackHandler(enabled = hasResult || state.isComparing) { onBack() }
+
+    // View state, like the report's focused tag: which sheet is open is not a thing the ViewModel
+    // decides, and a rotation mid-choice should not close it.
+    var shareFormatVisible by rememberSaveable { mutableStateOf(false) }
+
+    if (shareFormatVisible) {
+        ShareFormatSheet(
+            onShareText = {
+                shareFormatVisible = false
+                onIntent(QrScanIntent.ShareReportRequested)
+            },
+            onShareJson = {
+                shareFormatVisible = false
+                onIntent(QrScanIntent.ShareJsonRequested)
+            },
+            onDismiss = { shareFormatVisible = false },
+        )
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -289,6 +350,22 @@ private fun QrScanContent(
                     }
                     // Only offered once there is a report. An always-present copy button that
                     // silently does nothing is worse than one that appears when it works.
+                    // Copy and share, but no edit: "edit which of the two?" has no good answer,
+                    // and the pinned code's own report — with its edit action — is one back away.
+                    if (state.content is QrScanState.ContentState.Comparison) {
+                        IconButton(onClick = { onIntent(QrScanIntent.CopyComparisonRequested) }) {
+                            Icon(
+                                imageVector = Icons.Filled.ContentCopy,
+                                contentDescription = stringResource(R.string.qrscan_compare_copy),
+                            )
+                        }
+                        IconButton(onClick = { onIntent(QrScanIntent.ShareComparisonRequested) }) {
+                            Icon(
+                                imageVector = Icons.Filled.Share,
+                                contentDescription = stringResource(R.string.qrscan_compare_share),
+                            )
+                        }
+                    }
                     if (state.hasReport) {
                         IconButton(onClick = { onIntent(QrScanIntent.EditRequested) }) {
                             Icon(
@@ -302,7 +379,18 @@ private fun QrScanContent(
                                 contentDescription = stringResource(R.string.qrscan_copy_report),
                             )
                         }
-                        IconButton(onClick = { onIntent(QrScanIntent.ShareReportRequested) }) {
+                        // A payment code has a second shape worth exporting, so sharing one asks
+                        // which. The other three have no response contract to offer, and a chooser
+                        // with one real option is a tap for nothing.
+                        IconButton(
+                            onClick = {
+                                if (state.canExportJson) {
+                                    shareFormatVisible = true
+                                } else {
+                                    onIntent(QrScanIntent.ShareReportRequested)
+                                }
+                            },
+                        ) {
                             Icon(
                                 imageVector = Icons.Filled.Share,
                                 contentDescription = stringResource(R.string.qrscan_share_report),
@@ -319,12 +407,36 @@ private fun QrScanContent(
                 .padding(contentPadding),
             verticalArrangement = Arrangement.spacedBy(spacing),
         ) {
+            // Above the viewfinder rather than over it, so a user who walked to the far end of a
+            // counter can still see which code is sitting in the slot. Theme colours are correct
+            // here for that reason; anything drawn *on* the preview needs fixed ones.
+            // Shown for every phase of a comparison except the diff itself, where the verdict card
+            // already names both sides. That includes the spinner a picked image puts up: the
+            // pinned code vanishing for the second or two it takes to search a photo reads as
+            // having lost it.
+            state.baseline
+                ?.takeIf { state.content !is QrScanState.ContentState.Comparison }
+                ?.let { pinned ->
+                    CompareBanner(
+                        baseline = pinned,
+                        onCancel = { onIntent(QrScanIntent.CompareCancelled) },
+                    )
+                }
+
             when (val content = state.content) {
                 QrScanState.ContentState.Idle -> IdleContent(
                     state = state,
                     onIntent = onIntent,
                     onRequestPermission = onRequestPermission,
                     modifier = Modifier.weight(1f),
+                )
+
+                is QrScanState.ContentState.Comparison -> CompareView(
+                    comparison = content.comparison,
+                    rawDiff = content.rawDiff,
+                    onIntent = onIntent,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(bottom = spacing),
                 )
 
                 QrScanState.ContentState.Decoding -> DecodingContent(
@@ -346,6 +458,7 @@ private fun QrScanContent(
                     is ScannedContent.Payment -> QrInquiryReportView(
                         report = scanned.report,
                         onCopy = { onIntent(QrScanIntent.CopyValueRequested(it)) },
+                        onCompare = { onIntent(QrScanIntent.CompareRequested) },
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(horizontal = spacing, vertical = spacing),
                     )
@@ -353,6 +466,7 @@ private fun QrScanContent(
                     is ScannedContent.Wifi -> WifiReportView(
                         credentials = scanned.credentials,
                         onCopy = { onIntent(QrScanIntent.CopyValueRequested(it)) },
+                        onCompare = { onIntent(QrScanIntent.CompareRequested) },
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(horizontal = spacing, vertical = spacing),
                     )
@@ -361,6 +475,7 @@ private fun QrScanContent(
                         url = scanned.url,
                         onCopy = { onIntent(QrScanIntent.CopyValueRequested(it)) },
                         onOpenLink = { onIntent(QrScanIntent.OpenLinkRequested) },
+                        onCompare = { onIntent(QrScanIntent.CompareRequested) },
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(horizontal = spacing, vertical = spacing),
                     )
@@ -369,6 +484,7 @@ private fun QrScanContent(
                         card = scanned.card,
                         onCopy = { onIntent(QrScanIntent.CopyValueRequested(it)) },
                         onAddContact = { onIntent(QrScanIntent.AddContactRequested) },
+                        onCompare = { onIntent(QrScanIntent.CompareRequested) },
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(horizontal = spacing, vertical = spacing),
                     )
@@ -643,6 +759,7 @@ private fun FailureContent(
 }
 
 private const val MIME_TYPE_PLAIN_TEXT = "text/plain"
+private const val MIME_TYPE_JSON = "application/json"
 
 @Preview
 @Composable

@@ -24,4 +24,10 @@
     <!-- The aim hint's pill, sized so the scrim reads as a label rather than as a stray box. -->
     <dimen name="qrscan_hint_inset_horizontal">12dp</dimen>
     <dimen name="qrscan_hint_inset_vertical">6dp</dimen>
+
+    <!--
+      Comparison. The status strip is the coloured edge down a diff card; everything else in that
+      view derives from qrscan_spacing so the whole comparison re-spaces from one number.
+    -->
+    <dimen name="qrscan_compare_status_bar">4dp</dimen>
 </resources>

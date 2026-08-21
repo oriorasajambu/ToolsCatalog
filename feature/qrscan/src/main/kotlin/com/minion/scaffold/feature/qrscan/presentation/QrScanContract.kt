@@ -8,6 +8,8 @@ import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.core.navigation.AppRoute
 import com.minion.scaffold.core.vcard.model.ContactCard
 import com.minion.scaffold.feature.qrscan.domain.ScannedContent
+import com.minion.scaffold.feature.qrscan.domain.compare.PayloadCharDiff
+import com.minion.scaffold.feature.qrscan.domain.compare.QrComparison
 
 /**
  * What the scan screen renders.
@@ -26,10 +28,33 @@ internal data class QrScanState(
     val content: ContentState = ContentState.Idle,
     /** The text in the manual-entry field. */
     val manualPayload: String = "",
+    /**
+     * The pinned first code, for as long as a comparison is in progress.
+     *
+     * A sibling field rather than a payload carried by each [ContentState], because it outlives
+     * three of them: the camera is re-armed ([ContentState.Idle]), a picked image may be searched
+     * ([ContentState.Decoding]), and then the diff is on screen ([ContentState.Comparison]).
+     * Threading it through all three would change the shape of two states that the non-comparing
+     * paths construct and match on, for no gain here.
+     */
+    val baseline: ScannedContent? = null,
 ) : UiState {
 
     /** True once there is something worth copying or sharing. */
     val hasReport: Boolean get() = content is ContentState.Success
+
+    /** True from pressing Compare until the comparison is cancelled. */
+    val isComparing: Boolean get() = baseline != null
+
+    /**
+     * Whether the report on screen can be exported as a payment response.
+     *
+     * Payment codes only. The response contract describes a transaction, and there is no honest
+     * JSON of that shape for a contact card — so the other three formats keep a share that goes
+     * straight to the system sheet with nothing to choose between.
+     */
+    val canExportJson: Boolean
+        get() = (content as? ContentState.Success)?.content is ScannedContent.Payment
 
     /**
      * Whether the camera should be looking for a code.
@@ -79,7 +104,46 @@ internal data class QrScanState(
             val error: QrScanError,
             val payload: String = "",
         ) : ContentState
+
+        /**
+         * Two codes, read against each other.
+         *
+         * Reachable only with a non-null [QrScanState.baseline]; the comparison carries both sides
+         * itself, and the field on the state is what the "scan another" and "swap" actions pin
+         * their next round to.
+         *
+         * @property comparison The aligned fields.
+         * @property rawDiff    The character alignment, which is only computed if it is asked for.
+         */
+        data class Comparison(
+            val comparison: QrComparison,
+            val rawDiff: RawDiffState = RawDiffState.NotComputed,
+        ) : ContentState
     }
+}
+
+/**
+ * How far along the character-by-character alignment is.
+ *
+ * Separate from the comparison itself because it is the one part of this feature that is not
+ * affordable on the main thread for a worst-case pair, and because most people never open the tab
+ * that needs it. Starting as [NotComputed] rather than computing eagerly is what keeps a
+ * comparison instant.
+ */
+internal sealed interface RawDiffState {
+
+    /** Nobody has asked for it. */
+    data object NotComputed : RawDiffState
+
+    /** Somebody has, and the alignment is running. */
+    data object Computing : RawDiffState
+
+    /**
+     * The alignment finished.
+     *
+     * @property diff Where the two payloads disagree.
+     */
+    data class Ready(val diff: PayloadCharDiff) : RawDiffState
 }
 
 /** Where a payload comes from. Both funnel into [QrScanIntent.PayloadSubmitted]. */
@@ -169,6 +233,45 @@ internal sealed interface QrScanIntent : UiIntent {
 
     /** Share the whole decoded report. */
     data object ShareReportRequested : QrScanIntent
+
+    /** Share the scanned payment code as the response a payment backend would have returned. */
+    data object ShareJsonRequested : QrScanIntent
+
+    /**
+     * Pin the code on screen and go looking for one to compare it against.
+     *
+     * The camera is re-armed rather than a second screen being pushed: a result is already a step
+     * within this screen rather than a destination, and giving the comparison its own route would
+     * mean the scanner existed twice on the back stack with only one of them holding the baseline.
+     */
+    data object CompareRequested : QrScanIntent
+
+    /** Abandon the comparison and go back to the pinned code's own report. */
+    data object CompareCancelled : QrScanIntent
+
+    /** Keep the baseline, drop the code it was compared against, and look for another. */
+    data object CompareRescanRequested : QrScanIntent
+
+    /**
+     * Read the two codes the other way round.
+     *
+     * Worth having because "only in A" and "only in B" are the wrong way round the moment the two
+     * were scanned in the order they came to hand rather than the order they mean.
+     */
+    data object CompareSwapped : QrScanIntent
+
+    /**
+     * The character-by-character view was opened.
+     *
+     * Idempotent: the tab can be selected any number of times, and the alignment runs once.
+     */
+    data object RawDiffRequested : QrScanIntent
+
+    /** Copy the whole comparison. */
+    data object CopyComparisonRequested : QrScanIntent
+
+    /** Share the whole comparison. */
+    data object ShareComparisonRequested : QrScanIntent
 }
 
 /**
@@ -187,6 +290,17 @@ internal sealed interface QrScanEffect : UiEffect {
     data class CopyText(val text: String) : QrScanEffect
 
     data class ShareReport(val content: ScannedContent) : QrScanEffect
+
+    /**
+     * Share a finished JSON document.
+     *
+     * Carries the **text**, where [ShareReport] and [CopyReport] carry the domain object. Not an
+     * inconsistency: those defer to the screen because rendering a report needs string resources
+     * and has to follow a locale change. A response document has no locale — its field names and
+     * its enumerated values are protocol, and a device set to Bahasa must not rename them — so
+     * there is nothing for the screen to resolve and the ViewModel builds it outright.
+     */
+    data class ShareJson(val json: String) : QrScanEffect
 
     /**
      * Hand this payload onward to be edited.
@@ -210,4 +324,17 @@ internal sealed interface QrScanEffect : UiEffect {
 
     /** Send the user to the app's system settings, the only place a hard denial can be undone. */
     data object OpenAppSettings : QrScanEffect
+
+    data class CopyComparison(val comparison: QrComparison) : QrScanEffect
+
+    data class ShareComparison(val comparison: QrComparison) : QrScanEffect
+
+    /**
+     * A second code was turned away.
+     *
+     * An effect rather than a state, because the camera is still running and the baseline is still
+     * pinned — nothing about the screen changed, and a message that persisted through the next
+     * three scans would be describing a moment that had passed.
+     */
+    data class CompareRejected(val reason: CompareRejection) : QrScanEffect
 }
