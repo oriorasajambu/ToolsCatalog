@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -27,8 +28,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -79,6 +83,16 @@ fun FormSection(
  * component's own semantics — a screen reader announces the two together. The message is a finished
  * `String`, not a typed reason, so each feature maps its own violations before the widget sees them.
  *
+ * The supporting slot carries [errorMessage] when there is one and [hint] otherwise, rather than
+ * showing both: a field can only usefully say one thing at a time under it, and the failure always
+ * outranks the explanation. Keeping them in the same slot also means the field does not change
+ * height as it goes valid and invalid, which is what makes a long form stop jumping under the
+ * thumb.
+ *
+ * [imeAction] defaults to `Next` and advances focus downward, so a form can be filled without
+ * reaching for the screen between fields. The last field in a form should pass `ImeAction.Done`,
+ * which dismisses the keyboard instead.
+ *
  * @param value         The current field text.
  * @param onValueChange Called with the new text on every edit.
  * @param label         The field label.
@@ -86,6 +100,9 @@ fun FormSection(
  * @param modifier      The [Modifier] for the field.
  * @param enabled       Whether the field is editable.
  * @param keyboardType  The soft-keyboard type to request.
+ * @param imeAction     The keyboard's action key; `Next` advances focus, `Done` dismisses.
+ * @param hint          Guidance shown under the field while it has no error, or `null` for none.
+ * @param prefix        Fixed text shown before the value, e.g. a currency code, or `null`.
  */
 @Composable
 fun FormField(
@@ -96,7 +113,13 @@ fun FormField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     keyboardType: KeyboardType = KeyboardType.Text,
+    imeAction: ImeAction = ImeAction.Next,
+    hint: String? = null,
+    prefix: String? = null,
 ) {
+    val focusManager = LocalFocusManager.current
+    val supporting = errorMessage ?: hint
+
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -105,8 +128,13 @@ fun FormField(
         enabled = enabled,
         isError = errorMessage != null,
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        supportingText = errorMessage?.let { { Text(text = it) } },
+        prefix = prefix?.let { { Text(text = it) } },
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+        keyboardActions = KeyboardActions(
+            onNext = { focusManager.moveFocus(FocusDirection.Down) },
+            onDone = { focusManager.clearFocus() },
+        ),
+        supportingText = supporting?.let { { Text(text = it) } },
     )
 }
 
