@@ -19,9 +19,12 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,10 +39,10 @@ import com.minion.scaffold.core.designsystem.component.FormSection
 import com.minion.scaffold.core.designsystem.component.PickerField
 import com.minion.scaffold.core.designsystem.theme.AppTheme
 import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
+import com.minion.scaffold.core.ui.clipboard.rememberClipboardCopy
 import com.minion.scaffold.feature.texttools.R
 import com.minion.scaffold.feature.texttools.presentation.label
 import com.minion.scaffold.feature.texttools.presentation.describe
-import com.minion.scaffold.feature.texttools.presentation.rememberClipboardCopy
 
 /**
  * The text transform screen: an input, an operation picker, and a live output.
@@ -55,7 +58,12 @@ internal fun TextToolsScreen(
     viewModel: TextToolsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val copyToClipboard = rememberClipboardCopy()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val copyToClipboard = rememberClipboardCopy(
+        snackbarHostState = snackbarHostState,
+        label = stringResource(R.string.texttools_clipboard_label),
+        confirmation = stringResource(R.string.texttools_text_copied),
+    )
 
     ObserveAsEvents(viewModel.effect) { effect ->
         when (effect) {
@@ -67,6 +75,7 @@ internal fun TextToolsScreen(
         state = state,
         onIntent = viewModel::onIntent,
         onNavigateBack = onNavigateBack,
+        snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
 }
@@ -77,6 +86,7 @@ private fun TextToolsContent(
     state: TextToolsState,
     onIntent: (TextToolsIntent) -> Unit,
     onNavigateBack: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     val resources = LocalResources.current
@@ -85,6 +95,7 @@ private fun TextToolsContent(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.texttools_title)) },
@@ -176,6 +187,7 @@ internal fun TextToolsPreview() {
             state = TextToolsState(input = "Man", output = "TWFu"),
             onIntent = {},
             onNavigateBack = {},
+            snackbarHostState = SnackbarHostState(),
         )
     }
 }

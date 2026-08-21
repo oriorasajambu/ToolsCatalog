@@ -31,6 +31,7 @@
     <string name="qrscan_copy_report">Copy report</string>
     <string name="qrscan_share_report">Share report</string>
     <string name="qrscan_clipboard_label">QR inquiry report</string>
+    <string name="qrscan_report_copied">Report copied to clipboard</string>
     <string name="qrscan_copy_value">Copy</string>
     <string name="qrscan_try_again">Try again</string>
     <string name="qrscan_report_qr_image">The scanned payload, redrawn as a QR code</string>

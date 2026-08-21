@@ -2,7 +2,6 @@ package com.minion.scaffold.feature.qrscan.presentation
 
 import android.Manifest
 import android.content.ActivityNotFoundException
-import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -51,9 +50,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.Clipboard
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
@@ -71,6 +67,7 @@ import com.minion.scaffold.core.designsystem.component.AppButton
 import com.minion.scaffold.core.designsystem.component.AppOutlinedButton
 import com.minion.scaffold.core.designsystem.theme.AppTheme
 import com.minion.scaffold.core.ui.permission.PermissionState
+import com.minion.scaffold.core.ui.clipboard.rememberClipboardCopy
 import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
 import com.minion.scaffold.feature.qrscan.R
 import com.minion.scaffold.core.emv.model.HeaderDefect
@@ -114,11 +111,22 @@ internal fun QrScanScreen(
     val resources = LocalResources.current
     val context = LocalContext.current
     val activity = LocalActivity.current
-    val clipboard = LocalClipboard.current
     val clipboardLabel = stringResource(R.string.qrscan_clipboard_label)
     val noAppMessage = stringResource(R.string.qrscan_no_app)
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Two confirmations, because the screen copies two different things and "Copied" alone would
+    // leave the user unsure which of the two buttons they hit.
+    val copyReportToClipboard = rememberClipboardCopy(
+        snackbarHostState = snackbarHostState,
+        label = clipboardLabel,
+        confirmation = stringResource(R.string.qrscan_report_copied),
+    )
+    val copyValueToClipboard = rememberClipboardCopy(
+        snackbarHostState = snackbarHostState,
+        label = clipboardLabel,
+    )
 
     // The photo picker, not READ_MEDIA_IMAGES. It grants access to exactly the one image the user
     // chose, needs no permission at all, and cannot be declined into a broken state.
@@ -165,13 +173,10 @@ internal fun QrScanScreen(
 
     ObserveAsEvents(viewModel.effect) { effect ->
         when (effect) {
-            is QrScanEffect.CopyReport -> coroutineScope.launch {
-                clipboard.copy(clipboardLabel, effect.content.toPlainText(resources))
-            }
+            is QrScanEffect.CopyReport ->
+                copyReportToClipboard(effect.content.toPlainText(resources))
 
-            is QrScanEffect.CopyText -> coroutineScope.launch {
-                clipboard.copy(clipboardLabel, effect.text)
-            }
+            is QrScanEffect.CopyText -> copyValueToClipboard(effect.text)
 
             is QrScanEffect.ShareReport -> {
                 val share = Intent(Intent.ACTION_SEND).apply {
@@ -638,10 +643,6 @@ private fun FailureContent(
 }
 
 private const val MIME_TYPE_PLAIN_TEXT = "text/plain"
-
-private suspend fun Clipboard.copy(label: String, text: String) {
-    setClipEntry(ClipEntry(ClipData.newPlainText(label, text)))
-}
 
 @Preview
 @Composable

@@ -1,7 +1,6 @@
 package com.minion.scaffold.feature.ocr.presentation
 
 import android.Manifest
-import android.content.ClipData
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -30,10 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
@@ -43,6 +39,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.minion.scaffold.core.ui.clipboard.rememberClipboardCopy
 import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
 import com.minion.scaffold.core.ui.permission.PermissionState
 import com.minion.scaffold.feature.ocr.R
@@ -68,15 +65,17 @@ internal fun OcrScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val activity = LocalActivity.current
-    val clipboard = LocalClipboard.current
-    val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Read in composition, used in the effect handler below. A configuration change recomposes and
     // re-reads these; LocalContext.current.getString() inside the handler would keep resolving
     // against the locale that was active when the screen was first composed.
     val resources = LocalResources.current
-    val clipboardLabel = stringResource(R.string.ocr_clipboard_label)
+    val copyToClipboard = rememberClipboardCopy(
+        snackbarHostState = snackbarHostState,
+        label = stringResource(R.string.ocr_clipboard_label),
+        confirmation = stringResource(R.string.ocr_text_copied),
+    )
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -127,9 +126,7 @@ internal fun OcrScreen(
                 ),
             )
 
-            is OcrEffect.CopyText -> coroutineScope.launch {
-                clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(clipboardLabel, effect.text)))
-            }
+            is OcrEffect.CopyText -> copyToClipboard(effect.text)
 
             is OcrEffect.ShareText -> {
                 val share = Intent(Intent.ACTION_SEND).apply {

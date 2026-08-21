@@ -38,6 +38,7 @@
     <string name="ocr_send_to_text_tools">Open in Text tools</string>
     <string name="ocr_restart">Start over</string>
     <string name="ocr_clipboard_label">Extracted text</string>
+    <string name="ocr_text_copied">Text copied to clipboard</string>
     <string name="ocr_remove_page">Remove page %1$d</string>
     <string name="ocr_truncated">That was too long to hand over in full, so it was shortened.</string>
 

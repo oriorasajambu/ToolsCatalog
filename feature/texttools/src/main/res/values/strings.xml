@@ -3,6 +3,8 @@
     <string name="texttools_title">Text tools</string>
     <string name="texttools_navigate_back">Back</string>
     <string name="texttools_clipboard_label">Text tool output</string>
+    <string name="texttools_text_copied">Result copied to clipboard</string>
+    <string name="generate_value_copied">Value copied to clipboard</string>
     <string name="texttools_copy">Copy</string>
 
     <string name="texttools_section_input">Input</string>

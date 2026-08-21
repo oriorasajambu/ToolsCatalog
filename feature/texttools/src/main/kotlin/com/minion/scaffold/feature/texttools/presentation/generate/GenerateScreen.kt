@@ -20,10 +20,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,8 +41,8 @@ import com.minion.scaffold.core.designsystem.component.FormSection
 import com.minion.scaffold.core.designsystem.theme.AppTheme
 import com.minion.scaffold.core.text.model.CharacterClass
 import com.minion.scaffold.core.text.model.PasswordProblem
+import com.minion.scaffold.core.ui.clipboard.rememberClipboardCopy
 import com.minion.scaffold.feature.texttools.R
-import com.minion.scaffold.feature.texttools.presentation.rememberClipboardCopy
 
 /**
  * The generator screen: pick a kind, set its options, and generate a value.
@@ -55,7 +58,12 @@ internal fun GenerateScreen(
     viewModel: GenerateViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val copyToClipboard = rememberClipboardCopy()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val copyToClipboard = rememberClipboardCopy(
+        snackbarHostState = snackbarHostState,
+        label = stringResource(R.string.texttools_clipboard_label),
+        confirmation = stringResource(R.string.generate_value_copied),
+    )
 
     com.minion.scaffold.core.ui.mvi.ObserveAsEvents(viewModel.effect) { effect ->
         when (effect) {
@@ -67,6 +75,7 @@ internal fun GenerateScreen(
         state = state,
         onIntent = viewModel::onIntent,
         onNavigateBack = onNavigateBack,
+        snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
 }
@@ -77,12 +86,14 @@ private fun GenerateContent(
     state: GenerateState,
     onIntent: (GenerateIntent) -> Unit,
     onNavigateBack: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     val spacing = dimensionResource(R.dimen.texttools_spacing)
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.generate_title)) },
@@ -261,6 +272,7 @@ internal fun GeneratePreview() {
             state = GenerateState(output = "aB3!kM9pQ2rT7xZ0"),
             onIntent = {},
             onNavigateBack = {},
+            snackbarHostState = SnackbarHostState(),
         )
     }
 }
