@@ -6,10 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 An opinionated Android scaffold: Kotlin, Jetpack Compose, MVI, Clean Architecture, Hilt, and a
 Gradle multi-module graph whose boundaries are enforced by the build rather than by code review.
-The repo currently carries a worked example app, **ToolBox** (`app_name` in strings.xml) — an
-offline utility app whose tools cover scanning/building EMV, Wi-Fi, link and vCard QR codes, text
-transforms, a weather lookup, on-device OCR, a bubble level, a sound-level meter and an EXIF
-stripper. Package root is `com.minion.scaffold`.
+The repo currently carries a worked example app, **ToolBox** (`app_name` in strings.xml) — a
+mostly-offline utility app whose tools cover scanning/comparing/exporting EMV codes, building EMV,
+Wi-Fi, link and vCard QR codes, text and developer transforms, a random string generator, a weather
+lookup, on-device OCR, a bubble level, a sound-level meter, a GPS speedometer and an EXIF stripper.
+Package root is `com.minion.scaffold`. 31 Gradle modules.
 
 The full architectural rationale (why each rule exists, not just what it is) lives in
 [README.md](README.md) — read it before making structural changes; this file summarizes what's
@@ -25,7 +26,9 @@ needed to work productively day to day.
 ./gradlew :feature:tools:testDebugUnitTest --tests "*.HomeViewModelTest.loads on init"  # single test
 ./gradlew assembleDevelopmentDebug     # build one variant (see Build variants below)
 ./gradlew :app:signingReport            # confirm release signing is wired up
+./gradlew build --no-configuration-cache  # REQUIRED after editing dev/prod/keystore.properties
 python scripts/scaffold_feature.py --name Home   # generate a new feature slice (see below)
+python scripts/generate_geoid.py                 # regenerate :core:gnss's EGM96 geoid (needs numpy + pillow)
 ```
 
 There is no separate lint-only or ktlint task beyond what `./gradlew build` runs; Android Lint
@@ -34,32 +37,36 @@ androidTest can't silently rot even though nothing normally builds it. The depen
 name pattern (`compile*DebugAndroidTestKotlin`) rather than named outright — a module with product
 flavors gets one task per variant, so `:app` has `compileDevelopmentDebugAndroidTestKotlin` and
 `compileProductionDebugAndroidTestKotlin` and never the unflavored name. Naming it directly made
-`./gradlew build` fail outright while resolving `:app:check`.
+`./gradlew build` fail outright while resolving `:app:check`. (No module currently has an
+`androidTest` source set — the guard exists so that adding one can't rot unnoticed.)
 
 First-time setup: copy `keystore.properties.template` → `keystore.properties` and
 `dev.properties.template`/`prod.properties.template` → `dev.properties`/`prod.properties` if you
 need real values; the repo builds without them (unsigned release, template `BASE_URL`).
+`git clone` needs **git-lfs** — see *Things that will bite you*.
 
 ## Module graph
 
 ```
-:app                    Application, MainActivity, NavHost, DI aggregation — nothing else
+:app                    Application, MainActivity, NavHost, DI aggregation, feature flags — nothing else
 ├── :core:common         Pure Kotlin. AppResult, DomainError, dispatcher qualifiers, UiState/UiIntent/UiEffect markers.
-├── :core:domain         Pure Kotlin. Shared models, repository interfaces, use cases.
+├── :core:domain         Pure Kotlin. Shared models, repository interfaces, use cases. Currently FeatureFlagRepository.
 ├── :core:navigation     Pure Kotlin. @Serializable route contracts — the only channel between features.
-├── :core:designsystem   AppTheme, colour/type/shape tokens, dumb widgets.
-├── :core:ui             MviViewModel, ObserveAsEvents, DomainError → @StringRes, PermissionState.
+├── :core:designsystem   AppTheme, colour/type/shape tokens, AppTextStyles, screen transitions, dumb widgets.
+├── :core:ui             MviViewModel, ObserveAsEvents, DomainError → @StringRes, PermissionState, rememberClipboardCopy.
 ├── :core:camera         CameraX viewfinder — torch, zoom, tap-to-focus, still capture. Shared by qrscan and ocr.
 ├── :core:network        Shared OkHttp/Retrofit, safeCall, error mapping.
-├── :core:data           Data shared BETWEEN features (not a feature's own data layer).
+├── :core:data           Data shared BETWEEN features (not a feature's own data layer). Currently a README only.
 ├── :core:testing        MainDispatcherRule, fakes — testImplementation only.
 ├── :core:emv/:wifi/:url/:vcard/:text   Pure-Kotlin domain logic for each QR/text format.
 ├── :core:weather        Pure Kotlin. WMO codes, unit conversion, notable-condition thresholds.
 ├── :core:ocr            Pure Kotlin. Reading-order reconstruction, line→block grouping, OcrEngine.
 ├── :core:level          Pure Kotlin. Tilt geometry, pose machine, gravity smoothing, flip calibration.
 ├── :core:sound          Pure Kotlin. A/C/Z weighting filters, time weighting, the Leq session accumulator.
+├── :core:gnss           Pure Kotlin. EGM96 geoid → height above sea level, speed/zero-speed rules, trip accumulators.
 ├── :core:exif           Pure Kotlin. JPEG/PNG/WebP container surgery — returns byte-range strip plans, never touches a file.
-└── :feature:*           tools, qrscan, qrcreate, texttools, weather, ocr, level, soundmeter, exifstrip — one per screen area.
+└── :feature:*           tools, qrscan, qrcreate, texttools, weather, ocr, level, soundmeter, exifstrip,
+                         speedometer — one per screen area.
 ```
 
 Dependency rules (enforced by convention plugins, not review):
@@ -71,16 +78,20 @@ Dependency rules (enforced by convention plugins, not review):
 :core:common depends on nothing
 ```
 
-- `:core:common`, `:core:domain`, `:core:navigation` and the QR/text format modules apply
+- `:core:common`, `:core:domain`, `:core:navigation` and the format/algorithm modules (`emv`,
+  `wifi`, `url`, `vcard`, `text`, `weather`, `ocr`, `level`, `sound`, `gnss`, `exif`) apply
   `minion.jvm.library` (plain Kotlin, no Android plugin) — `import android.*` is a compile error
-  there, not a review comment.
+  there, not a review comment. That is deliberate for the sensor-driven modules in particular:
+  a level, a sound meter and a speedometer have no visible ground truth on a phone, so the only
+  way to know the maths is right is to prove it against synthesised inputs in a JVM test.
 - Everything in a feature module is `internal` except its navigation entry point
   (`fun NavGraphBuilder.homeScreen(...)`). Without `internal`, `:app` could construct a
   ViewModel directly and the boundary becomes decorative.
 - Hilt bindings live beside the implementations they bind, in each feature's own `internal
   @Module` — not centralized, since a central `:core:di` would have to depend on every feature.
 - Promote something into `:core:data` or `:core:domain` only once **two** features need it; one
-  feature needing it is that feature's own concern.
+  feature needing it is that feature's own concern. `:core:data`'s README records the package
+  layout to use when something does move there.
 
 ## Convention plugins (`build-logic/`)
 
@@ -96,6 +107,17 @@ files apply exactly one plugin and set a namespace; everything else is centraliz
 | `minion.android.feature` | every `:feature:*` | Compose + Hilt + navigation + the core modules a feature may see |
 | `minion.jvm.library` | pure-Kotlin modules | `kotlin-jvm` only, no Android plugin |
 
+`minion.android.feature` grants a feature `:core:common`, `:core:domain`, `:core:navigation`,
+`:core:designsystem`, `:core:ui`, `:core:network` and (as `testImplementation`) `:core:testing`.
+`:core:data` is deliberately **not** granted — see the promotion rule above. A feature needing
+anything else (`:core:camera`, a format module, DataStore, ML Kit) declares it in its own
+`build.gradle.kts`.
+
+compileSdk 37.1, minSdk 29, targetSdk 37, Java 11 with core-library desugaring, AGP 9 with its
+built-in Kotlin support (applying `org.jetbrains.kotlin.android` alongside it is a hard error).
+`minion.jvm.library` pins `jvmTarget = JVM_11` by hand — the standalone JVM plugin would otherwise
+use the daemon's default and emit class files the Android modules cannot read.
+
 Dependency versions live in `gradle/libs.versions.toml`, shared by the main build and `build-logic`.
 
 ## Build variants & environment
@@ -103,11 +125,32 @@ Dependency versions live in `gradle/libs.versions.toml`, shared by the main buil
 Two flavors (`development`/`production`, the `environment` dimension) × two build types
 (`debug`/`release`). `development` gets a `.dev` applicationId suffix, a `-dev` version suffix,
 and a DEV-badged launcher icon so it installs alongside production. `release` runs R8
-(`app/proguard-rules.pro`) and is signed with the `toolbox` keystore at the repo root.
+(`app/proguard-rules.pro`), shrinks resources, uploads its mapping to Crashlytics, and is signed
+with the `toolbox` keystore at the repo root when `keystore.properties` supplies the credentials —
+otherwise the release build is left unsigned so a fresh clone or a CI job without secrets still
+assembles.
 
 `BASE_URL` resolves per flavor, first hit wins: `local.properties` (development-only override) →
-`dev.properties`/`prod.properties` (gitignored) → `*.template` (committed fallback). Only `:app`
-reads it; `:core:network` receives it via the `@BaseUrl` qualifier, never `BuildConfig`.
+`dev.properties`/`prod.properties` (gitignored) → `*.template` (committed fallback). Missing from
+all three is a configuration error, not a silent fallback. Only `:app` reads it; `:core:network`
+receives it via the `@BaseUrl` qualifier, never `BuildConfig`.
+
+## Gradle performance settings (`gradle.properties`)
+
+All four are on, each for a structural reason rather than by experiment — read the comments in the
+file before changing one:
+
+- **6 GB daemon heap + 1 GB metaspace, 3 GB for the Kotlin daemon.** The 2 GB default is a
+  single-module figure; KSP runs in most modules and R8 processes the whole graph in one pass.
+  The Kotlin compile daemon is a separate process and does not inherit `org.gradle.jvmargs`.
+- **`org.gradle.parallel=true`.** Safe here because no project reads another's model during
+  configuration — the convention plugins live in an included build and module files only declare
+  dependencies.
+- **`org.gradle.configuration-cache=true`.** The one setting whose payoff grows with module count.
+  It also carries a live trap — see *Things that will bite you*.
+- **`org.gradle.caching=true`.** What this actually buys is the debug↔release and
+  development↔production switch, which otherwise recompiles the half of the graph that did not
+  change.
 
 ## The MVI contract
 
@@ -130,6 +173,11 @@ the latter is scoped to composition and drops events fired while the screen is b
 `ObserveAsEvents` uses `repeatOnLifecycle(STARTED)` and the buffered channel holds events until
 resume.
 
+A feature with a settings or calibration sub-screen (`qrscan`, `ocr`, `soundmeter`, `exifstrip`,
+`speedometer`, `weather`, `level`) gives it its **own** contract + ViewModel + route rather than a
+mode flag on the main one. Both are registered by the same feature's navigation file and both stay
+`internal`.
+
 ## Error handling
 
 Repositories and use cases return `AppResult<T>` (`Success`/`Failure(DomainError)`), never
@@ -142,33 +190,92 @@ Exception ──► toDomainError() ──► DomainError ──► toMessageRes
 
 - `safeCall { }` (`:core:network`) is the exception boundary — it rethrows
   `CancellationException` before catching `Throwable`; a plain `runCatching` would turn a
-  cancelled screen's request into a spurious failure.
+  cancelled screen's request into a spurious failure. Anything else that catches broadly follows
+  the same rule — `RemoteConfigFeatureFlagRepository` rethrows `CancellationException` first for
+  exactly this reason.
 - `DomainError` is sealed — a new failure mode becomes a compile error everywhere it must be
   handled. `e.message` never reaches state (developer text, often `null`, never localized); only
   the composable turns an error into words via `stringResource(error.toMessageRes())`.
 - A feature's own errors do not extend `DomainError` (a sealed interface can only be extended
   from the same package+module). Declare a feature-local sealed type, return it in the success
   channel when it's a domain rejection rather than a failure, and map it to a `@StringRes` in the
-  feature itself.
+  feature itself. `:feature:qrscan` has three of these — `QrScanError`, `CompareRejection`,
+  `SchemaRefusal` — each kept separate because they mean different things to the person holding
+  the phone ("this code is damaged" vs "wrong kind of code" vs "these two aren't comparable").
+
+## Persistence
+
+Feature preferences use **Preferences DataStore**, declared in the feature's own
+`data/local/*PreferencesDataStore.kt` behind a repository interface in the feature's `domain/`.
+It stays in the feature for the promotion rule above — only one feature reads it.
+
+Enums are stored **by name, never by ordinal**. An ordinal silently rebinds the moment an entry is
+added or reordered, and km/h read back as knots is a factor of 1.85 with nothing on screen to
+suggest anything changed. Read back with `Entries.firstOrNull { it.name == stored }` and a typed
+default.
+
+## Shared UI building blocks
+
+Before writing one of these in a feature, check `:core:ui` and `:core:designsystem`:
+
+- **`rememberClipboardCopy(snackbarHostState, label, confirmation)`** (`:core:ui`) — copying is the
+  one action with no visible result, so the snackbar is the entire feedback for it. Six features
+  copy something; `Clipboard.setClipEntry` suspends, which is why this is a remembered lambda.
+- **`PermissionState`** (`:core:ui`) — `Unknown`/`Granted`/`Denied`/`PermanentlyDenied`, plus
+  `resolve(granted, shouldShowRationale)`. Only call `resolve` with the answer to a *request*;
+  `shouldShowRationale` is also false before the first one, so a cold check reports every
+  never-asked permission as `PermanentlyDenied`. The rationale **UI** deliberately stays per
+  feature — qrscan offers "paste a payload instead", weather has no such fallback.
+- **`AppTextStyles`** (`:core:designsystem`) — `eyebrow` and `sectionHeading`, the tracked-out
+  label treatments Material has no slot for. See the UI-token rules below for why they are not
+  `.copy(letterSpacing = …)` at the call site.
+- **`ScreenTransitions`** (`:core:designsystem`) — the push motion applied once as the NavHost
+  default. A screen that needs modal (vertical) motion overrides it at its own `composable`.
+- **`FormSection` / `FormField` / `PasswordField` / `PickerField`** (`:core:designsystem`) — the
+  shared form widgets. `FormField` supports an IME action, a hint and a prefix.
+
+## Feature flags
+
+The home screen's tool catalog is filtered by Firebase Remote Config, through
+`FeatureFlagRepository` (`:core:domain`) implemented by `RemoteConfigFeatureFlagRepository`
+(`:app`). The implementation lives in `:app` because Remote Config is configured by
+`google-services.json`, which is application identity; a feature reading a flag never learns
+Firebase is behind it.
+
+Two rules:
+
+- **Key naming lives in exactly one place.** A tool id from `ToolCatalog` is kebab-case
+  (`sound-meter`); a Remote Config key allows only letters, digits and underscores, so it becomes
+  `feature_sound_meter_enabled`. `keyFor()` in the repository is the rule; `remote_config_defaults.xml`
+  is the readable copy of what it produces.
+- **Flags fail open.** Every default is `true`, an unknown id reads as enabled, and a fetch failure,
+  a throttle or a non-boolean value in the console all leave the tool visible. Hiding a tool is
+  always a deliberate act in the console, never something an outage can do.
+
+Adding a tool means an entry in `ToolCatalog` (carrying an `AppRoute`, not an id, so no `when` has
+to learn about it) **and** an entry in `app/src/main/res/xml/remote_config_defaults.xml`.
 
 ## Adding a feature
 
 Prefer `python scripts/scaffold_feature.py --name Home` (flags: `--dry-run`, `--force`,
-`--no-remote`, `--no-tests`, `--plural People`) — it writes contract, ViewModel, screen with
-previews, navigation entry point, domain model, repository interface + impl, use case, DTO,
-Retrofit API, mapper, two Hilt modules, strings, and a passing ViewModel test, then prints the
+`--no-remote`, `--no-tests`, `--plural People`, `--output-dir`) — it writes contract, ViewModel,
+screen with previews, navigation entry point, domain model, repository interface + impl, use case,
+DTO, Retrofit API, mapper, two Hilt modules, strings, and a passing ViewModel test, then prints the
 three manual wiring lines still needed:
 
 1. `settings.gradle.kts` — `include(":feature:home")`
 2. `app/build.gradle.kts` — `implementation(project(":feature:home"))`
 3. `app/.../navigation/AppNavHost.kt` — `homeScreen(onNavigateToDetail = { … })`
 
+If the feature is a user-facing tool, also add it to `ToolCatalog` and to
+`remote_config_defaults.xml` (see *Feature flags*).
+
 Layers are packages (`presentation/`, `domain/`, `data/`, `di/`) inside one feature module, not
 separate Gradle modules — split into submodules only when different teams own the layers. Build
 order that avoids rework: contract → domain → data → DI → ViewModel → screen → navigation → tests.
 Routes belong in `:core:navigation`, never the feature itself, so other features can navigate to
-it without depending on the module. Pass navigation down as lambdas — never hand a feature the
-`NavController`.
+it without depending on the module. Route arguments must be ids and primitives, never domain
+models. Pass navigation down as lambdas — never hand a feature the `NavController`.
 
 ## UI tokens — no literals in a screen
 
@@ -202,6 +309,8 @@ The rules that are easy to get wrong:
 - **String interpolation in a composable is hardcoded text.** `"${temp.roundToInt()}°"` and
   `"$day - $date"` look like formatting, not copy — but the degree mark, the separator and their
   placement are all translatable. Use a `%1$d`/`%1$s` template in `strings.xml`.
+- **A `@StringRes` in a long-lived list, not a resolved `String`.** `ToolCatalog` is built once at
+  class-init time; a `String` resolved then would not follow a locale change.
 
 A literal that survives review because it "isn't user-facing" or "is only a number": `testTag`
 identifiers, log tags, and `@Preview` sample data are genuinely exempt, and so is `0.dp`. Nothing
@@ -215,11 +324,18 @@ automatically by the feature convention plugin. `MainDispatcherRule` defaults to
 deliberately not `UnconfinedTestDispatcher`, which would hide ordering bugs by making everything
 look synchronous. Assert typed `DomainError` values, never message substrings.
 
+Where the tests actually are: the pure-Kotlin algorithm modules carry the bulk of them
+(`:core:emv`, `:core:level`, `:core:gnss`, `:core:sound`, `:core:exif`, `:core:ocr`, the format
+modules), because that is the code with a checkable ground truth. Feature modules test their
+ViewModels and their feature-local use cases. Fakes for a feature's own repository live in that
+feature's `src/test` (e.g. `FakePaymentSchemaRepository`), not in `:core:testing`.
+
 ## Renaming this scaffold for a new project
 
 Everything is under `com.minion.scaffold`; see [README.md § 7](README.md) for the full checklist
 (package rename, `settings.gradle.kts` root name, `applicationId`, `app_name`/theme name,
-designsystem palette + launcher icons, `dev.properties`/`prod.properties`, keystore).
+designsystem palette + launcher icons, `dev.properties`/`prod.properties`, keystore,
+`google-services.json`).
 
 ## Firebase
 
@@ -233,7 +349,9 @@ that file too, or it reads as `""`/`0`/`false` before the first fetch.
 
 Collection is off in debug builds (`<meta-data>` in `app/src/debug/AndroidManifest.xml`); release
 builds keep the SDK defaults. The release build type uploads its R8 mapping, which is why
-`-keepattributes SourceFile, LineNumberTable` in `app/proguard-rules.pro` must stay.
+`-keepattributes SourceFile, LineNumberTable` in `app/proguard-rules.pro` must stay; the debug type
+turns the upload off, since a non-minified build produces no mapping file and the task would look
+for one that is never written.
 
 ## Things that will bite you
 
@@ -245,11 +363,23 @@ builds keep the SDK defaults. The release build type uploads its R8 mapping, whi
   `--no-configuration-cache`, or invalidate the cache. The real fix is reading them through
   `providers.fileContents(...).asText`, which the cache does track; until that lands, this is a
   live trap.
+- **An enum used as a route argument needs `@Keep`.** R8 renames enum entry fields, and the
+  generated serializer resolves entries by name — so under minification, decoding the argument
+  throws and navigating to the screen fails. `ScanPurpose` carries the annotation; another enum
+  added to `Routes.kt` needs its own. The route *classes* do not: their serial names are read only
+  by `composable<T>`/`navigate(T)`, both compiled in the same R8 run.
+- **A ViewModel reads a route argument by name, not via `toRoute()`.** The typed decoder builds an
+  `android.os.Bundle`, which does not exist in a JVM unit test — using it would make every
+  ViewModel test need Robolectric. Read `savedStateHandle[QrScanRoute.ARG_PURPOSE]` instead, and
+  note the handle holds the **decoded enum**, not its name: typing it as `String` compiles, passes
+  a test that seeds a `String`, and throws `ClassCastException` on the first real navigation.
+- **Store enums in DataStore by name, never by ordinal** — see *Persistence*.
 - `@ShowkaseRoot` must live in `src/main`, not `src/debug` — KSP doesn't scan the debug source
   set, so it silently generates nothing there.
 - A `@Preview` Showkase should catalog must be `internal`, not `private` (Showkase can't call a
   private function); the compose convention sets `skipPrivatePreviews=true` so a stray private
-  preview just doesn't show up rather than failing the build.
+  preview just doesn't show up rather than failing the build. The browser has no launcher icon —
+  the home screen's brand tile opens it, and only in a debug build.
 - A type returned from a `@Provides` method must be exposed as `api`, not `implementation` — the
   Hilt component is generated in `:app`, so the type must be on `:app`'s compile classpath. This
   is why `:core:network`'s bundle is `api` and why Chucker is built inside
@@ -262,6 +392,9 @@ builds keep the SDK defaults. The release build type uploads its R8 mapping, whi
   repositions every row.
 - Default Gradle dependencies to `implementation`; use `api` only when a type appears in the
   module's own public signatures.
+- A `data class` whose property is typed as an interface (like `Tool.route: AppRoute`) reads as
+  unstable to Compose and recomposes with everything above it. Annotate `@Immutable` where nothing
+  is ever mutated.
 - Anything drawn over the camera preview needs **fixed** colours, not theme ones. A theme colour
   answers to the palette rather than to the image behind it: the scan hint used `inverseOnSurface`,
   which is dark in the dark theme, and was invisible against the reticle's dark scrim. `ScanReticle`
@@ -276,6 +409,9 @@ builds keep the SDK defaults. The release build type uploads its R8 mapping, whi
   is why `PaddleModelAssets` extracts to `filesDir` first. Its digests are documented, so
   `ppocrv5_dict.txt` is pinned `-text` in `.gitattributes` — a Windows checkout converting it to
   CRLF breaks the digest and gives every dictionary entry a trailing carriage return.
+- `:core:gnss` ships its EGM96 geoid as a **JVM resource** (`src/main/resources/egm96_geoid.bin`),
+  not an Android asset — that is what lets the altitude conversion be checked at a hundred thousand
+  points in a plain JVM test. Regenerate it with `scripts/generate_geoid.py`, never by hand.
 - `google-services.json` must list **every** applicationId, and the `development` flavor's is
   `com.minion.scaffold.dev` because of its `applicationIdSuffix`. The plugin fails configuration
   with "No matching client found for package name" rather than falling back to the base id, so a
