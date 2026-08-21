@@ -11,6 +11,7 @@ plugins {
     // AGP 9 has built-in Kotlin support; applying 'org.jetbrains.kotlin.android' alongside it is
     // now a hard error. See https://kotl.in/gradle/agp-built-in-kotlin
     id("com.android.library")
+    id("minion.detekt")
 }
 
 // Precompiled script plugins get no type-safe `libs` accessor, so the catalog is resolved by hand.
