@@ -237,6 +237,14 @@ builds keep the SDK defaults. The release build type uploads its R8 mapping, whi
 
 ## Things that will bite you
 
+- **The configuration cache does not see `keystore.properties`, `dev.properties` or
+  `prod.properties`.** `app/build.gradle.kts` reads all three through `java.util.Properties` at
+  configuration time, which the cache cannot track as an input. So editing `dev.properties` and
+  rebuilding gives you the *previously cached* `BASE_URL`, with no warning and no failure — the app
+  just talks to the old backend. After changing any of those three files, either run once with
+  `--no-configuration-cache`, or invalidate the cache. The real fix is reading them through
+  `providers.fileContents(...).asText`, which the cache does track; until that lands, this is a
+  live trap.
 - `@ShowkaseRoot` must live in `src/main`, not `src/debug` — KSP doesn't scan the debug source
   set, so it silently generates nothing there.
 - A `@Preview` Showkase should catalog must be `internal`, not `private` (Showkase can't call a
