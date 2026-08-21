@@ -21,6 +21,8 @@ dependencies {
     // The JSON export builds a JsonObject by hand and encodes it — the runtime only, no
     // @Serializable types and so no compiler plugin, exactly as :core:text's JsonFormatter does.
     implementation(libs.kotlin.serializable)
+    // The active JSON schema template, stored the way every other feature stores a preference.
+    implementation(libs.data.store)
     implementation(project(":core:wifi"))
     implementation(project(":core:url"))
     implementation(project(":core:vcard"))

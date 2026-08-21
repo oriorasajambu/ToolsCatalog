@@ -5,6 +5,8 @@ import com.minion.scaffold.core.emv.model.QrInquiryReport
 import com.minion.scaffold.core.emv.usecase.EmvDraftFromPayloadUseCase
 import com.minion.scaffold.core.emv.usecase.ParseEmvPayloadUseCase
 import com.minion.scaffold.feature.qrscan.presentation.ScanSamples
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -25,13 +27,19 @@ import org.junit.Test
  * Their checksums are placeholders — a failed checksum is deliberately not a parse error, so a
  * payload ending `6304ABCD` reads back fine and the export never has to care.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class ExportPaymentJsonUseCaseTest {
 
     private val parse = ParseEmvPayloadUseCase()
-    private val export = ExportPaymentJsonUseCase(EmvDraftFromPayloadUseCase(parse))
+    private val schemaRepository = FakePaymentSchemaRepository()
+    private val export = ExportPaymentJsonUseCase(
+        schemaRepository = schemaRepository,
+        resolvePlaceholders = ResolvePlaceholdersUseCase(EmvDraftFromPayloadUseCase(parse)),
+        renderSchema = RenderSchemaUseCase(),
+    )
 
     @Test
-    fun `a domestic code names both of its merchant identifiers`() {
+    fun `a domestic code names both of its merchant identifiers`() = runTest {
         val json = exportOf(ScanSamples.QRIS_DYNAMIC)
 
         assertEquals("qris", json.string("qr_type"))
@@ -46,7 +54,7 @@ internal class ExportPaymentJsonUseCaseTest {
     }
 
     @Test
-    fun `a domestic code carries its own figures, unreformatted`() {
+    fun `a domestic code carries its own figures, unreformatted`() = runTest {
         val merchant = exportOf(ScanSamples.QRIS_DYNAMIC).merchantData()
 
         assertEquals("15000000.00", merchant.string("amount"))
@@ -59,7 +67,7 @@ internal class ExportPaymentJsonUseCaseTest {
     }
 
     @Test
-    fun `a code with no tip has no total distinct from its amount`() {
+    fun `a code with no tip has no total distinct from its amount`() = runTest {
         val merchant = exportOf(ScanSamples.QRIS_DYNAMIC).merchantData()
 
         assertEquals("NO_TIPS", merchant.string("tips_type"))
@@ -68,7 +76,7 @@ internal class ExportPaymentJsonUseCaseTest {
     }
 
     @Test
-    fun `a cross-border code is named as one and has no national identifier`() {
+    fun `a cross-border code is named as one and has no national identifier`() = runTest {
         val json = exportOf(CROSS_BORDER)
 
         assertEquals("qrcrossborder", json.string("qr_type"))
@@ -86,10 +94,10 @@ internal class ExportPaymentJsonUseCaseTest {
     }
 
     @Test
-    fun `tags the contract has no field for are left out`() {
+    fun `tags the contract has no field for are left out`() = runTest {
         // The whole document as text, because what is being asserted is an absence — and these
         // values are distinctive enough that finding them anywhere means they leaked.
-        val text = export(reportOf(CROSS_BORDER))!!
+        val text = jsonOf(CROSS_BORDER)
 
         // Tag 62's reference label and its nested fee structure.
         assertFalse(text.contains("REF20260806000001"))
@@ -99,7 +107,7 @@ internal class ExportPaymentJsonUseCaseTest {
     }
 
     @Test
-    fun `a static code lets the payer choose the amount`() {
+    fun `a static code lets the payer choose the amount`() = runTest {
         val json = exportOf(payload(tlv("01", "11"), tlv("52", "0780"), tlv("53", "360")))
 
         assertEquals("static", json.obj("qr_data").string("qr_type"))
@@ -107,7 +115,7 @@ internal class ExportPaymentJsonUseCaseTest {
     }
 
     @Test
-    fun `a fixed tip is added to the amount`() {
+    fun `a fixed tip is added to the amount`() = runTest {
         val merchant = exportOf(
             payload(
                 tlv("01", "12"),
@@ -125,7 +133,7 @@ internal class ExportPaymentJsonUseCaseTest {
     }
 
     @Test
-    fun `a percentage tip stays a rate and is applied to the amount`() {
+    fun `a percentage tip stays a rate and is applied to the amount`() = runTest {
         val merchant = exportOf(
             payload(
                 tlv("01", "12"),
@@ -143,7 +151,7 @@ internal class ExportPaymentJsonUseCaseTest {
     }
 
     @Test
-    fun `a prompted tip has no figure and no total`() {
+    fun `a prompted tip has no figure and no total`() = runTest {
         val merchant = exportOf(
             payload(tlv("01", "12"), tlv("53", "360"), tlv("54", "100.00"), tlv("55", "01")),
         ).merchantData()
@@ -155,7 +163,7 @@ internal class ExportPaymentJsonUseCaseTest {
     }
 
     @Test
-    fun `a code with no account template reports no merchant identity`() {
+    fun `a code with no account template reports no merchant identity`() = runTest {
         val merchant = exportOf(payload(tlv("01", "11"), tlv("53", "360"))).merchantData()
 
         assertTrue(merchant.isNull("merchant_pan"))
@@ -165,7 +173,7 @@ internal class ExportPaymentJsonUseCaseTest {
     }
 
     @Test
-    fun `an unlisted currency falls back to its number`() {
+    fun `an unlisted currency falls back to its number`() = runTest {
         val json = exportOf(payload(tlv("01", "11"), tlv("53", "999"), tlv("58", "ID")))
 
         assertEquals("999", json.merchantData().string("amount_currency"))
@@ -175,7 +183,7 @@ internal class ExportPaymentJsonUseCaseTest {
     }
 
     @Test
-    fun `the issuer fields nobody can scan are always present`() {
+    fun `the issuer fields nobody can scan are always present`() = runTest {
         val json = exportOf(ScanSamples.QRIS_DYNAMIC)
 
         assertEquals("000000012687", json.string("transaction_id"))
@@ -194,15 +202,18 @@ internal class ExportPaymentJsonUseCaseTest {
     }
 
     @Test
-    fun `every export is valid JSON`() {
+    fun `every export is valid JSON`() = runTest {
         for (payload in listOf(ScanSamples.QRIS_DYNAMIC, CROSS_BORDER)) {
-            val text = export(reportOf(payload))
-            assertNull(Json.parseToJsonElement(text!!).jsonObject["nothing"])
+            assertNull(Json.parseToJsonElement(jsonOf(payload)).jsonObject["nothing"])
         }
     }
 
-    private fun exportOf(payload: String): JsonObject =
-        Json.parseToJsonElement(export(reportOf(payload))!!).jsonObject
+    private suspend fun exportOf(payload: String): JsonObject =
+        Json.parseToJsonElement(jsonOf(payload)).jsonObject
+
+    /** The rendered document, failing loudly when the template could not produce one. */
+    private suspend fun jsonOf(payload: String): String =
+        (export(reportOf(payload)) as PaymentJsonExport.Ready).json
 
     private fun reportOf(payload: String): QrInquiryReport =
         (parse(payload) as EmvParseResult.Success).value

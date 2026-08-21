@@ -10,6 +10,7 @@ import com.minion.scaffold.core.vcard.model.ContactCard
 import com.minion.scaffold.feature.qrscan.domain.ScannedContent
 import com.minion.scaffold.feature.qrscan.domain.compare.PayloadCharDiff
 import com.minion.scaffold.feature.qrscan.domain.compare.QrComparison
+import com.minion.scaffold.feature.qrscan.domain.export.PaymentSchemaSource
 
 /**
  * What the scan screen renders.
@@ -38,6 +39,16 @@ internal data class QrScanState(
      * paths construct and match on, for no gain here.
      */
     val baseline: ScannedContent? = null,
+    /**
+     * Which JSON schema an export would use.
+     *
+     * On the state rather than read by the sheet, because the share sheet has to *name* the active
+     * contract before sending anything — and what it is allowed to promise about the contents
+     * depends on whether the app wrote the template or the user did.
+     */
+    val schemaSource: PaymentSchemaSource = PaymentSchemaSource.BuiltIn,
+    /** The imported schema's file name. Empty under the built-in. */
+    val schemaLabel: String = "",
 ) : UiState {
 
     /** True once there is something worth copying or sharing. */
@@ -301,6 +312,14 @@ internal sealed interface QrScanEffect : UiEffect {
      * there is nothing for the screen to resolve and the ViewModel builds it outright.
      */
     data class ShareJson(val json: String) : QrScanEffect
+
+    /**
+     * A JSON export could not be built from the active schema template.
+     *
+     * An effect rather than a state: the report is still on screen and still correct, and the only
+     * thing that happened is that a document could not be made from it.
+     */
+    data class SchemaRefused(val reason: SchemaRefusal) : QrScanEffect
 
     /**
      * Hand this payload onward to be edited.

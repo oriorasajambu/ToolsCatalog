@@ -27,6 +27,9 @@ import com.minion.scaffold.feature.qrscan.domain.compare.DiffPayloadCharactersUs
 import com.minion.scaffold.feature.qrscan.domain.compare.FieldComparison
 import com.minion.scaffold.feature.qrscan.domain.compare.QrComparison
 import com.minion.scaffold.feature.qrscan.domain.export.ExportPaymentJsonUseCase
+import com.minion.scaffold.feature.qrscan.domain.export.FakePaymentSchemaRepository
+import com.minion.scaffold.feature.qrscan.domain.export.RenderSchemaUseCase
+import com.minion.scaffold.feature.qrscan.domain.export.ResolvePlaceholdersUseCase
 import io.mockk.mockk
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -53,7 +56,18 @@ internal class QrScanViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val imageDecoder = FakeImageBarcodeDecoder()
-    private val viewModel = viewModel()
+    private val schemaRepository = FakePaymentSchemaRepository()
+    /**
+     * Built on first use, not at field initialisation.
+     *
+     * JUnit constructs the test class *before* applying its rules, so a ViewModel created in a
+     * field initialiser would run its `init` while `Dispatchers.Main` is still whatever the last
+     * test left behind. This one's `init` collects a flow, which creates `viewModelScope` and pins
+     * it to that dispatcher for good — and every coroutine launched afterwards then never reaches
+     * the scheduler `advanceUntilIdle()` drives. The symptom is a suspending call that never
+     * resumes, which reads exactly like a production deadlock.
+     */
+    private val viewModel by lazy { viewModel() }
 
     /**
      * The purpose reaches the ViewModel through its route, so the handle is seeded the way
@@ -80,7 +94,14 @@ internal class QrScanViewModelTest {
         imageDecoder,
         CompareScannedContentUseCase(CompareEmvPayloadsUseCase()),
         DiffPayloadCharactersUseCase(),
-        ExportPaymentJsonUseCase(EmvDraftFromPayloadUseCase(ParseEmvPayloadUseCase())),
+        ExportPaymentJsonUseCase(
+            schemaRepository = schemaRepository,
+            resolvePlaceholders = ResolvePlaceholdersUseCase(
+                EmvDraftFromPayloadUseCase(ParseEmvPayloadUseCase()),
+            ),
+            renderSchema = RenderSchemaUseCase(),
+        ),
+        schemaRepository,
         // The rule's own dispatcher, so the character alignment runs on the test's scheduler and
         // `advanceUntilIdle()` actually controls it. Left as `Dispatchers.Default` it would escape
         // onto a real thread pool and the assertions would race it.

@@ -31,6 +31,7 @@ import com.minion.scaffold.feature.level.presentation.levelScreen
 import com.minion.scaffold.feature.ocr.presentation.ocrScreen
 import com.minion.scaffold.feature.ocr.presentation.ocrSettingsScreen
 import com.minion.scaffold.feature.qrscan.presentation.qrScanScreen
+import com.minion.scaffold.feature.qrscan.presentation.qrScanSettingsScreen
 import com.minion.scaffold.feature.soundmeter.presentation.soundMeterScreen
 import com.minion.scaffold.feature.soundmeter.presentation.soundMeterSettingsScreen
 import com.minion.scaffold.feature.texttools.presentation.generateScreen
@@ -94,6 +95,10 @@ fun AppNavHost(
         qrScanScreen(
             onNavigateBack = { navController.popBackStack() },
             onEditPayload = { route -> navController.navigate(route) },
+            onNavigateToSettings = { route -> navController.navigate(route) },
+        )
+        qrScanSettingsScreen(
+            onNavigateBack = { navController.popBackStack() },
         )
         qrCreateScreen(
             onNavigateBack = { navController.popBackStack() },
