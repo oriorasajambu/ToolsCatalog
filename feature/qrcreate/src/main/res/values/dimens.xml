@@ -6,6 +6,19 @@
 
     <!-- Legend chips in the tag breakdown. -->
     <dimen name="qrcreate_chip_padding_horizontal">10dp</dimen>
-    <dimen name="qrcreate_chip_padding_vertical">6dp</dimen>
+    <!--
+      Taller than it looks like it needs to be, on purpose. Surface(onClick) applies Material's
+      48dp minimum touch target, so every chip reserves 48dp of row height whatever its padding.
+      Padding it out fills that reserved space instead of leaving it as a gap between rows, which
+      is what made the legend read as several loose lists. Shrinking the touch target instead would
+      have traded a real accessibility guarantee for the same visual result.
+    -->
+    <dimen name="qrcreate_chip_padding_vertical">8dp</dimen>
     <dimen name="qrcreate_chip_border">2dp</dimen>
+    <!--
+      The gap between wrapped rows of chips. Smaller than the horizontal gap on purpose: each chip
+      already carries its own vertical padding, so the row gap sits on top of that and the general
+      8dp spacing left the legend looking like several separate lists rather than one block.
+    -->
+    <dimen name="qrcreate_chip_row_gap">4dp</dimen>
 </resources>

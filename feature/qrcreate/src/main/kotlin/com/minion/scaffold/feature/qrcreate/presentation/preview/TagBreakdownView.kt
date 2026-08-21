@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontFamily
 import com.minion.scaffold.core.designsystem.component.OffsetGridText
@@ -96,17 +99,30 @@ internal fun TagBreakdownView(
             },
         )
 
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(tight),
-            verticalArrangement = Arrangement.spacedBy(tight),
-        ) {
-            tags.forEach { tag ->
-                TagChip(
-                    text = stringResource(R.string.qrcreate_tag_chip, tag.path),
-                    band = bandFor.getValue(tag.path),
-                    selected = focusedPath == tag.path,
-                    onClick = { focusedPath = if (focusedPath == tag.path) null else tag.path },
-                )
+        // The chips opt out of Material's 48dp minimum touch target.
+        //
+        // `Surface(onClick)` reserves 48dp of height whatever the chip is padded to, so with a
+        // dozen tags the legend was mostly empty space — rows sat 48dp apart while painting about
+        // 30dp, which read as several loose lists rather than one block. The rule is there for a
+        // good reason and is not worth overriding for a primary control; these are a secondary
+        // legend, each chip is far wider than it is tall, and tapping one only highlights a span
+        // that tapping the payload above already selects. Padding alone could not fix it: the
+        // minimum wins over padding, so the reserved height has to go.
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(tight),
+                verticalArrangement = Arrangement.spacedBy(
+                    dimensionResource(R.dimen.qrcreate_chip_row_gap),
+                ),
+            ) {
+                tags.forEach { tag ->
+                    TagChip(
+                        text = stringResource(R.string.qrcreate_tag_chip, tag.path),
+                        band = bandFor.getValue(tag.path),
+                        selected = focusedPath == tag.path,
+                        onClick = { focusedPath = if (focusedPath == tag.path) null else tag.path },
+                    )
+                }
             }
         }
 

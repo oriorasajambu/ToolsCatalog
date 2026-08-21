@@ -81,9 +81,22 @@ internal class QrCreateViewModel @Inject constructor(
 
             QrCreateIntent.GenerateRequested -> generate()
 
-            QrCreateIntent.CopyPayloadRequested -> currentState.payload?.let { payload ->
-                viewModelScope.launch { emitEffect(QrExportEffect.CopyText(payload)) }
-            }
+            QrCreateIntent.ResetRequested -> reduce { copy(confirmingReset = true) }
+
+            QrCreateIntent.ResetDismissed -> reduce { copy(confirmingReset = false) }
+
+            // `editing` survives: the screen was opened to change a scanned code, and clearing the
+            // form does not change what the user came here to do or what the title should read.
+            QrCreateIntent.ResetConfirmed -> reduce { QrCreateState(editing = editing) }
+
+            // Guarded on the payload being current, not merely present. Everything below exports
+            // what is on screen, and while it is stale what is on screen is the old form's code.
+            QrCreateIntent.CopyPayloadRequested -> currentState
+                .takeIf { it.hasUsablePayload }
+                ?.payload
+                ?.let { payload ->
+                    viewModelScope.launch { emitEffect(QrExportEffect.CopyText(payload)) }
+                }
 
             QrCreateIntent.ShareImageRequested -> export { exporter, payload ->
                 exporter.writeShareableImage(payload)?.let(QrExportEffect::ShareImage)
@@ -105,8 +118,10 @@ internal class QrCreateViewModel @Inject constructor(
     /**
      * Applies a form change, and drops anything the change invalidates.
      *
-     * Two things go with every edit. The generated [QrCreateState.payload] is discarded, because a
-     * QR that no longer matches the fields beside it is worse than no QR. And the edited field's
+     * Two things go with every edit. The generated [QrCreateState.payload] is marked stale rather
+     * than discarded — it stays on screen behind a scrim, unexportable, so the user can see that
+     * their earlier result exists and needs regenerating instead of watching it vanish. And the
+     * edited field's
      * violation is cleared, because a "required" error sitting under a field the user is actively
      * filling in is noise.
      */
@@ -118,8 +133,7 @@ internal class QrCreateViewModel @Inject constructor(
         reduce {
             copy(
                 form = transform(form),
-                payload = null,
-                tags = emptyList(),
+                payloadStale = payload != null,
                 violations = violations.filterNot {
                     it.field == clearing && it.accountIndex == accountIndex
                 },
@@ -139,13 +153,17 @@ internal class QrCreateViewModel @Inject constructor(
             is EmvBuildResult.Success -> reduce {
                 copy(
                     payload = result.payload,
+                    payloadStale = false,
                     tags = breakdownPayload(result.payload),
                     violations = emptyList(),
                 )
             }
 
+            // A failed Generate leaves any previous payload in place and stale. Clearing it here
+            // would punish the user for asking a question: they pressed Generate, were told what
+            // is wrong, and would also silently lose the code they had.
             is EmvBuildResult.Invalid -> reduce {
-                copy(payload = null, tags = emptyList(), violations = result.violations)
+                copy(violations = result.violations)
             }
         }
     }
@@ -158,7 +176,9 @@ internal class QrCreateViewModel @Inject constructor(
      * starting a parallel encode of the same image while the first is still writing.
      */
     private fun export(action: suspend (QrImageExporter, String) -> QrExportEffect) {
-        val payload = currentState.payload ?: return
+        // Same guard as the copy path: a stale payload is the previous form's code, and writing
+        // it to the gallery or a share sheet is the one way a wrong QR leaves this screen.
+        val payload = currentState.takeIf { it.hasUsablePayload }?.payload ?: return
         if (currentState.exporting) return
 
         reduce { copy(exporting = true) }

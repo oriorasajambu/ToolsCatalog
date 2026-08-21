@@ -6,6 +6,14 @@
     <string name="qrcreate_navigate_back">Back</string>
     <string name="qrcreate_generate">Generate</string>
 
+    <!-- Top-bar action and its confirmation. Clearing a twelve-field form is destructive enough to
+         ask first. -->
+    <string name="qrcreate_reset">Clear form</string>
+    <string name="qrcreate_reset_confirm_title">Clear the form?</string>
+    <string name="qrcreate_reset_confirm_message">Every field will be emptied. This cannot be undone.</string>
+    <string name="qrcreate_reset_confirm_action">Clear</string>
+    <string name="qrcreate_cancel">Cancel</string>
+
     <!-- Web link -->
     <string name="urlcreate_title">Create Link QR</string>
     <string name="urlcreate_title_edit">Edit Link QR</string>
@@ -63,6 +71,15 @@
     <string name="qrcreate_merchant_name">Merchant name</string>
     <string name="qrcreate_merchant_city">City</string>
     <string name="qrcreate_country_code">Country code</string>
+
+    <!-- Field guidance. These names come from the EMV specification and mean nothing to someone
+         who has not read it, so each says what to actually type. -->
+    <string name="qrcreate_hint_country_code">Two letters, e.g. ID</string>
+    <string name="qrcreate_hint_merchant_name">The name the payer will see when they scan</string>
+    <string name="qrcreate_hint_account_identifier">The acquirer\'s reverse-domain id, e.g. ID.CO.BANK.WWW</string>
+    <string name="qrcreate_hint_account_merchant_pan">The card number this merchant is registered under</string>
+    <string name="qrcreate_hint_account_merchant_id">The merchant\'s id with this acquirer</string>
+    <string name="qrcreate_hint_account_criteria">The acquirer\'s merchant tier, e.g. UMI</string>
     <string name="qrcreate_postal_code">Postal code (optional)</string>
 
     <!-- Transaction -->
@@ -80,6 +97,11 @@
 
     <string name="qrcreate_currency">Currency</string>
     <string name="qrcreate_currency_option">%1$s — %2$s</string>
+
+    <!-- A field label with the EMV tag it writes, e.g. "Amount · Tag 54". The tag is the same
+         dotted path the breakdown chips under the QR use, so a field and its bytes can be matched
+         up by eye. -->
+    <string name="qrcreate_field_with_tag">%1$s · Tag %2$s</string>
     <string name="qrcreate_category">Merchant category</string>
     <string name="qrcreate_category_option">%1$s — %2$s</string>
 
@@ -94,11 +116,17 @@
 
     <!-- Result -->
     <string name="qrcreate_qr_image">The payload, drawn as a QR code</string>
+
+    <!-- Shown over the dimmed QR once the form has changed under it. The code stays visible for
+         context but is deliberately obscured, so it cannot be scanned off the screen. -->
+    <string name="qrcreate_payload_stale">Out of date — generate again</string>
+    <string name="qrcreate_payload_stale_a11y">This code no longer matches the form. Generate again to use it.</string>
     <string name="qrcreate_copy_payload">Copy payload</string>
     <string name="qrcreate_share_image">Share image</string>
     <string name="qrcreate_save_image">Save to gallery</string>
     <string name="qrcreate_clipboard_label">EMV QR payload</string>
     <string name="qrcreate_saved">Saved to your gallery.</string>
+    <string name="qrcreate_payload_copied">Payload copied to clipboard</string>
     <string name="qrcreate_export_failed">That image could not be created.</string>
     <string name="qrcreate_empty_hint">Fill in the merchant details, then generate a code.</string>
 

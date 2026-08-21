@@ -1,14 +1,12 @@
 package com.minion.scaffold.feature.qrcreate.presentation.preview
 
-import android.content.ClipData
 import android.content.Intent
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.minion.scaffold.core.ui.clipboard.rememberClipboardCopy
 import com.minion.scaffold.core.ui.mvi.ObserveAsEvents
 import com.minion.scaffold.feature.qrcreate.R
 import kotlinx.coroutines.flow.Flow
@@ -27,22 +25,24 @@ internal fun HandleQrExportEffects(
     snackbarHostState: SnackbarHostState,
 ) {
     val context = LocalContext.current
-    val clipboard = LocalClipboard.current
     val coroutineScope = rememberCoroutineScope()
 
     // Read in composition so a configuration change re-reads them. Resolving these inside the
     // handler would pin the locale that was active when the screen was first composed.
-    val clipboardLabel = stringResource(R.string.qrcreate_clipboard_label)
     val savedMessage = stringResource(R.string.qrcreate_saved)
     val failedMessage = stringResource(R.string.qrcreate_export_failed)
 
+    // Copying a payload used to put it on the clipboard and say nothing at all, which on this
+    // screen is indistinguishable from the button not working.
+    val copyToClipboard = rememberClipboardCopy(
+        snackbarHostState = snackbarHostState,
+        label = stringResource(R.string.qrcreate_clipboard_label),
+        confirmation = stringResource(R.string.qrcreate_payload_copied),
+    )
+
     ObserveAsEvents(effects) { effect ->
         when (effect) {
-            is QrExportEffect.CopyText -> coroutineScope.launch {
-                clipboard.setClipEntry(
-                    ClipEntry(ClipData.newPlainText(clipboardLabel, effect.text)),
-                )
-            }
+            is QrExportEffect.CopyText -> copyToClipboard(effect.text)
 
             is QrExportEffect.ShareImage -> {
                 val share = Intent(Intent.ACTION_SEND).apply {

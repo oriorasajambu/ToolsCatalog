@@ -15,22 +15,34 @@ import com.minion.scaffold.feature.qrcreate.presentation.form.TipMode
 /**
  * What the create screen renders.
  *
- * [payload] is non-null only between a successful **Generate** and the next edit. Any change to
- * the form clears it, because a QR left on screen while the fields no longer match it is the one
- * genuinely dangerous state here — someone would scan a code encoding different values from the
- * ones they are reading.
+ * [payload] survives an edit, but [payloadStale] then marks it as no longer matching the form.
+ *
+ * This used to clear outright, on the grounds that a QR on screen while the fields no longer match
+ * it is the one genuinely dangerous state here — someone could scan a code encoding different
+ * values from the ones they are reading. That danger is real and has not gone away; what changed is
+ * the mitigation. A code that silently vanishes mid-edit reads as a bug and tells the user nothing,
+ * so the payload is now kept, obscured behind a scrim so it cannot be scanned off the screen, and
+ * every export is refused while [payloadStale] is true. The user keeps the context; the hazard is
+ * still closed.
  */
 internal data class QrCreateState(
     /** The form's raw contents. */
     val form: EmvFormState = EmvFormState(),
     /** The current validation failures, empty when valid. */
     val violations: List<FieldViolation> = emptyList(),
-    /** The generated payload, or `null` before Generate or after an edit. */
+    /** The generated payload, or `null` before the first successful Generate. */
     val payload: String? = null,
     /**
+     * Whether [payload] predates the current form contents.
+     *
+     * True from the first edit after a Generate until the next one. Nothing may be exported while
+     * it is set — see the note on this class.
+     */
+    val payloadStale: Boolean = false,
+    /**
      * The generated payload broken into its tags for highlighting, or empty when there is no
-     * payload. Cleared alongside [payload] on every edit, for the same reason: a breakdown of a
-     * payload the form no longer matches would point at the wrong characters.
+     * payload. Kept alongside [payload] when it goes stale: the breakdown describes the payload it
+     * was built from, which is exactly what the scrimmed, out-of-date code still shows.
      */
     val tags: List<PayloadTag> = emptyList(),
     /** Whether an export is in progress. */
@@ -39,7 +51,17 @@ internal data class QrCreateState(
     val editing: Boolean = false,
     /** The payload handed to this screen could not be read. */
     val prefillFailed: Boolean = false,
+    /**
+     * Whether the "clear the form" confirmation is showing.
+     *
+     * State rather than a `remember` in the composable: clearing a twelve-field form is
+     * destructive, so the question has to survive a rotation taken mid-decision.
+     */
+    val confirmingReset: Boolean = false,
 ) : UiState {
+
+    /** Whether there is a payload the user may act on — generated, and still matching the form. */
+    val hasUsablePayload: Boolean get() = payload != null && !payloadStale
 
     /**
      * Why [field] was rejected, or null if it was not.
@@ -111,6 +133,15 @@ internal sealed interface QrCreateIntent : UiIntent {
 
     /** Validate the whole form and, if it passes, write the payload. */
     data object GenerateRequested : QrCreateIntent
+
+    /** The user asked to clear the form; opens the confirmation. */
+    data object ResetRequested : QrCreateIntent
+
+    /** The user confirmed clearing the form. */
+    data object ResetConfirmed : QrCreateIntent
+
+    /** The user backed out of clearing the form. */
+    data object ResetDismissed : QrCreateIntent
 
     /** Copy the generated payload. */
     data object CopyPayloadRequested : QrCreateIntent

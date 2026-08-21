@@ -23,6 +23,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -120,18 +121,81 @@ internal class QrCreateViewModelTest {
     }
 
     /**
-     * A QR on screen beside fields it no longer matches is the one genuinely dangerous state here
-     * — it would encode different values from the ones being read.
+     * A QR beside fields it no longer matches is the one genuinely dangerous state here — it would
+     * encode different values from the ones being read. The payload is kept so the user can see
+     * that a result exists and needs regenerating, and marked stale so nothing can act on it.
      */
     @Test
-    fun `editing anything after generating discards the payload`() {
+    fun `editing after generating marks the payload stale rather than discarding it`() {
         fillValidForm()
         viewModel.onIntent(QrCreateIntent.GenerateRequested)
         assertNotNull(viewModel.state.value.payload)
+        assertFalse(viewModel.state.value.payloadStale)
 
         viewModel.onIntent(QrCreateIntent.FieldChanged(EmvField.MERCHANT_CITY, "Depok"))
 
-        assertNull(viewModel.state.value.payload)
+        assertNotNull(viewModel.state.value.payload)
+        assertTrue(viewModel.state.value.payloadStale)
+        assertFalse(viewModel.state.value.hasUsablePayload)
+    }
+
+    /** Regenerating is what makes the payload current again. */
+    @Test
+    fun `generating again clears the stale mark`() {
+        fillValidForm()
+        viewModel.onIntent(QrCreateIntent.GenerateRequested)
+        viewModel.onIntent(QrCreateIntent.FieldChanged(EmvField.MERCHANT_CITY, "Depok"))
+        assertTrue(viewModel.state.value.payloadStale)
+
+        viewModel.onIntent(QrCreateIntent.GenerateRequested)
+
+        assertFalse(viewModel.state.value.payloadStale)
+        assertTrue(viewModel.state.value.hasUsablePayload)
+    }
+
+    /**
+     * The guard that makes keeping a stale payload on screen safe: it may be looked at, never
+     * exported. Copying one would put the previous form's code on the clipboard.
+     */
+    @Test
+    fun `a stale payload cannot be copied`() = runTest {
+        fillValidForm()
+        viewModel.onIntent(QrCreateIntent.GenerateRequested)
+        viewModel.onIntent(QrCreateIntent.FieldChanged(EmvField.MERCHANT_CITY, "Depok"))
+
+        viewModel.effect.test {
+            viewModel.onIntent(QrCreateIntent.CopyPayloadRequested)
+            expectNoEvents()
+        }
+    }
+
+    /** Clearing the form empties every field, and keeps the screen's purpose. */
+    @Test
+    fun `confirming a reset empties the form`() {
+        fillValidForm()
+        viewModel.onIntent(QrCreateIntent.GenerateRequested)
+
+        viewModel.onIntent(QrCreateIntent.ResetRequested)
+        assertTrue(viewModel.state.value.confirmingReset)
+        viewModel.onIntent(QrCreateIntent.ResetConfirmed)
+
+        val state = viewModel.state.value
+        assertEquals("", state.form.merchantName)
+        assertNull(state.payload)
+        assertFalse(state.confirmingReset)
+    }
+
+    /** Backing out of the confirmation changes nothing. */
+    @Test
+    fun `dismissing a reset leaves the form alone`() {
+        fillValidForm()
+        val before = viewModel.state.value.form
+
+        viewModel.onIntent(QrCreateIntent.ResetRequested)
+        viewModel.onIntent(QrCreateIntent.ResetDismissed)
+
+        assertEquals(before, viewModel.state.value.form)
+        assertFalse(viewModel.state.value.confirmingReset)
     }
 
     /** The highlight breakdown appears with the payload, and every top-level tag it covers. */
@@ -147,16 +211,21 @@ internal class QrCreateViewModelTest {
         assertTrue(tags.any { it.path == "63" })
     }
 
-    /** The breakdown is cleared with the payload, so it never points at stale characters. */
+    /**
+     * The breakdown is kept with the payload it describes. Both go stale together, and the screen
+     * shows them behind the same scrim — a breakdown of the code actually on display is correct,
+     * where an empty one beside a visible QR would not be.
+     */
     @Test
-    fun `editing after generating discards the tag breakdown`() {
+    fun `editing after generating keeps the tag breakdown with its payload`() {
         fillValidForm()
         viewModel.onIntent(QrCreateIntent.GenerateRequested)
-        assertTrue(viewModel.state.value.tags.isNotEmpty())
+        val generated = viewModel.state.value.tags
+        assertTrue(generated.isNotEmpty())
 
         viewModel.onIntent(QrCreateIntent.FieldChanged(EmvField.MERCHANT_CITY, "Depok"))
 
-        assertTrue(viewModel.state.value.tags.isEmpty())
+        assertEquals(generated, viewModel.state.value.tags)
     }
 
     @Test
