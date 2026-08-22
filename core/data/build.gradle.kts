@@ -21,6 +21,10 @@ dependencies {
     // produce domain models, so both are part of this module's public surface.
     api(project(":core:common"))
     api(project(":core:domain"))
+
+    // PinnedTool exposes a ToolDescriptor, and reconcilePinnedTools takes a catalog, so both
+    // appear in this module's public signatures — api rather than implementation.
+    api(project(":core:toolcatalog"))
     implementation(project(":core:network"))
 
     // ErrorMapper matches on retrofit2.HttpException to turn a status code into a DomainError.
