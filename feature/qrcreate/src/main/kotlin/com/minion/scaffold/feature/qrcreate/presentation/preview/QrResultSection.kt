@@ -43,6 +43,9 @@ import com.minion.scaffold.core.designsystem.component.FormSection
  *   format-specific view out of this otherwise format-agnostic section.
  */
 @Composable
+// Three pieces of payload state and three things the user can do with it. There is no existing
+// slice to pass, and inventing one to hold three fields would not read any better.
+@Suppress("LongParameterList")
 internal fun QrResultSection(
     payload: String?,
     exporting: Boolean,

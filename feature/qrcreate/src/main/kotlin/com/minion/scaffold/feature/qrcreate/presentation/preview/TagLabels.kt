@@ -62,6 +62,9 @@ internal fun PayloadTag.describeValue(): String = when (val interpretation = int
 
 /** The `@StringRes` for this tag's name, or null when there is no specific name for it. */
 @StringRes
+// A tag-to-@StringRes lookup. Outside ignoreSingleWhenExpression only because the depth guard
+// has to come first: the same two-character code names something different inside a template.
+@Suppress("CyclomaticComplexMethod")
 private fun PayloadTag.labelRes(): Int? {
     // Inside a template the two-character code means something else than at the top level, so the
     // sub-tag names are keyed on depth first.

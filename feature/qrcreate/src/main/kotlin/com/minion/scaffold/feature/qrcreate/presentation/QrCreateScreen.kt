@@ -144,6 +144,9 @@ private fun EmvField.formPart(): FormPart = when (this) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// Branching over which part of the form is showing. Each arm picks a section to draw; the
+// count tracks how many states the screen has, and splitting it would scatter that one list.
+@Suppress("CyclomaticComplexMethod")
 private fun QrCreateContent(
     state: QrCreateState,
     onIntent: (QrCreateIntent) -> Unit,

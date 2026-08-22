@@ -220,6 +220,9 @@ private fun ContactSection(
 
 /** Every field on this form differs only in which one it is, so they share one call shape. */
 @Composable
+// One row of the contact form: which field it is, its current value and label, and the state it
+// validates against. Resources is passed rather than read so the row stays previewable.
+@Suppress("LongParameterList")
 private fun ContactField(
     state: VCardCreateState,
     field: VCardFormField,

@@ -213,6 +213,8 @@ private fun KeepScreenOn() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// The screen body -- see the note on SoundMeterContent; the shape is the same.
+@Suppress("LongParameterList")
 private fun SpeedometerContent(
     state: State<SpeedometerState>,
     onIntent: (SpeedometerIntent) -> Unit,

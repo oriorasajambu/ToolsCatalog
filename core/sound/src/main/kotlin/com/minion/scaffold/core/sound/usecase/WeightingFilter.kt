@@ -148,6 +148,9 @@ class WeightingFilter internal constructor(
  * [criticalRadiansPerSecond] is the frequency the bilinear transform is prewarped to map exactly —
  * the section's own pole frequency, or the geometric mean where it has two.
  */
+// b0..a2 are the coefficients of the transfer function in this class's own KDoc. Renaming them
+// into a holder would leave the documentation describing something the signature no longer says.
+@Suppress("LongParameterList")
 internal class AnalogSection(
     private val b0: Double,
     private val b1: Double,
