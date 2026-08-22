@@ -2,7 +2,6 @@ package com.minion.scaffold.core.gnss.usecase
 
 import com.minion.scaffold.core.gnss.model.GnssFix
 import javax.inject.Inject
-import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin

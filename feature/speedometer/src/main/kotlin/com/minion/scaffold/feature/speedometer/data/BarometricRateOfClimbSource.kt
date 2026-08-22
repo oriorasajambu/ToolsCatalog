@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.exp
 import kotlin.math.ln
 
 /**

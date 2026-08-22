@@ -8,7 +8,6 @@ import androidx.core.content.FileProvider
 import com.minion.scaffold.core.common.dispatcher.IoDispatcher
 import com.minion.scaffold.core.exif.model.ImageContainer
 import com.minion.scaffold.core.exif.model.PlanResult
-import com.minion.scaffold.core.exif.model.StripFailure
 import com.minion.scaffold.core.exif.usecase.ExecuteStripUseCase
 import com.minion.scaffold.core.exif.usecase.PlanStripUseCase
 import com.minion.scaffold.core.exif.usecase.VerificationResult
