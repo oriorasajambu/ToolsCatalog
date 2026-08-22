@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.minion.scaffold.feature.speedometer.R
+import com.minion.scaffold.feature.speedometer.presentation.SpeedometerChrome
+import com.minion.scaffold.feature.speedometer.presentation.SpeedometerIntent
 import com.minion.scaffold.feature.speedometer.presentation.SpeedometerState
 
 /**
@@ -33,14 +35,12 @@ import com.minion.scaffold.feature.speedometer.presentation.SpeedometerState
  */
 @Composable
 internal fun LocationGate(
-    access: SpeedometerState.LocationAccess,
-    providerEnabled: Boolean,
-    onRequest: () -> Unit,
-    onRequestPrecise: () -> Unit,
-    onOpenAppSettings: () -> Unit,
-    onOpenLocationSettings: () -> Unit,
+    chrome: SpeedometerChrome,
+    onRequestPermission: () -> Unit,
+    onIntent: (SpeedometerIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val access = chrome.access
     // Unknown draws nothing at all: anything here flashes behind the system dialog on the way in,
     // which reads as the screen failing before it has even asked.
     if (access == SpeedometerState.LocationAccess.Unknown) return
@@ -53,25 +53,25 @@ internal fun LocationGate(
         access == SpeedometerState.LocationAccess.Approximate -> {
             message = R.string.speedometer_permission_approximate
             action = R.string.speedometer_permission_upgrade
-            onClick = onRequestPrecise
+            onClick = onRequestPermission
         }
 
         access == SpeedometerState.LocationAccess.Denied -> {
             message = R.string.speedometer_permission_rationale
             action = R.string.speedometer_permission_grant
-            onClick = onRequest
+            onClick = onRequestPermission
         }
 
         access == SpeedometerState.LocationAccess.PermanentlyDenied -> {
             message = R.string.speedometer_permission_blocked
             action = R.string.speedometer_permission_open_settings
-            onClick = onOpenAppSettings
+            onClick = { onIntent(SpeedometerIntent.AppSettingsRequested) }
         }
 
-        !providerEnabled -> {
+        !chrome.providerEnabled -> {
             message = R.string.speedometer_provider_disabled
             action = R.string.speedometer_provider_open_settings
-            onClick = onOpenLocationSettings
+            onClick = { onIntent(SpeedometerIntent.LocationSettingsRequested) }
         }
 
         else -> return
