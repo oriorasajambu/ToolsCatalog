@@ -1,3 +1,17 @@
+# Line endings are decided by the repository rather than by each machine's core.autocrlf. Every
+# text file is stored LF and checked out in the platform's own convention; without this the rule
+# holds only as long as everyone's git happens to be configured the same way, and one clone with
+# core.autocrlf=false starts committing CRLF blobs that diff as whole rewritten files.
+#
+# `text=auto` and not `*.kt eol=lf`: two Kotlin sources embed real NUL bytes (the EXIF identifier
+# is written as a literal Exif followed by two NUL bytes), so git detects them as binary. auto
+# leaves them alone; forcing text on them would rewrite them for no benefit.
+#
+# First, not last: within this file a later rule wins, so the two `-text` pins below rely on this
+# blanket rule sitting above them. Moved beneath, it would quietly re-enable conversion on the
+# dictionary the pin exists to protect.
+* text=auto
+
 # The PP-OCRv5 weights are ~22MB of binary that would otherwise sit in every clone forever. LFS
 # keeps them out of the packfile — at the cost of needing git-lfs installed to get real files
 # rather than pointers. `ppocrv5_dict.txt` is deliberately not tracked here: it is 74KB of plain
