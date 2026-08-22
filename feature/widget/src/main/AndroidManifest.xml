@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Merged into :app's manifest at build time. The widget is the one feature module that contributes
+  a component rather than only a screen, which is the whole argument for it being a module at all.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+
+        <!--
+          `android:exported="true"` is required: the launcher, a different process, sends
+          ACTION_APPWIDGET_UPDATE to this receiver. It carries no data of ours and starts nothing
+          on its own - taps go through an explicit intent built at render time.
+
+          No `android:configure` activity. Configuration is global rather than per instance, so
+          there is nothing to ask when an instance is dropped, and being asked to pick tools every
+          time you place a second copy would be worse than useless.
+        -->
+        <receiver
+            android:name=".glance.QuickAccessWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_title">
+
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quick_access_widget_info" />
+        </receiver>
+
+    </application>
+
+</manifest>
