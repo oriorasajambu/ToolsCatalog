@@ -9,8 +9,9 @@ Gradle multi-module graph whose boundaries are enforced by the build rather than
 The repo currently carries a worked example app, **ToolBox** (`app_name` in strings.xml) — a
 mostly-offline utility app whose tools cover scanning/comparing/exporting EMV codes, building EMV,
 Wi-Fi, link and vCard QR codes, text and developer transforms, a random string generator, a weather
-lookup, on-device OCR, a bubble level, a sound-level meter, a GPS speedometer and an EXIF stripper.
-Package root is `com.minion.scaffold`. 31 Gradle modules.
+lookup, on-device OCR, a bubble level, a sound-level meter, a GPS speedometer and an EXIF stripper. A home-screen App
+Widget holds up to five of those tools and launches straight into them.
+Package root is `com.minion.scaffold`. 33 Gradle modules.
 
 The full architectural rationale (why each rule exists, not just what it is) lives in
 [README.md](README.md) — read it before making structural changes; this file summarizes what's
@@ -58,7 +59,8 @@ need real values; the repo builds without them (unsigned release, template `BASE
 ├── :core:ui             MviViewModel, ObserveAsEvents, DomainError → @StringRes, PermissionState, rememberClipboardCopy.
 ├── :core:camera         CameraX viewfinder — torch, zoom, tap-to-focus, still capture. Shared by qrscan and ocr.
 ├── :core:network        Shared OkHttp/Retrofit, safeCall, error mapping.
-├── :core:data           Data shared BETWEEN features (not a feature's own data layer). Currently a README only.
+├── :core:data           Data shared BETWEEN features (not a feature's own data layer). The widget's
+│                       pinned-tool model, its repository interface, and reconcilePinnedTools.
 ├── :core:testing        MainDispatcherRule, fakes — testImplementation only.
 ├── :core:emv/:wifi/:url/:vcard/:text   Pure-Kotlin domain logic for each QR/text format.
 ├── :core:weather        Pure Kotlin. WMO codes, unit conversion, notable-condition thresholds.
@@ -67,8 +69,10 @@ need real values; the repo builds without them (unsigned release, template `BASE
 ├── :core:sound          Pure Kotlin. A/C/Z weighting filters, time weighting, the Leq session accumulator.
 ├── :core:gnss           Pure Kotlin. EGM96 geoid → height above sea level, speed/zero-speed rules, trip accumulators.
 ├── :core:exif           Pure Kotlin. JPEG/PNG/WebP container surgery — returns byte-range strip plans, never touches a file.
+├── :core:toolcatalog    The tool table: ToolDescriptor, ToolCategory, ToolCatalog, and the 14 tool
+│                       icons. Android, not JVM — an entry carries an ImageVector and two @StringRes.
 └── :feature:*           tools, qrscan, qrcreate, texttools, weather, ocr, level, soundmeter, exifstrip,
-                         speedometer — one per screen area.
+                         speedometer, widget — one per screen area, except `widget`, which draws none.
 ```
 
 Dependency rules (enforced by convention plugins, not review):
@@ -93,7 +97,17 @@ Dependency rules (enforced by convention plugins, not review):
   @Module` — not centralized, since a central `:core:di` would have to depend on every feature.
 - Promote something into `:core:data` or `:core:domain` only once **two** features need it; one
   feature needing it is that feature's own concern. `:core:data`'s README records the package
-  layout to use when something does move there.
+  layout to use when something does move there. The widget is the worked example: `PinnedTool`,
+  `PinnedToolsRepository`, `WidgetPinRequester` and `reconcilePinnedTools` are there because
+  `:feature:widget` renders the pinned list and `:feature:tools` owns the screen that edits it —
+  two features, neither of which may depend on the other. The DataStore that implements the
+  interface stayed in `:feature:widget`, because only one module writes it.
+- **A feature that needs a fact only `:app` has declares the interface and lets `:app` bind it.**
+  `WidgetLaunchIntentFactory` is in `:feature:widget` and bound in `:app`, because building the
+  launch intent means naming `MainActivity`. The same shape as `FeatureFlagRepository` keeping
+  Firebase out of every feature. The test of where a binding belongs is what it has to *name*:
+  pin-to-home names the widget provider, which is `:feature:widget`'s own component, so that one is
+  bound there and the receiver stays `internal`.
 
 ## Convention plugins (`build-logic/`)
 
@@ -295,7 +309,18 @@ Exception ──► toDomainError() ──► DomainError ──► toMessageRes
 
 Feature preferences use **Preferences DataStore**, declared in the feature's own
 `data/local/*PreferencesDataStore.kt` behind a repository interface in the feature's `domain/`.
-It stays in the feature for the promotion rule above — only one feature reads it.
+It stays in the feature for the promotion rule above — only one feature reads it. The widget is the
+one case where the *interface* was promoted to `:core:data` while the store stayed put: two
+features read the pinned list, but only `:feature:widget` writes it.
+
+**An ordered list is a delimited string, not a `stringSetPreferencesKey`.** A `Set` has no order,
+and for the widget's pinned tools the order is half the point. `WidgetPreferencesDataStore` joins
+ids with the ASCII unit separator, chosen because it cannot occur in a kebab-case tool id.
+
+**Absent and present-but-empty must stay distinguishable** wherever a store seeds a default. The
+widget seeds five tools on a first read by checking for a *missing key*: conflating that with an
+empty list hands the defaults back to a user who deliberately unpinned everything, on every read,
+with no way to make it stop.
 
 Enums are stored **by name, never by ordinal**. An ordinal silently rebinds the moment an entry is
 added or reordered, and km/h read back as knots is a factor of 1.85 with nothing on screen to
@@ -340,8 +365,13 @@ Two rules:
   a throttle or a non-boolean value in the console all leave the tool visible. Hiding a tool is
   always a deliberate act in the console, never something an outage can do.
 
-Adding a tool means an entry in `ToolCatalog` (carrying an `AppRoute`, not an id, so no `when` has
-to learn about it) **and** an entry in `app/src/main/res/xml/remote_config_defaults.xml`.
+Adding a tool means an entry in `ToolCatalog` — now in `:core:toolcatalog`, carrying an `AppRoute`
+rather than an id so no `when` has to learn about it — **and** an entry in
+`app/src/main/res/xml/remote_config_defaults.xml`. An entry also needs a `widgetIconRes`: the tools
+screen draws the `ImageVector`, but Glance renders a `RemoteViews` tree and can only take a
+drawable, so every tool carries the same glyph twice. The 14 drawables were generated from the path
+data in `material-icons-extended`, the same source `Icons.Filled.*` is built from, and each records
+that in its own comment — redraw one by hand and the two surfaces drift.
 
 ## Adding a feature
 
@@ -355,8 +385,9 @@ three manual wiring lines still needed:
 2. `app/build.gradle.kts` — `implementation(project(":feature:home"))`
 3. `app/.../navigation/AppNavHost.kt` — `homeScreen(onNavigateToDetail = { … })`
 
-If the feature is a user-facing tool, also add it to `ToolCatalog` and to
-`remote_config_defaults.xml` (see *Feature flags*).
+If the feature is a user-facing tool, also add it to `ToolCatalog` (in `:core:toolcatalog`, with
+both icon fields) and to `remote_config_defaults.xml` (see *Feature flags*). Nothing else needs
+touching for it to be pinnable to the home-screen widget — the widget reads the same catalog.
 
 Layers are packages (`presentation/`, `domain/`, `data/`, `di/`) inside one feature module, not
 separate Gradle modules — split into submodules only when different teams own the layers. Build
@@ -505,6 +536,29 @@ for one that is never written.
   with "No matching client found for package name" rather than falling back to the base id, so a
   Firebase console that only registers `com.minion.scaffold` breaks development builds while
   production ones pass.
+- **The widget's DataStore name appears in three files.** `preferencesDataStore(name =
+  "widget_preferences")` in `WidgetPreferencesDataStore`, and the `<include>` path in both
+  `app/src/main/res/xml/backup_rules.xml` and `data_extraction_rules.xml`. Renaming the store
+  without changing both XML files stops the backup silently — no build failure, no runtime error,
+  just a user who restores a device and finds an empty widget. The two XML files must also agree
+  with *each other*: the first is read on API 30 and below, the second on 31+, so a file listed in
+  one and forgotten in the other is backed up on half your devices.
+- **A `PendingIntent` is matched by `Intent.filterEquals`, which ignores extras.** Action, data,
+  type, component, categories and identifier are compared; extras are not. Five widget tiles that
+  differ only by a tool-id extra are therefore five *equal* intents, and the system hands every one
+  of them the first `PendingIntent` it made — every tile opens whichever tool was drawn first, with
+  nothing failing anywhere to say so. `Intent.setIdentifier` exists for exactly this and has been
+  available since API 29, which is this app's minSdk. `WidgetLaunchModule` sets it to the tool id.
+- **Glance's `cornerRadius` does nothing below API 31.** It is backed by
+  `RemoteViews.setViewOutlinePreferredRadius`, added in API 31, and on 29–30 it is a silent no-op:
+  the widget draws square corners and no warning is emitted. `QuickAccessWidget` takes the platform
+  radius above 31 and a tinted shape drawable below. Treat any Glance modifier as version-gated
+  until checked — the API surface is uniform, the behaviour is not.
+- **Glance resolves colours into the `RemoteViews` at render time below API 31.** A widget already
+  on the home screen keeps its old palette through a light/dark switch while the app recomposes
+  correctly, so "the widget did not follow the theme" is a *redraw* problem, not a colour-bridge
+  one. `ACTION_CONFIGURATION_CHANGED` cannot be a manifest receiver, which is why `AppApplication`
+  hears it and asks `WidgetSynchroniser` for a redraw.
 - Text that can overflow uses `Modifier.basicMarquee()` with `maxLines = 1` and **no**
   `TextOverflow.Ellipsis`. Marquee measures its content with an infinite width constraint, so the
   ellipsis can never trigger and the two are not complementary — leaving it in is dead config.
