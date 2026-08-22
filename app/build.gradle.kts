@@ -184,6 +184,9 @@ dependencies {
     implementation(project(":core:network"))
     implementation(project(":core:data"))
 
+    // resolveWidgetRoute matches a widget's tool id against the shipped catalog.
+    implementation(project(":core:toolcatalog"))
+
     // Features are added here as they are created — this is the one place that sees all of them.
     implementation(project(":feature:tools"))
     implementation(project(":feature:qrscan"))
@@ -195,6 +198,10 @@ dependencies {
     implementation(project(":feature:soundmeter"))
     implementation(project(":feature:exifstrip"))
     implementation(project(":feature:speedometer"))
+
+    // Not a screen. :app depends on it for two reasons: its receiver has to reach the manifest,
+    // and WidgetLaunchIntentFactory has to be bound to something that can name MainActivity.
+    implementation(project(":feature:widget"))
 
     implementation(libs.androidx.splashscreen)
 
