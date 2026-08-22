@@ -142,11 +142,25 @@ comments:
   UndocumentedPublicFunction:
     active: true
 
-# MagicNumber: flags an unnamed numeric literal. Left at its own defaults deliberately — property
-# declarations, constants, companion object properties, hashCode() bodies and named arguments are
-# already excluded out of the box, which is a reasonable starting point for a first pass. Most
-# valuable in the pure-Kotlin algorithm modules (:core:emv, :core:gnss, :core:sound, ...), where an
-# unnamed constant in a checksum or a threshold is a correctness risk, not just a style nit.
+# MagicNumber is off. It was enabled on the theory that it would earn its place in the pure-Kotlin
+# algorithm modules, where an unnamed constant in a checksum or a threshold is a correctness risk
+# rather than a style nit. Run against the codebase it reported 230 findings and that theory did not
+# survive them: :core:emv, :core:gnss and :core:sound account for 18 between them, while four
+# categories that cannot be fixed account for 161.
+#
+#  - **The palette, 53** — every `Color(0xFF0E1017)` in the designsystem's Color.kt. The rule this
+#    repo actually has is that colours come from `MaterialTheme.colorScheme` rather than a literal
+#    at a call site; Color.kt is where that scheme is defined, so the hex *is* the definition and
+#    there is nowhere further to hoist it.
+#  - **Spec-defined codes, ~35** — WMO weather codes (`95, 96, 99 -> THUNDERSTORM`), EMV tag ranges,
+#    HTTP statuses. The `when` arm already names the number; a constant would say it twice.
+#  - **Binary format constants, 47** — all of :core:exif. Byte masks, `shr 8/16/24` bit positions,
+#    and MinimalExif's hand-built EXIF header, where every byte of the format is a finding.
+#  - **@Preview sample data, 36** — which this file's own conventions exempt outright.
+#
+# What is left is mostly self-evident geometry — `degrees % 360.0`, `/ 90.0` — and `spacing / 4`,
+# the derived-spacing idiom CLAUDE.md recommends by name. A rule whose output is four fifths things
+# that must not change is not a rule that is teaching anything.
 #
 # UnusedImports / UnusedParameter / UnusedPrivateProperty / UnusedPrivateMember: plain dead-code
 # hygiene, near-zero false-positive risk. UnusedPrivateMember stands in for "unused private
@@ -167,7 +181,7 @@ comments:
 style:
   active: true
   MagicNumber:
-    active: true
+    active: false
   UnusedImports:
     active: true
   UnusedParameter:

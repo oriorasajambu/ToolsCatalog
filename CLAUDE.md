@@ -147,17 +147,26 @@ enforces a convention this file already states in prose: `ElseCaseInsteadOfExhau
 MVI contract's exhaustive `when`s, `TooGenericExceptionCaught` and `SuspendFunSwallowedCancellation`
 for the `safeCall` `CancellationException`-first rule, `InjectDispatcher` for `:core:common`'s
 dispatcher qualifiers, `GlobalCoroutineUsage` against unstructured concurrency, `NotImplementedDeclaration`
-against a scaffolded feature's `TODO()` surviving to merge, `EmptyCatchBlock` against silently
-swallowing what the `DomainError` pipeline exists to surface, and `MagicNumber`. The rest —
+against a scaffolded feature's `TODO()` surviving to merge, and `EmptyCatchBlock` against silently
+swallowing what the `DomainError` pipeline exists to surface. The rest —
 `UnsafeCallOnNullableType`/`UnsafeCast`, `SleepInsteadOfDelay`/`RedundantSuspendModifier`, the dead-code
 group (`UnusedImports`/`UnusedParameter`/`UnusedPrivateProperty`/`UnusedPrivateMember`/`WildcardImport`),
-`VarCouldBeVal`/`UseDataClass`, the complexity ceiling (`LongMethod`/`LongParameterList`/
+`VarCouldBeVal`, the complexity ceiling (`LongMethod`/`LongParameterList`/
 `CyclomaticComplexMethod`/`NestedBlockDepth`), the allocation-hygiene set (`SpreadOperator`/
 `ForEachOnRange`/`CouldBeSequence`), and the public-API doc guard (`UndocumentedPublicClass`/
 `UndocumentedPublicFunction`) — round out the same idea: general-purpose, low-noise rules rather
 than project-specific ones. Add to the set the same way: a rule earns its place by encoding
 something already true of the codebase or by being a cheap, high-confidence catch, not because it
 is a detekt default.
+
+**Two rules were tried and removed, which is the same bar working in the other direction.**
+`UseDataClass` produced six findings and no true positive (see the `detekt.yml` comment).
+`MagicNumber` produced 230, of which the palette in `Color.kt` (53, where the hex *is* the colour
+definition), spec-defined codes like the WMO table (~35, where the `when` arm already names the
+number), `:core:exif`'s byte masks and bit positions (47), and `@Preview` sample data (36) are all
+things that must not change — while `:core:emv`, `:core:gnss` and `:core:sound`, the modules it was
+turned on for, produced 18 between them. Removing a rule needs the same kind of evidence as adding
+one; both removals record theirs in `detekt.yml`.
 
 `check` depends on the `detekt` task the same way it depends on the androidTest-compile guard
 above — a finding fails the build rather than sitting in a report nobody opens.
