@@ -130,6 +130,14 @@ rather than requested per module — the same pattern `minion.android.library.co
 Showkase. One config file, `config/detekt/detekt.yml`, governs every module; a rule that means
 something different in `:core:gnss` than in `:feature:qrscan` is a rule that should not exist yet.
 
+detekt reads `src/main` only, and skips `**/vendor/**`. Both exclusions are in
+`minion.detekt.gradle.kts` rather than the config file, because they are about which code is in
+scope at all rather than which rules apply to it. A test's backtick name is its documentation, so
+the doc guards fire on every `@Test` in the repo while saying nothing useful; and the PaddleOCR
+sources under `:feature:ocr` are vendored, where restyling to house conventions is what turns the
+next re-vendor into a merge conflict. Together they account for roughly four fifths of what detekt
+reported before they were added.
+
 `buildUponDefaultConfig` is `false`: detekt ships roughly 150 rules active out of the box, and
 turning all of them on at once against a codebase that has never run it would produce a wall of
 unreviewed findings rather than a usable first pass. Only the rules `detekt.yml` lists explicitly
