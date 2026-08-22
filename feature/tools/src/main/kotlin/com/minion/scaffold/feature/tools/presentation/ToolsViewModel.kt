@@ -42,6 +42,10 @@ internal class ToolsViewModel @Inject constructor(
             is ToolsIntent.ToolSelected -> viewModelScope.launch {
                 emitEffect(ToolsEffect.OpenTool(intent.tool.route))
             }
+
+            ToolsIntent.WidgetSettingsSelected -> viewModelScope.launch {
+                emitEffect(ToolsEffect.OpenWidgetSettings)
+            }
         }
     }
 }

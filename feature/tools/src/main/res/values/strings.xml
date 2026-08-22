@@ -21,4 +21,28 @@
     <!-- Home — section headers -->
     <string name="tools_section_create">CREATE</string>
     <string name="tools_section_utilities">UTILITIES</string>
+
+    <!-- Widget configuration screen -->
+    <string name="tools_widget_settings_title">Quick access widget</string>
+    <string name="tools_widget_settings_subtitle">Choose up to %1$d tools. Drag to reorder.</string>
+    <string name="tools_widget_section_pinned">ON THE WIDGET</string>
+    <string name="tools_widget_section_all">ALL TOOLS</string>
+
+    <!-- The counter, e.g. "3/5". A template rather than interpolation: the separator is
+         translatable and so is the way the pair is ordered. -->
+    <string name="tools_widget_count">%1$d/%2$d</string>
+
+    <string name="tools_widget_unavailable">Currently unavailable</string>
+    <string name="tools_widget_cap_reached">The widget holds %1$d tools. Remove one to add another.</string>
+    <string name="tools_widget_empty">No tools pinned. The widget will prompt you to choose some.</string>
+
+    <string name="tools_widget_add_to_home">Add to home screen</string>
+    <string name="tools_widget_navigate_back">Back</string>
+
+    <!-- Drag handle. The content description names the tool so a screen reader user knows which
+         row the move actions below belong to. -->
+    <string name="tools_widget_drag_handle">Reorder %1$s</string>
+    <string name="tools_widget_move_up">Move up</string>
+    <string name="tools_widget_move_down">Move down</string>
+    <string name="tools_widget_settings_action">Configure the quick access widget</string>
 </resources>

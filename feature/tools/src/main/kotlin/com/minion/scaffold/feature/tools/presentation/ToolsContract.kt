@@ -63,6 +63,9 @@ internal sealed interface ToolsIntent : UiIntent {
      * @property tool The tool the user selected.
      */
     data class ToolSelected(val tool: ToolDescriptor) : ToolsIntent
+
+    /** The widgets button in the header was tapped. */
+    data object WidgetSettingsSelected : ToolsIntent
 }
 
 /** One-shot events from the home screen. */
@@ -77,4 +80,12 @@ internal sealed interface ToolsEffect : UiEffect {
      * @property route The route of the selected tool.
      */
     data class OpenTool(val route: AppRoute) : ToolsEffect
+
+    /**
+     * Open the widget configuration screen.
+     *
+     * Its own effect rather than an [OpenTool] carrying `WidgetSettingsRoute`: that route is not a
+     * tool, and folding it in would put something in the effect that is not in the catalog.
+     */
+    data object OpenWidgetSettings : ToolsEffect
 }

@@ -318,3 +318,16 @@ data object WeatherSearchRoute : AppRoute
 /** The weather tool's own settings — the metric/imperial toggle. */
 @Serializable
 data object WeatherSettingsRoute : AppRoute
+
+/**
+ * Which tools sit on the home-screen widget, and in what order.
+ *
+ * A `data object`: the list it edits is global rather than per widget instance, so there is
+ * nothing to identify and no argument to carry.
+ *
+ * Registered by `:feature:tools` rather than `:feature:widget`, even though it configures the
+ * widget. It edits the tool catalog, the home screen already owns that, and the widget module has
+ * no screens at all — the two share what they need through `:core:data`.
+ */
+@Serializable
+data object WidgetSettingsRoute : AppRoute

@@ -18,15 +18,18 @@ import com.minion.scaffold.core.navigation.ToolsRoute
  * lambda leaves the brand tile decorative, so a developer tool cannot ship as a visible control.
  *
  * @param onOpenTool Called with the route of the tool the user selected.
+ * @param onOpenWidgetSettings Called when the header's widgets button is tapped.
  * @param onOpenComponentCatalog Called when the brand tile is tapped, or null where no catalog exists.
  */
 fun NavGraphBuilder.toolsScreen(
     onOpenTool: (AppRoute) -> Unit,
+    onOpenWidgetSettings: () -> Unit,
     onOpenComponentCatalog: (() -> Unit)? = null,
 ) {
     composable<ToolsRoute> {
         ToolsScreen(
             onOpenTool = onOpenTool,
+            onOpenWidgetSettings = onOpenWidgetSettings,
             onOpenComponentCatalog = onOpenComponentCatalog,
         )
     }

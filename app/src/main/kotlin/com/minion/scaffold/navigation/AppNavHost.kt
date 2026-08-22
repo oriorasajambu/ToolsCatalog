@@ -38,8 +38,10 @@ import com.minion.scaffold.feature.soundmeter.presentation.soundMeterSettingsScr
 import com.minion.scaffold.feature.texttools.presentation.generateScreen
 import com.minion.scaffold.feature.texttools.presentation.textToolsScreen
 import com.minion.scaffold.feature.tools.presentation.toolsScreen
+import com.minion.scaffold.feature.tools.presentation.widget.widgetSettingsScreen
 import com.minion.scaffold.feature.weather.presentation.weatherScreen
 import com.minion.scaffold.core.navigation.AppRoute
+import com.minion.scaffold.core.navigation.WidgetSettingsRoute
 import com.minion.scaffold.showkase.ComponentCatalog
 
 /**
@@ -112,8 +114,12 @@ fun AppNavHost(
         // feature owns that route, so adding a tool does not touch this file.
         toolsScreen(
             onOpenTool = { route -> navController.navigate(route) },
+            onOpenWidgetSettings = { navController.navigate(WidgetSettingsRoute) },
             onOpenComponentCatalog = openComponentCatalog,
         )
+        // Configures the home-screen widget, but registered by :feature:tools: it edits the tool
+        // catalog, and :feature:widget draws no screens at all.
+        widgetSettingsScreen(onNavigateBack = { navController.popBackStack() })
         // The scanner reports a payload the user wants to change; :app is the only place that
         // knows the editor exists, so neither feature learns about the other.
         qrScanScreen(
