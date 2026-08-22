@@ -27,6 +27,9 @@ plugins {
     // the google-services plugin above to have run first.
     id("com.google.firebase.crashlytics")
     id("minion.detekt")
+    // Applied here rather than by the library conventions on purpose: git hooks belong to the
+    // checkout, not to a module, and this is the one convention exactly one module applies.
+    id("minion.githooks")
 }
 
 // Precompiled script plugins get no type-safe `libs` accessor, so the catalog is resolved by hand.

@@ -23,3 +23,9 @@ feature/ocr/src/main/assets/ocr/ppocrv5/*.onnx filter=lfs diff=lfs merge=lfs -te
 # byte-identical to what was published — otherwise the file on disk no longer matches the SHA-256
 # it is documented by, and every entry carries a trailing carriage return.
 feature/ocr/src/main/assets/ocr/ppocrv5/ppocrv5_dict.txt -text
+
+# The pre-push hook is a shell script, and `* text=auto` above would hand a Windows checkout CRLF
+# line endings. A shell script with CRLF fails on Linux and macOS with a "bad interpreter" error
+# naming a command that plainly exists, which is a confusing way to discover a line-ending rule.
+# Pinned to LF everywhere, on every platform.
+.githooks/** text eol=lf

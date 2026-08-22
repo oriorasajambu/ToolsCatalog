@@ -48,6 +48,54 @@ First-time setup: copy `keystore.properties.template` → `keystore.properties` 
 need real values; the repo builds without them (unsigned release, template `BASE_URL`).
 `git clone` needs **git-lfs** — see *Things that will bite you*.
 
+## Branch naming
+
+`<type>/<kebab-subject>`, where the type is one the commit messages already use — so there is one
+vocabulary rather than two, and `git log --grep` and `git branch` answer with the same words:
+
+```
+feat/quick-access-widget          fix/widget-pending-intent-identifier
+build/detekt-baseline             docs/claude-md-widget
+refactor/tool-catalog-extraction  chore/gitattributes-text-auto
+```
+
+`feat` `fix` `build` `docs` `refactor` `perf` `chore`, plus `claude` for the agent tooling's own
+generated names. **`feat/`, never `feature/`** — the repo has both in its history and the shorter
+one matches `feat:` in commits.
+
+**`build/` is the toolchain, not the product.** Anything that changes how the project is built or
+checked rather than what it does when run: `build-logic/`, `config/detekt/`, `gradle/libs.versions.toml`,
+`gradle.properties`, `.gitattributes`, an `abiFilters` change. A `build:` commit may still touch
+Kotlin — clearing a newly-enabled detekt rule edits source — and it is still `build:`, because the
+reason the source changed came from the toolchain. If the change alters behaviour a user could
+notice, it is `feat:`/`fix:` no matter which file it lives in.
+
+**Name the subject, not the act.** `feat/quick-access-widget`, not `feat/add-widget`: the type
+already says it is an addition, so repeating it spends the useful half of the name.
+
+**A name that wants "and" in it is telling you it is two branches.** The quick-access widget landed
+alongside an unrelated detekt pass as one 130-file pull request, which was harder to review than
+two would have been.
+
+Enforced by `.githooks/pre-push`, which is tracked rather than left in `.git/hooks` — git does not
+version that directory, so a hook only one machine has is a rule nobody else is held to. A tracked
+hook still does nothing until `core.hooksPath` names its directory, so `:app:installGitHooks` sets
+it and `check` depends on that task: the first `./gradlew build` in a fresh clone installs the
+hooks, the same way `check` already enforces detekt.
+
+It is applied by `minion.android.application` alone rather than by the library conventions. Git
+hooks belong to the checkout, not to a module, and `:app` is built by every full build — the cost
+is that `./gradlew :core:emv:test` on its own will not install them, and the next full build will.
+Run `./gradlew installGitHooks` to do it directly.
+
+The task has no declared output and runs on every `check`. A marker file would let Gradle skip it,
+but the state it asserts lives in `.git/config`, where a developer can unset it and a stale marker
+would then be a confident lie. A `git config` call costs milliseconds; being wrong about whether
+the hooks are installed costs a pushed branch that should have been refused.
+
+Protected names (`master`, `main`), tag pushes and branch deletions all pass through, and
+`git push --no-verify` overrides it for a genuine one-off.
+
 ## Module graph
 
 ```
@@ -116,12 +164,13 @@ files apply exactly one plugin and set a namespace; everything else is centraliz
 
 | Plugin | Applies to | Provides |
 |---|---|---|
-| `minion.android.application` | `:app` | Android app plugin, SDK levels, desugaring, Compose, Hilt, Showkase, Firebase, test wiring |
+| `minion.android.application` | `:app` | Android app plugin, SDK levels, desugaring, Compose, Hilt, Showkase, Firebase, test wiring, git hooks |
 | `minion.android.library` | Android library modules | same, minus Compose, plus the androidTest-compile guard |
 | `minion.android.library.compose` | modules that draw | Compose BOM + bundles, Showkase processor |
 | `minion.android.hilt` | data-layer modules | Hilt + KSP without Compose |
 | `minion.android.feature` | every `:feature:*` | Compose + Hilt + navigation + the core modules a feature may see |
 | `minion.jvm.library` | pure-Kotlin modules | `kotlin-jvm` only, no Android plugin |
+| `minion.githooks` | `:app` only, via the application convention | `installGitHooks`, wired into `check` — see *Branch naming* |
 
 `minion.android.feature` grants a feature `:core:common`, `:core:domain`, `:core:navigation`,
 `:core:designsystem`, `:core:ui`, `:core:network` and (as `testImplementation`) `:core:testing`.

@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+# Rejects a push whose branch name does not match the convention in CLAUDE.md.
+#
+# Tracked in the repo rather than left in .git/hooks, which git does not version — a hook only
+# one machine has is a convention nobody else is held to. It costs one opt-in per clone:
+#
+#     git config core.hooksPath .githooks
+#
+# Without that line this file is inert, so a fresh clone pushes unchecked until someone runs it.
+# That is the trade for not rewriting a developer's git config behind their back.
+#
+# Bypass for a genuine one-off with `git push --no-verify`.
+
+set -eu
+
+# refs/heads/<name> for a branch; anything else (a tag, a note) is not ours to judge.
+BRANCH_REF_PREFIX='refs/heads/'
+
+# The commit types this repo already uses, so branches and commits share one vocabulary rather
+# than two — see the `feat:`/`fix:`/`build:` split in `git log`. `claude` is here because the
+# agent tooling generates those names; rejecting them would break a workflow this repo relies on.
+ALLOWED='feat|fix|build|docs|refactor|perf|chore|claude'
+
+# Long-lived branches nobody names by the convention.
+PROTECTED='master|main'
+
+status=0
+
+# stdin: <local ref> <local sha> <remote ref> <remote sha>, one line per ref being pushed.
+while read -r _local_ref local_sha remote_ref _remote_sha; do
+    # A deletion pushes the zero sha and creates no branch to name.
+    case "$local_sha" in
+        *[!0]*) ;;
+        *) continue ;;
+    esac
+
+    # The *remote* ref, deliberately, not the local one. `git push origin HEAD:refs/heads/wip`
+    # has a local ref of "HEAD", so checking that side lets an explicit refspec walk straight
+    # past the rule. What lands on the remote is what the convention is about.
+    case "$remote_ref" in
+        "$BRANCH_REF_PREFIX"*) branch=${remote_ref#"$BRANCH_REF_PREFIX"} ;;
+        *) continue ;;
+    esac
+
+    if printf '%s' "$branch" | grep -Eq "^($PROTECTED)$"; then
+        continue
+    fi
+
+    if printf '%s' "$branch" | grep -Eq "^($ALLOWED)/[a-z0-9][a-z0-9-]*$"; then
+        continue
+    fi
+
+    printf '\n  Refusing to push "%s".\n\n' "$branch" >&2
+    printf '  Branch names are <type>/<kebab-subject>, using the same types as commit\n' >&2
+    printf '  messages so there is one vocabulary rather than two:\n\n' >&2
+    printf '      feat/quick-access-widget\n' >&2
+    printf '      fix/widget-pending-intent-identifier\n' >&2
+    printf '      build/detekt-baseline\n' >&2
+    printf '      docs/claude-md-widget\n\n' >&2
+    printf '  Types: %s\n' "$(printf '%s' "$ALLOWED" | tr '|' ' ')" >&2
+    printf '  Subject: lowercase, digits and hyphens, naming the thing rather than the act.\n\n' >&2
+    printf '  Rename with:  git branch -m <new-name>\n' >&2
+    printf '  Override once with:  git push --no-verify\n\n' >&2
+
+    status=1
+done
+
+exit $status
