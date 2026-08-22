@@ -78,16 +78,23 @@ alongside an unrelated detekt pass as one 130-file pull request, which was harde
 two would have been.
 
 Enforced by `.githooks/pre-push`, which is tracked rather than left in `.git/hooks` — git does not
-version that directory, so a hook only one machine has is a rule nobody else is held to. It needs
-one opt-in per clone:
+version that directory, so a hook only one machine has is a rule nobody else is held to. A tracked
+hook still does nothing until `core.hooksPath` names its directory, so `:app:installGitHooks` sets
+it and `check` depends on that task: the first `./gradlew build` in a fresh clone installs the
+hooks, the same way `check` already enforces detekt.
 
-```bash
-git config core.hooksPath .githooks
-```
+It is applied by `minion.android.application` alone rather than by the library conventions. Git
+hooks belong to the checkout, not to a module, and `:app` is built by every full build — the cost
+is that `./gradlew :core:emv:test` on its own will not install them, and the next full build will.
+Run `./gradlew installGitHooks` to do it directly.
 
-Until that is run the hook is inert, which is the deliberate trade for not rewriting a developer's
-git config behind their back. Protected names (`master`, `main`), tag pushes and branch deletions
-are all passed through, and `git push --no-verify` overrides it for a genuine one-off.
+The task has no declared output and runs on every `check`. A marker file would let Gradle skip it,
+but the state it asserts lives in `.git/config`, where a developer can unset it and a stale marker
+would then be a confident lie. A `git config` call costs milliseconds; being wrong about whether
+the hooks are installed costs a pushed branch that should have been refused.
+
+Protected names (`master`, `main`), tag pushes and branch deletions all pass through, and
+`git push --no-verify` overrides it for a genuine one-off.
 
 ## Module graph
 
@@ -157,12 +164,13 @@ files apply exactly one plugin and set a namespace; everything else is centraliz
 
 | Plugin | Applies to | Provides |
 |---|---|---|
-| `minion.android.application` | `:app` | Android app plugin, SDK levels, desugaring, Compose, Hilt, Showkase, Firebase, test wiring |
+| `minion.android.application` | `:app` | Android app plugin, SDK levels, desugaring, Compose, Hilt, Showkase, Firebase, test wiring, git hooks |
 | `minion.android.library` | Android library modules | same, minus Compose, plus the androidTest-compile guard |
 | `minion.android.library.compose` | modules that draw | Compose BOM + bundles, Showkase processor |
 | `minion.android.hilt` | data-layer modules | Hilt + KSP without Compose |
 | `minion.android.feature` | every `:feature:*` | Compose + Hilt + navigation + the core modules a feature may see |
 | `minion.jvm.library` | pure-Kotlin modules | `kotlin-jvm` only, no Android plugin |
+| `minion.githooks` | `:app` only, via the application convention | `installGitHooks`, wired into `check` — see *Branch naming* |
 
 `minion.android.feature` grants a feature `:core:common`, `:core:domain`, `:core:navigation`,
 `:core:designsystem`, `:core:ui`, `:core:network` and (as `testImplementation`) `:core:testing`.
