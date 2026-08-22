@@ -28,6 +28,10 @@ import kotlin.coroutines.cancellation.CancellationException
  * @return [AppResult.Success] with [block]'s result, or [AppResult.Failure] with the mapped
  *         [com.minion.scaffold.core.common.error.DomainError]. Rethrows [CancellationException].
  */
+// The broad catch is the point: this is the exception boundary the whole DomainError pipeline
+// hangs off, and the CancellationException rethrow above it is the safeguard the rule exists to
+// ask for. Anything narrower here would let an unmapped failure reach a screen as a crash.
+@Suppress("TooGenericExceptionCaught")
 suspend fun <T> safeCall(block: suspend () -> T): AppResult<T> =
     try {
         AppResult.Success(block())
