@@ -13,7 +13,8 @@ import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
-import androidx.glance.LocalSize
+// Parked with the tile labels, which were the only reader of the widget's measured size.
+// import androidx.glance.LocalSize
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
@@ -57,15 +58,22 @@ private val COMPACT_SIZE = DpSize(250.dp, 50.dp)
  */
 private val REGULAR_SIZE = DpSize(250.dp, 70.dp)
 
-/**
- * The narrowest a tile can be and still say something with its label.
- *
- * Height alone was the wrong test. Five tiles across four cells gives each about 50dp, where three
- * of them truncated to the identical "Crea..." — a label that costs a line of height and
- * distinguishes nothing. At four tiles the same strip has room for "Scan QR" in full, so the
- * decision belongs to the width each tile actually gets rather than to the widget's height.
- */
-private val MIN_LABEL_TILE_WIDTH = 60.dp
+// ---------------------------------------------------------------------------------------------
+// Tile labels are parked, not deleted. Icon-only for now, while what a widget tile should be
+// labelled with is settled properly.
+//
+// What was here worked: labels appeared at three or four tools and dropped at five, tested on the
+// width each tile actually gets rather than on the widget's height — five across four cells gives
+// each about 50dp, where three of them truncated to the identical "Crea...". Restoring it is
+// uncommenting this block, the two lines in QuickAccessStrip, the `showLabel` parameter, and the
+// `if (showLabel)` body in ToolTile.
+//
+// The content description is deliberately *not* part of this. Icon-only is a visual decision and
+// never a semantic one: a TalkBack user still hears every tool's name, and an unavailable tile
+// still says so.
+//
+// private val MIN_LABEL_TILE_WIDTH = 60.dp
+// ---------------------------------------------------------------------------------------------
 
 /**
  * A strip of up to five tools, straight onto the home screen.
@@ -125,12 +133,10 @@ internal class QuickAccessWidget : GlanceAppWidget() {
 private fun QuickAccessStrip(tools: List<PinnedTool>, intents: WidgetLaunchIntentFactory) {
     val context = LocalContext.current
 
-    // Both conditions, and the width one is per tile: the strip divides whatever width it has
-    // between however many tools are pinned, so the same widget shows labels at four and drops
-    // them at five.
-    val size = LocalSize.current
-    val showLabels = size.height >= REGULAR_SIZE.height &&
-        (size.width / tools.size.coerceAtLeast(1)) >= MIN_LABEL_TILE_WIDTH
+    // Parked with the labels — see the note above MIN_LABEL_TILE_WIDTH.
+    // val size = LocalSize.current
+    // val showLabels = size.height >= REGULAR_SIZE.height &&
+    //     (size.width / tools.size.coerceAtLeast(1)) >= MIN_LABEL_TILE_WIDTH
 
     Row(
         modifier = GlanceModifier
@@ -158,7 +164,7 @@ private fun QuickAccessStrip(tools: List<PinnedTool>, intents: WidgetLaunchInten
                 modifier = GlanceModifier.defaultWeight(),
                 tool = tool,
                 label = context.getString(tool.descriptor.titleRes),
-                showLabel = showLabels,
+                // showLabel = showLabels,
                 // A withheld tool resolves to the tools home rather than to nothing: a greyed tile
                 // that does nothing at all reads as a broken widget.
                 intent = intents.intentFor(tool.descriptor.id.takeIf { tool.isAvailable }),
@@ -184,7 +190,7 @@ private fun ToolTile(
     tool: PinnedTool,
     label: String,
     intent: Intent,
-    showLabel: Boolean,
+    // showLabel: Boolean,
     modifier: GlanceModifier = GlanceModifier,
 ) {
     val context = LocalContext.current
@@ -213,14 +219,14 @@ private fun ToolTile(
             modifier = GlanceModifier.size(R.dimen.widget_icon_size),
         )
 
-        if (showLabel) {
-            Spacer(GlanceModifier.size(R.dimen.widget_icon_label_gap))
-            Text(
-                text = label,
-                maxLines = 1,
-                style = TextStyle(color = colour, textAlign = TextAlign.Center),
-            )
-        }
+        // if (showLabel) {
+        //     Spacer(GlanceModifier.size(R.dimen.widget_icon_label_gap))
+        //     Text(
+        //         text = label,
+        //         maxLines = 1,
+        //         style = TextStyle(color = colour, textAlign = TextAlign.Center),
+        //     )
+        // }
     }
 }
 
