@@ -281,19 +281,7 @@ private fun SoundMeterContent(
                 weighting = chrome.weighting,
             )
 
-            MeterControls(
-                weighting = chrome.weighting,
-                timeWeighting = chrome.timeWeighting,
-                measuring = chrome.measuring,
-                canMeasure = chrome.canMeasure,
-                hasSummary = chrome.hasSummary,
-                onWeightingChange = { onIntent(SoundMeterIntent.WeightingChanged(it)) },
-                onTimeWeightingChange = { onIntent(SoundMeterIntent.TimeWeightingChanged(it)) },
-                onStart = { onIntent(SoundMeterIntent.StartPressed) },
-                onStop = { onIntent(SoundMeterIntent.StopPressed) },
-                onReset = { onIntent(SoundMeterIntent.ResetPressed) },
-                onCopy = { onIntent(SoundMeterIntent.CopySummaryRequested) },
-            )
+            MeterControls(chrome = chrome, onIntent = onIntent)
         }
     }
 }

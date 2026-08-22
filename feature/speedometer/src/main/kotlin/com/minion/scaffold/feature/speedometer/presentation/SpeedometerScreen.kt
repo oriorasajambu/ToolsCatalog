@@ -263,12 +263,9 @@ private fun SpeedometerContent(
             verticalArrangement = Arrangement.spacedBy(spacing),
         ) {
             LocationGate(
-                access = chrome.access,
-                providerEnabled = chrome.providerEnabled,
-                onRequest = onRequestPermission,
-                onRequestPrecise = onRequestPermission,
-                onOpenAppSettings = { onIntent(SpeedometerIntent.AppSettingsRequested) },
-                onOpenLocationSettings = { onIntent(SpeedometerIntent.LocationSettingsRequested) },
+                chrome = chrome,
+                onRequestPermission = onRequestPermission,
+                onIntent = onIntent,
             )
 
             if (chrome.mocked) {
@@ -286,26 +283,10 @@ private fun SpeedometerContent(
             if (live == null) {
                 SearchingCard(chrome)
             } else {
-                PositionPanel(
-                    reading = live,
-                    distanceUnit = chrome.distanceUnit,
-                    coordinateFormat = chrome.coordinateFormat,
-                    rateOfClimbMetersPerMinute = chrome.rateOfClimbMetersPerMinute,
-                    onCopy = { onIntent(SpeedometerIntent.CopyCoordinatesRequested) },
-                    onOpenInMaps = { onIntent(SpeedometerIntent.OpenInMapsRequested) },
-                )
+                PositionPanel(reading = live, chrome = chrome, onIntent = onIntent)
             }
 
-            TripPanel(
-                trip = chrome.trip,
-                measuring = chrome.measuring,
-                speedUnit = chrome.speedUnit,
-                distanceUnit = chrome.distanceUnit,
-                onStart = { onIntent(SpeedometerIntent.StartPressed) },
-                onStop = { onIntent(SpeedometerIntent.StopPressed) },
-                onReset = { onIntent(SpeedometerIntent.ResetPressed) },
-                enabled = chrome.canMeasure,
-            )
+            TripPanel(chrome = chrome, onIntent = onIntent)
         }
     }
 }
