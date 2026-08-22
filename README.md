@@ -5,8 +5,10 @@ An opinionated, buildable starting point for Android apps: **Kotlin**, **Jetpack
 the build rather than by code review.
 
 The scaffold now carries a worked example — **ToolBox**, a small offline utility app: scan and build
-EMV / Wi-Fi / link / vCard QR codes, text and generator tools, an on-device image-to-text reader,
-and a weather tool, assembled entirely with the conventions below. Weather is the one deliberate
+EMV / Wi-Fi / link / vCard QR codes, text and generator tools, an on-device image-to-text reader, a
+weather tool, and four sensor-driven instruments — a bubble level, a sound-level meter, a GPS
+speedometer and an EXIF stripper. A home-screen App Widget holds up to five of those tools and
+launches straight into them. All of it is assembled with the conventions below. Weather is the one deliberate
 exception to the offline positioning — see [§1.1](#11-the-one-online-feature-weather) — everything
 else works with no network at all, including the OCR, which runs its models locally
 ([§1.2](#12-on-device-machine-learning-ocr)). Clone it, rename the package, drop the `feature/*` you
@@ -28,6 +30,8 @@ do not want, and run `scripts/scaffold_feature.py` to generate the next vertical
 - **Persistence** — Room, where a feature needs an offline cache (first used by `:feature:weather`); DataStore for per-feature preferences
 - **On-device ML** — ML Kit (bundled models) and ONNX Runtime, behind one swappable interface
 - **Build** — `development`/`production` flavors × `debug`/`release`; environment and signing read from gitignored properties files; R8 on release
+- **Static analysis** — detekt, one config for every module, wired into `check` so a finding fails the build ([§2](#2-convention-plugins))
+- **Widgets** — Glance, with a colour bridge so the home-screen widget and the app cannot drift apart
 - **Testing** — JUnit + MockK + Turbine, with a shared `MainDispatcherRule`
 - **Previews** — Showkase, aggregating every `@Preview` into a browsable catalog
 
@@ -49,7 +53,12 @@ do not want, and run `scripts/scaffold_feature.py` to generate the next vertical
 │                        coordinate transform, optional still capture. Extracted from
 │                        :feature:qrscan once :feature:ocr became a second consumer.
 ├── :core:network        Shared OkHttp/Retrofit, safeCall, error mapping.
-├── :core:data           Data shared between features (not a feature's own data layer).
+├── :core:data           Data shared between features (not a feature's own data layer). Holds the
+│                        widget's pinned-tool model and reconcile — two features need them and
+│                        neither may depend on the other, which is the promotion rule in action.
+├── :core:toolcatalog    The tool table every surface reads: ToolDescriptor, ToolCategory,
+│                        ToolCatalog and the tool icons. Android rather than pure Kotlin, because
+│                        an entry carries an ImageVector, a @DrawableRes and two @StringRes.
 ├── :core:testing        MainDispatcherRule, fakes. Consumed via testImplementation.
 │
 ├── :core:emv            Pure Kotlin. EMV Merchant-Presented-Mode QR domain — parse and build.
@@ -62,11 +71,26 @@ do not want, and run `scripts/scaffold_feature.py` to generate the next vertical
 │                        Retrofit API and a Room cache for (see §1.1).
 ├── :core:ocr            Pure Kotlin. Reading-order reconstruction, line→block grouping, the
 │                        OcrEngine choice — the geometry, with none of the ML (see §1.2).
+├── :core:level          Pure Kotlin. Tilt geometry, pose machine, gravity smoothing, flip
+│                        calibration.
+├── :core:sound          Pure Kotlin. A/C/Z weighting filters, time weighting, the Leq accumulator.
+├── :core:gnss           Pure Kotlin. EGM96 geoid → height above sea level, speed and zero-speed
+│                        rules, trip accumulators.
+├── :core:exif           Pure Kotlin. JPEG/PNG/WebP container surgery — returns byte-range strip
+│                        plans and never touches a file itself.
 │
-└── :feature:*           tools, qrscan, qrcreate, texttools, weather, ocr — one module per screen
-                         area. (The domain lives in the pure-Kotlin :core:* modules above; add more
-                         with scripts/scaffold_feature.py.)
+└── :feature:*           tools, qrscan, qrcreate, texttools, weather, ocr, level, soundmeter,
+                         speedometer, exifstrip — one module per screen area — plus widget, which
+                         draws no screen at all: it owns a manifest receiver, a provider XML and a
+                         DataStore, and `:app` is supposed to hold nothing but wiring. (The domain
+                         lives in the pure-Kotlin :core:* modules above; add more with
+                         scripts/scaffold_feature.py.)
 ```
+
+The four sensor modules are pure Kotlin for one reason: a level, a sound meter and a speedometer
+have no visible ground truth on a phone, so the only way to know the maths is right is to prove it
+against synthesised input in a JVM test. `import android.*` is a compile error there, not a review
+comment.
 
 ### 1.1 The one online feature: weather
 
@@ -202,12 +226,55 @@ growing without any of them drifting apart.
 | `minion.android.hilt` | data-layer modules | Hilt + KSP, without dragging in Compose |
 | `minion.android.feature` | every `:feature:*` | Compose + Hilt + navigation + the core modules a feature may see |
 | `minion.jvm.library` | pure-Kotlin modules | `kotlin-jvm` only — deliberately no Android plugin |
+| `minion.detekt` | applied by the three base conventions | detekt with one shared config, wired into `check` |
+| `minion.githooks` | `:app`, via the application convention | `installGitHooks`, wired into `check` |
 
 `check` depends on `compileDebugAndroidTestKotlin` on purpose. Neither `testDebugUnitTest` nor
 `assembleDebug` builds `androidTest` sources, so they can stop compiling with a green board and
 nobody finds out for weeks.
 
 Dependency versions live in `gradle/libs.versions.toml`, shared by both builds.
+
+### Static analysis
+
+detekt rides along on the three base conventions rather than being requested per module, the same
+way Showkase rides along on the compose one. One config file, `config/detekt/detekt.yml`, governs
+everything: a rule that means something different in `:core:gnss` than in `:feature:qrscan` is a
+rule that should not exist yet.
+
+`buildUponDefaultConfig` is `false`. detekt ships around 150 rules active by default, and turning
+all of them on against a codebase that has never run it produces a wall of unreviewed findings
+rather than a usable first pass. Only the rules the config names are active, and each is there
+because it mechanically enforces something this README already argues for in prose — the exhaustive
+`when` of the MVI contract, the `CancellationException`-first rule in `safeCall`, the dispatcher
+qualifiers in `:core:common`.
+
+Two rules were tried and removed, which is the same bar working in the other direction. `UseDataClass`
+produced six findings and no true positive — every one was a class that must *not* be a data class,
+four of them holding an array where a generated `equals` compares references while reading like it
+compares content. `MagicNumber` produced 230, of which the palette (where the hex *is* the colour),
+spec-defined tables like the WMO codes, `:core:exif`'s byte masks and `@Preview` sample data are all
+things that must not change. Removing a rule needs the same kind of evidence as adding one; both
+removals record theirs in `detekt.yml`.
+
+Where a rule is right almost everywhere, it is suppressed at the site with a comment saying why,
+never weakened globally. A raised threshold would cover every case and record none of the reasons.
+
+### Branch naming
+
+`<type>/<kebab-subject>`, where the type is one the commit messages already use — `feat` `fix`
+`build` `docs` `refactor` `perf` `chore`, plus `claude` for agent-generated names:
+
+```
+feat/quick-access-widget          build/detekt-baseline
+fix/widget-pending-intent-identifier    docs/claude-md-widget
+```
+
+Enforced by `.githooks/pre-push`, which is tracked because git does not version `.git/hooks` — a
+hook one machine has is a rule nobody else is held to. A tracked hook still does nothing until
+`core.hooksPath` names its directory, so `:app:installGitHooks` sets it and `check` depends on that
+task: the first `./gradlew build` in a fresh clone installs the hooks. `master`, tag pushes and
+branch deletions all pass through, and `git push --no-verify` overrides it for a one-off.
 
 Room and KSP are **not** part of any convention plugin — no module used them until
 `:feature:weather`. A feature that needs a local database wires `androidx.room` + `ksp(room-compiler)`
@@ -507,6 +574,17 @@ Everything is under `com.minion.scaffold`. To rebrand:
 - **A clone without `git-lfs` looks like a working checkout.** The OCR models resolve to pointer
   files, PaddleOCR fails to start, and the app falls back to ML Kit with a notice rather than
   announcing that the repository is incomplete.
+- **A `PendingIntent` is matched by `Intent.filterEquals`, which ignores extras.** Component,
+  action, data, categories and identifier are compared; extras are not. The widget's five tiles
+  differ only by a tool-id extra, so they are five *equal* intents, and the system hands every one
+  of them the first `PendingIntent` it made — every tile opens whichever tool was drawn first, with
+  nothing failing to say so. `Intent.setIdentifier` exists for this and has been available since
+  API 29.
+- **Glance is uniform in API surface and not in behaviour.** `cornerRadius` is backed by an API 31+
+  `RemoteViews` call and is a silent no-op below it — square corners, no warning. Below API 31
+  Glance also resolves colours into the `RemoteViews` when it renders, so a placed widget keeps its
+  old palette through a light/dark switch while the app recomposes correctly. Treat any Glance
+  modifier as version-gated until checked.
 - **`abiFilters` in `:app` is app-wide.** It is set to `arm64-v8a` for ONNX Runtime's sake, which
   means an x86 emulator cannot install the app at all — including for features that have nothing to
   do with OCR.
