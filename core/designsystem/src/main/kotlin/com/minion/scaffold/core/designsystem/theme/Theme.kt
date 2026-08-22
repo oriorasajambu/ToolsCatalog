@@ -2,6 +2,7 @@ package com.minion.scaffold.core.designsystem.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -177,6 +178,29 @@ private val SignalTagPalette = TagHighlightPalette(
         SignalTag5, SignalTag6, SignalTag7, SignalTag8,
     ),
 )
+
+/**
+ * The two schemes [AppTheme] installs, for surfaces that cannot call it.
+ *
+ * The home-screen widget is the reason this exists. Glance renders a `RemoteViews` tree outside
+ * any `MaterialTheme`, so it builds its own `ColorProviders` — but from *these* schemes, so the
+ * widget and the app cannot drift apart. Two independently maintained copies of a palette is how
+ * a widget ends up a slightly different shade of the brand than the app it belongs to.
+ *
+ * Exposed as `ColorScheme` rather than as anything Glance-shaped on purpose: this module owns
+ * tokens, and taking a widget toolkit onto its classpath would put Glance on every consumer of the
+ * design system. The conversion belongs to the one module that draws a widget.
+ *
+ * Anything drawing inside the app should read `MaterialTheme.colorScheme` and never touch this.
+ */
+object AppColorSchemes {
+
+    /** Signal — the light direction. */
+    val light: ColorScheme get() = SignalColorScheme
+
+    /** Midnight — the dark direction. */
+    val dark: ColorScheme get() = MidnightColorScheme
+}
 
 /**
  * The single theme wrapper. Everything the app draws sits inside exactly one of these, applied once

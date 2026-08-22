@@ -1,5 +1,6 @@
-package com.minion.scaffold.feature.tools.presentation
+package com.minion.scaffold.core.toolcatalog
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.compose.material.icons.Icons
@@ -33,7 +34,6 @@ import com.minion.scaffold.core.navigation.UrlCreateRoute
 import com.minion.scaffold.core.navigation.VCardCreateRoute
 import com.minion.scaffold.core.navigation.WeatherRoute
 import com.minion.scaffold.core.navigation.WifiCreateRoute
-import com.minion.scaffold.feature.tools.R
 
 /**
  * One entry in the tool catalog.
@@ -47,22 +47,32 @@ import com.minion.scaffold.feature.tools.R
  * resolved then would not follow a locale change.
  *
  * `@Immutable` because [route] is typed as the `AppRoute` interface, which Compose cannot infer
- * stability for. Without the annotation every `Tool` reads as unstable and the whole catalog
- * recomposes whenever anything above it does — the promise is real: nothing here is ever mutated.
+ * stability for. Without the annotation every `ToolDescriptor` reads as unstable and the whole
+ * catalog recomposes whenever anything above it does — the promise is real: nothing here is ever
+ * mutated.
+ *
+ * **Two icon fields, deliberately.** [icon] is what Compose draws on the tools screen;
+ * [widgetIconRes] is the same glyph as a vector drawable, because Glance renders a `RemoteViews`
+ * tree and cannot take an `ImageVector`. The drawables are generated from the same Material
+ * source as the `Icons.Filled.*` values, and each one records that in its own comment. Nothing
+ * enforces that the pair stays in step, which is the cost of the arrangement: change one and the
+ * two surfaces drift without anything failing.
  *
  * @property id             A stable identifier for the tool.
  * @property titleRes       The string resource for the tool's title.
  * @property descriptionRes The string resource for the tool's description.
- * @property icon           The tool's icon.
+ * @property icon           The tool's icon, for Compose surfaces.
+ * @property widgetIconRes  The same glyph as a drawable, for Glance surfaces.
  * @property route          The route that opens the tool.
  * @property category       Which home-screen section the tool belongs to.
  */
 @Immutable
-internal data class Tool(
+data class ToolDescriptor(
     val id: String,
     @param:StringRes val titleRes: Int,
     @param:StringRes val descriptionRes: Int,
     val icon: ImageVector,
+    @param:DrawableRes val widgetIconRes: Int,
     val route: AppRoute,
     val category: ToolCategory,
 )
@@ -74,7 +84,7 @@ internal data class Tool(
  * promotes the primary reader to a hero card, lists the creators, and grids the utilities — the
  * Midnight Pro catalog layout.
  */
-internal enum class ToolCategory {
+enum class ToolCategory {
 
     /** A tool that consumes a code — promoted to the hero card. */
     Reader,
@@ -90,125 +100,140 @@ internal enum class ToolCategory {
  * Every tool the app offers, as it ships in the binary.
  *
  * This is the full list, not the visible one — nothing here consults the remote switches. What the
- * user is actually offered is [ToolsState.tools], which is this list filtered by whatever
+ * user is actually offered is the filtered view each surface builds: the home screen's
+ * `ToolsState.tools`, and the widget's reconciled pinned list. Both filter by whatever
  * `FeatureFlagRepository` last reported.
  *
- * [Tool.id] is doing double duty as of the remote-switch work: it is the key the Firebase console
- * hides a tool by (`feature_<id>_enabled`, hyphens turned to underscores). Renaming an id is
- * therefore a breaking change to a published configuration, not a local rename.
+ * [ToolDescriptor.id] is doing double duty as of the remote-switch work: it is the key the
+ * Firebase console hides a tool by (`feature_<id>_enabled`, hyphens turned to underscores).
+ * Renaming an id is therefore a breaking change to a published configuration, not a local rename.
  */
-internal object ToolCatalog {
+object ToolCatalog {
 
-    val entries: List<Tool> = listOf(
-        Tool(
+    val entries: List<ToolDescriptor> = listOf(
+        ToolDescriptor(
             id = "qr-scan",
             titleRes = R.string.tools_qr_scan_title,
             descriptionRes = R.string.tools_qr_scan_description,
             icon = Icons.Filled.QrCodeScanner,
+            widgetIconRes = R.drawable.ic_tool_qr_scan,
             route = QrScanRoute(ScanPurpose.Inspect),
             category = ToolCategory.Reader,
         ),
-        Tool(
+        ToolDescriptor(
             id = "qr-edit",
             titleRes = R.string.tools_qr_edit_title,
             descriptionRes = R.string.tools_qr_edit_description,
             icon = Icons.Filled.EditNote,
+            widgetIconRes = R.drawable.ic_tool_qr_edit,
             route = QrScanRoute(ScanPurpose.Edit),
             category = ToolCategory.Reader,
         ),
-        Tool(
+        ToolDescriptor(
             id = "qr-create",
             titleRes = R.string.tools_qr_create_title,
             descriptionRes = R.string.tools_qr_create_description,
             icon = Icons.Filled.QrCode2,
+            widgetIconRes = R.drawable.ic_tool_qr_create,
             route = QrCreateRoute(),
             category = ToolCategory.Create,
         ),
-        Tool(
+        ToolDescriptor(
             id = "wifi-create",
             titleRes = R.string.tools_wifi_create_title,
             descriptionRes = R.string.tools_wifi_create_description,
             icon = Icons.Filled.Wifi,
+            widgetIconRes = R.drawable.ic_tool_wifi_create,
             route = WifiCreateRoute(),
             category = ToolCategory.Create,
         ),
-        Tool(
+        ToolDescriptor(
             id = "url-create",
             titleRes = R.string.tools_url_create_title,
             descriptionRes = R.string.tools_url_create_description,
             icon = Icons.Filled.Link,
+            widgetIconRes = R.drawable.ic_tool_url_create,
             route = UrlCreateRoute(),
             category = ToolCategory.Create,
         ),
-        Tool(
+        ToolDescriptor(
             id = "vcard-create",
             titleRes = R.string.tools_vcard_create_title,
             descriptionRes = R.string.tools_vcard_create_description,
             icon = Icons.Filled.ContactPage,
+            widgetIconRes = R.drawable.ic_tool_vcard_create,
             route = VCardCreateRoute(),
             category = ToolCategory.Create,
         ),
-        Tool(
+        ToolDescriptor(
             id = "text-tools",
             titleRes = R.string.tools_text_title,
             descriptionRes = R.string.tools_text_description,
             icon = Icons.Filled.TextFields,
+            widgetIconRes = R.drawable.ic_tool_text_tools,
             route = TextToolsRoute(),
             category = ToolCategory.Utility,
         ),
-        Tool(
+        ToolDescriptor(
             id = "generate",
             titleRes = R.string.tools_generate_title,
             descriptionRes = R.string.tools_generate_description,
             icon = Icons.Filled.Casino,
+            widgetIconRes = R.drawable.ic_tool_generate,
             route = GenerateRoute,
             category = ToolCategory.Utility,
         ),
-        Tool(
+        ToolDescriptor(
             id = "weather",
             titleRes = R.string.tools_weather_title,
             descriptionRes = R.string.tools_weather_description,
             icon = Icons.Filled.WbSunny,
+            widgetIconRes = R.drawable.ic_tool_weather,
             route = WeatherRoute,
             category = ToolCategory.Utility,
         ),
-        Tool(
+        ToolDescriptor(
             id = "level",
             titleRes = R.string.tools_level_title,
             descriptionRes = R.string.tools_level_description,
             icon = Icons.Filled.Architecture,
+            widgetIconRes = R.drawable.ic_tool_level,
             route = LevelRoute,
             category = ToolCategory.Utility,
         ),
-        Tool(
+        ToolDescriptor(
             id = "sound-meter",
             titleRes = R.string.tools_sound_meter_title,
             descriptionRes = R.string.tools_sound_meter_description,
             icon = Icons.Filled.GraphicEq,
+            widgetIconRes = R.drawable.ic_tool_sound_meter,
             route = SoundMeterRoute,
             category = ToolCategory.Utility,
         ),
-        Tool(
+        ToolDescriptor(
             id = "speedometer",
             titleRes = R.string.tools_speedometer_title,
             descriptionRes = R.string.tools_speedometer_description,
             icon = Icons.Filled.Speed,
+            widgetIconRes = R.drawable.ic_tool_speedometer,
             route = SpeedometerRoute,
             category = ToolCategory.Utility,
         ),
-        Tool(
+        ToolDescriptor(
             id = "exif-strip",
             titleRes = R.string.tools_exif_strip_title,
             descriptionRes = R.string.tools_exif_strip_description,
             icon = Icons.Filled.HideImage,
+            widgetIconRes = R.drawable.ic_tool_exif_strip,
             route = ExifStripRoute,
             category = ToolCategory.Utility,
         ),
-        Tool(
+        ToolDescriptor(
             id = "ocr",
             titleRes = R.string.tools_ocr_title,
             descriptionRes = R.string.tools_ocr_description,
             icon = Icons.Filled.DocumentScanner,
+            widgetIconRes = R.drawable.ic_tool_ocr,
             route = OcrRoute,
             category = ToolCategory.Utility,
         ),
@@ -217,10 +242,10 @@ internal object ToolCatalog {
     /**
      * The tool promoted to the home's hero card.
      *
-     * An id rather than a resolved [Tool], because the hero is not guaranteed to be on show: the
-     * catalog is filtered by [com.minion.scaffold.core.domain.featureflag.FeatureFlags] before the
-     * screen groups it, and the scanner can be switched off from the console like anything else.
-     * The grouping — and the decision about what a missing hero means — belongs to [ToolsState].
+     * An id rather than a resolved [ToolDescriptor], because the hero is not guaranteed to be on
+     * show: the catalog is filtered by the feature flags before the screen groups it, and the
+     * scanner can be switched off from the console like anything else. The grouping — and the
+     * decision about what a missing hero means — belongs to the home screen's own state.
      */
     const val HERO_ID: String = "qr-scan"
 }

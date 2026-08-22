@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The API 31+ picker preview.
+
+  This duplicates QuickAccessWidget.kt's layout by hand and will drift from it - a RemoteViews XML
+  cannot render a Glance composition, so there is no way to share one. Accepted, and the mitigation
+  is this comment: if the strip's arrangement changes, change it here too.
+
+  It shows the first five catalog tools rather than the user's own pins. The picker runs before any
+  widget exists and has no access to the pinned list, so no preview can be personal.
+
+  RemoteViews-safe views only (LinearLayout / ImageView / TextView) - the picker inflates this in
+  the launcher's process.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:baselineAligned="false"
+    android:orientation="horizontal"
+    android:padding="@dimen/widget_padding">
+
+    <ImageView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:contentDescription="@string/widget_title"
+        android:src="@drawable/ic_tool_qr_scan" />
+
+    <ImageView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_tool_qr_edit" />
+
+    <ImageView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_tool_qr_create" />
+
+    <ImageView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_tool_wifi_create" />
+
+    <ImageView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_tool_url_create" />
+
+</LinearLayout>

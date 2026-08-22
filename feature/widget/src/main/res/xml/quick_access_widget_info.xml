@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  `targetCellWidth`/`targetCellHeight` are API 31+; `minWidth`/`minHeight` are the 29-30 fallback
+  and must stay in agreement with them - 5 cells is roughly 250dp and 1 cell roughly 50dp on the
+  standard grid. Changing one without the other gives two different widgets depending on the
+  device.
+
+  `minResizeWidth` at 180dp lets a user shrink to about four cells. Below that the tiles stop
+  clearing the 48dp minimum touch target.
+
+  `resizeMode="horizontal"` only: extra height buys a strip of launchers nothing, and every extra
+  breakpoint is one more thing to lay out and verify.
+
+  `updatePeriodMillis="0"` because nothing here is time-varying. Every redraw is triggered
+  explicitly: a config save, a feature-flag change, a locale change, a package replacement, a
+  boot, and a light/dark switch. See WidgetUpdateReceiver and WidgetSynchroniser.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_description"
+    android:minHeight="50dp"
+    android:minResizeWidth="180dp"
+    android:minWidth="250dp"
+    android:previewImage="@drawable/widget_preview"
+    android:previewLayout="@layout/widget_preview"
+    android:resizeMode="horizontal"
+    android:targetCellHeight="1"
+    android:targetCellWidth="5"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Resource names are prefixed with the feature. Every module's resources are merged into one
+  namespace in :app, so an unprefixed `title` in two features silently resolves to whichever
+  module the merger happened to visit last.
+-->
+<resources>
+    <!-- Shown in the launcher's widget picker, under the widget's preview. -->
+    <string name="widget_description">Open a tool straight from the home screen</string>
+    <string name="widget_title">Quick access</string>
+
+    <!-- The whole widget when nothing is pinned. Tapping it opens the configuration screen. -->
+    <string name="widget_empty_prompt">Choose tools</string>
+
+    <!--
+      Appended to a tile's content description when the tool is pinned but currently withheld.
+      Spoken, not drawn: the tile shows the state as reduced alpha, which TalkBack cannot see.
+    -->
+    <string name="widget_tile_unavailable">%1$s, currently unavailable</string>
+
+    <!-- A tile's content description when the tool is available. Icon-only tiles carry it too. -->
+    <string name="widget_tile_available">%1$s</string>
+</resources>

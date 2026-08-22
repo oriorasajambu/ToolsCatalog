@@ -1,13 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Auto Backup, for API 30 and below. API 31+ reads data_extraction_rules.xml instead, and the two
+  have to agree: a file included here and forgotten there is backed up on old devices only.
+
+  Naming anything at all narrows this from "everything the app stores" to "only what is listed".
+  That is the intent: the widget's pinned list is a user arrangement worth restoring, while the
+  weather cache, the OCR models extracted to filesDir and the DataStores holding per-tool
+  preferences are all either large, re-derivable, or device-specific.
+
+  The path must track `preferencesDataStore(name = "widget_preferences")` in
+  WidgetPreferencesDataStore. Renaming the store without changing this file stops the backup
+  silently — no build failure, no runtime error, just a restored device with an empty widget.
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <include
+        domain="file"
+        path="datastore/widget_preferences.preferences_pb" />
 </full-backup-content>

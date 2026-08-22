@@ -98,6 +98,10 @@ include(":core:ui")
 // The camera viewfinder, shared by the scan and OCR tools so there is exactly one CameraX setup.
 include(":core:camera")
 
+// The tools this app offers, as a table. Shared by the home screen and the home-screen widget,
+// which is what keeps it out of either one.
+include(":core:toolcatalog")
+
 // Data
 include(":core:network")
 include(":core:data")
@@ -118,4 +122,9 @@ include(":feature:level")
 include(":feature:soundmeter")
 include(":feature:exifstrip")
 include(":feature:speedometer")
+
+// Not a screen: the home-screen App Widget. A module rather than part of :app because it
+// carries a manifest component, a provider XML, a DataStore and its own tests, and ":app --
+// nothing else" is the rule it would break.
+include(":feature:widget")
 

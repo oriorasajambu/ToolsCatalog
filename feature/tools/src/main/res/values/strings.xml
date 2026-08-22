@@ -21,36 +21,28 @@
     <!-- Home — section headers -->
     <string name="tools_section_create">CREATE</string>
     <string name="tools_section_utilities">UTILITIES</string>
-    <string name="tools_qr_scan_title">Scan QR</string>
-    <string name="tools_qr_scan_description">Decode an EMV QR payload into a readable report</string>
-    <!-- Named by kind: with two "create" tools, "Create QR" no longer says which. -->
-    <string name="tools_qr_create_title">Create Payment QR</string>
-    <string name="tools_qr_create_description">Build an EMV QR payload from a merchant\'s details</string>
-    <string name="tools_wifi_create_title">Create Wi-Fi QR</string>
-    <string name="tools_wifi_create_description">Share a network so guests can join by scanning</string>
-    <string name="tools_url_create_title">Create Link QR</string>
-    <string name="tools_url_create_description">Turn a web address into a code people can scan</string>
-    <string name="tools_vcard_create_title">Create Contact QR</string>
-    <string name="tools_vcard_create_description">Share your details as a scannable contact card</string>
-    <string name="tools_text_title">Text tools</string>
-    <string name="tools_text_description">Base64, hash, JSON, case — encode and reformat text</string>
-    <string name="tools_generate_title">Generate</string>
-    <string name="tools_generate_description">Make a UUID, a password, or random hex</string>
-    <string name="tools_qr_edit_title">Edit QR</string>
-    <string name="tools_qr_edit_description">Scan a code, change what you need, generate a new one</string>
-    <string name="tools_weather_title">Weather</string>
-    <string name="tools_weather_description">Current conditions and a forecast for your location</string>
-    <string name="tools_ocr_title">Image to text</string>
-    <string name="tools_ocr_description">Pull the text out of a photo, on the device</string>
-    <string name="tools_level_title">Level</string>
-    <string name="tools_level_description">Check whether a surface is level, and measure its slope</string>
 
-    <string name="tools_sound_meter_title">Sound meter</string>
-    <string name="tools_sound_meter_description">Measure ambient noise in decibels, with min, max and average</string>
+    <!-- Widget configuration screen -->
+    <string name="tools_widget_settings_title">Quick access widget</string>
+    <string name="tools_widget_settings_subtitle">Choose up to %1$d tools. Drag to reorder.</string>
+    <string name="tools_widget_section_pinned">ON THE WIDGET</string>
+    <string name="tools_widget_section_all">ALL TOOLS</string>
 
-    <string name="tools_exif_strip_title">Photo metadata</string>
-    <string name="tools_exif_strip_description">See what a photo reveals, and export a copy without it</string>
+    <!-- The counter, e.g. "3/5". A template rather than interpolation: the separator is
+         translatable and so is the way the pair is ordered. -->
+    <string name="tools_widget_count">%1$d/%2$d</string>
 
-    <string name="tools_speedometer_title">Speedometer</string>
-    <string name="tools_speedometer_description">Speed, altitude and position from satellites, with no data connection</string>
+    <string name="tools_widget_unavailable">Currently unavailable</string>
+    <string name="tools_widget_cap_reached">The widget holds %1$d tools. Remove one to add another.</string>
+    <string name="tools_widget_empty">No tools pinned. The widget will prompt you to choose some.</string>
+
+    <string name="tools_widget_add_to_home">Add to home screen</string>
+    <string name="tools_widget_navigate_back">Back</string>
+
+    <!-- Drag handle. The content description names the tool so a screen reader user knows which
+         row the move actions below belong to. -->
+    <string name="tools_widget_drag_handle">Reorder %1$s</string>
+    <string name="tools_widget_move_up">Move up</string>
+    <string name="tools_widget_move_down">Move down</string>
+    <string name="tools_widget_settings_action">Configure the quick access widget</string>
 </resources>

@@ -1,19 +1,29 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  API 31+. The counterpart to backup_rules.xml, which covers API 30 and below; the two must list
+  the same files.
+
+  Both destinations are named deliberately. `cloud-backup` restores the pinned list onto a new
+  device from a Google backup; `device-transfer` covers a direct phone-to-phone migration, where a
+  user moving everything across has even more reason to expect their arrangement intact.
+
+  Android does not restore widget placement, so a restored user re-drops the widget and finds
+  their five already chosen. Ids a newer build no longer ships are pruned by the reconcile on the
+  first read.
+
+  The path must track `preferencesDataStore(name = "widget_preferences")` — see the note in
+  backup_rules.xml.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <include
+            domain="file"
+            path="datastore/widget_preferences.preferences_pb" />
     </cloud-backup>
-    <!--
+
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <include
+            domain="file"
+            path="datastore/widget_preferences.preferences_pb" />
     </device-transfer>
-    -->
 </data-extraction-rules>

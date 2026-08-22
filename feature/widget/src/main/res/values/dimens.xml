@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Nothing the widget draws is a literal at the call site — the same rule CLAUDE.md sets for a
+  screen, including the values that look too small to tokenise. A 4dp gap repeated at three call
+  sites is three values that drift the moment one tile gets nudged.
+-->
+<resources>
+    <!-- Outer padding of the strip, inside the widget background. -->
+    <dimen name="widget_padding">8dp</dimen>
+
+    <!-- Gap between tiles. -->
+    <dimen name="widget_tile_gap">4dp</dimen>
+
+    <!-- Padding inside one tile, around the icon and label. -->
+    <dimen name="widget_tile_padding">4dp</dimen>
+
+    <!-- The icon itself. 24dp is the Material optical size the drawables were exported at. -->
+    <dimen name="widget_icon_size">24dp</dimen>
+
+    <!-- Gap between the icon and its label, in the regular breakpoint only. -->
+    <dimen name="widget_icon_label_gap">4dp</dimen>
+
+    <!--
+      Corner radius below API 31. From API 31 the platform supplies
+      android.R.dimen.system_app_widget_background_radius, which matches whatever the launcher
+      uses; there is no such value below, so this is the fallback.
+    -->
+    <dimen name="widget_corner_radius">16dp</dimen>
+</resources>

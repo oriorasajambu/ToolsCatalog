@@ -1,5 +1,7 @@
 package com.minion.scaffold.feature.tools.presentation
 
+import com.minion.scaffold.core.toolcatalog.ToolCatalog
+import com.minion.scaffold.core.toolcatalog.ToolDescriptor
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -27,7 +29,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.QrCode2
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -68,6 +72,7 @@ import com.minion.scaffold.feature.tools.R
 @Composable
 internal fun ToolsScreen(
     onOpenTool: (AppRoute) -> Unit,
+    onOpenWidgetSettings: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenComponentCatalog: (() -> Unit)? = null,
     viewModel: ToolsViewModel = hiltViewModel(),
@@ -77,6 +82,7 @@ internal fun ToolsScreen(
     ObserveAsEvents(viewModel.effect) { effect ->
         when (effect) {
             is ToolsEffect.OpenTool -> onOpenTool(effect.route)
+            ToolsEffect.OpenWidgetSettings -> onOpenWidgetSettings()
         }
     }
 
@@ -124,7 +130,10 @@ private fun ToolsContent(
                 .padding(bottom = dimensionResource(R.dimen.tools_section_gap)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tools_section_gap)),
         ) {
-            HomeHeader(onBrandClick = onOpenComponentCatalog)
+            HomeHeader(
+                onBrandClick = onOpenComponentCatalog,
+                onWidgetSettingsClick = { onIntent(ToolsIntent.WidgetSettingsSelected) },
+            )
 
             state.hero?.let { hero ->
                 HeroCard(
@@ -163,11 +172,13 @@ private fun ToolsContent(
  * build, and a null lambda leaves the tile inert — so the developer entry point is genuinely
  * absent from release rather than merely hidden, and it costs the product UI no visible control.
  *
- * @param modifier     The [Modifier] for the row.
- * @param onBrandClick Called when the logo tile is tapped, or null to make it decorative.
+ * @param modifier              The [Modifier] for the row.
+ * @param onBrandClick          Called when the logo tile is tapped, or null to make it decorative.
+ * @param onWidgetSettingsClick Called when the widgets button is tapped.
  */
 @Composable
 private fun HomeHeader(
+    onWidgetSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
     onBrandClick: (() -> Unit)? = null,
 ) {
@@ -189,6 +200,14 @@ private fun HomeHeader(
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.weight(1f),
         )
+
+        IconButton(onClick = onWidgetSettingsClick) {
+            Icon(
+                imageVector = Icons.Filled.Widgets,
+                contentDescription = stringResource(R.string.tools_widget_settings_action),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -323,7 +342,7 @@ private fun Section(
 /** A full-width bordered card: icon tile, title, one-line description, caret. */
 @Composable
 private fun ToolRow(
-    tool: Tool,
+    tool: ToolDescriptor,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -375,8 +394,8 @@ private fun ToolRow(
 /** The two-column grid of compact utility cards. */
 @Composable
 private fun UtilityGrid(
-    tools: List<Tool>,
-    onSelect: (Tool) -> Unit,
+    tools: List<ToolDescriptor>,
+    onSelect: (ToolDescriptor) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val gap = dimensionResource(R.dimen.tools_row_gap)
@@ -400,7 +419,7 @@ private fun UtilityGrid(
 
 @Composable
 private fun UtilityCard(
-    tool: Tool,
+    tool: ToolDescriptor,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

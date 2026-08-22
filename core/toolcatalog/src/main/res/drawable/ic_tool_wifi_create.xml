@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Wifi from the Material icon set, the same glyph `Icons.Filled.Wifi` draws on the tools
+  screen. Path data extracted verbatim from androidx.compose.material:material-icons-extended
+  1.7.8, so the two surfaces cannot drift apart by a redraw.
+
+  Untinted white fill: every consumer tints it — the widget through Glance's ColorFilter, so an
+  unavailable tile can be drawn in onSurfaceVariant without a second copy of the asset.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 1 9 l 2 2 c 4.97 -4.97 13.03 -4.97 18 0 l 2 -2 C 16.93 2.93 7.08 2.93 1 9 Z M 9 17 l 3 3 l 3 -3 c -1.65 -1.66 -4.34 -1.66 -6 0 Z M 5 13 l 2 2 c 2.76 -2.76 7.24 -2.76 10 0 l 2 -2 C 15.14 9.14 8.87 9.14 5 13 Z" />
+</vector>

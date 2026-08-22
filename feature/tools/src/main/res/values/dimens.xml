@@ -25,4 +25,18 @@
     <dimen name="tools_hero_qr">92dp</dimen>
     <dimen name="tools_hero_qr_radius">16dp</dimen>
     <dimen name="tools_hero_qr_inset">8dp</dimen>
+
+    <!-- Widget configuration screen. -->
+    <dimen name="tools_widget_row_gap">4dp</dimen>
+    <dimen name="tools_widget_row_padding">12dp</dimen>
+    <dimen name="tools_widget_row_tile">36dp</dimen>
+    <dimen name="tools_widget_block_gap">16dp</dimen>
+
+    <!-- The drag handle's own hit area. Bigger than the glyph so the grab does not depend on
+         hitting a 24dp icon exactly, which is the difference between a drag that works and one
+         that scrolls the list instead. -->
+    <dimen name="tools_widget_drag_handle">48dp</dimen>
+
+    <!-- How far a dragged row is lifted, so it reads as above the list rather than in it. -->
+    <dimen name="tools_widget_drag_elevation">6dp</dimen>
 </resources>

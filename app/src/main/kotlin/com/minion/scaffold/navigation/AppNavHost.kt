@@ -3,6 +3,7 @@ package com.minion.scaffold.navigation
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
@@ -37,7 +38,10 @@ import com.minion.scaffold.feature.soundmeter.presentation.soundMeterSettingsScr
 import com.minion.scaffold.feature.texttools.presentation.generateScreen
 import com.minion.scaffold.feature.texttools.presentation.textToolsScreen
 import com.minion.scaffold.feature.tools.presentation.toolsScreen
+import com.minion.scaffold.feature.tools.presentation.widget.widgetSettingsScreen
 import com.minion.scaffold.feature.weather.presentation.weatherScreen
+import com.minion.scaffold.core.navigation.AppRoute
+import com.minion.scaffold.core.navigation.WidgetSettingsRoute
 import com.minion.scaffold.showkase.ComponentCatalog
 
 /**
@@ -51,14 +55,36 @@ import com.minion.scaffold.showkase.ComponentCatalog
  * feature the controller lets it navigate anywhere, which is the same as letting it know about
  * every other feature.
  *
- * @param modifier      The [Modifier] for the [NavHost].
- * @param navController The controller for the graph; defaults to a remembered one.
+ * @param modifier              The [Modifier] for the [NavHost].
+ * @param navController         The controller for the graph; defaults to a remembered one.
+ * @param initialRoute          A route to open once, on top of the start destination — how a
+ *                              widget tap reaches a tool. Null in every other case.
+ * @param onInitialRouteHandled Called after [initialRoute] has been navigated to, so the caller
+ *                              can clear it and a recomposition does not navigate again.
  */
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
+    initialRoute: AppRoute? = null,
+    onInitialRouteHandled: () -> Unit = {},
 ) {
+    // Keyed on the route, so a second widget tap for a *different* tool navigates again while a
+    // recomposition for any other reason does not.
+    LaunchedEffect(initialRoute) {
+        val route = initialRoute ?: return@LaunchedEffect
+
+        // Reset to the tools home and push the tool on top. Back from a widget-launched tool
+        // therefore always lands on the home, then exits — a clearer model than a back button that
+        // walks through history the user never chose, and it stops repeated taps stacking
+        // duplicates of the same screen.
+        navController.navigate(route) {
+            popUpTo(ToolsRoute) { inclusive = false }
+            launchSingleTop = true
+        }
+        onInitialRouteHandled()
+    }
+
     // The Showkase browser has no launcher icon of its own any more — two home-screen entries for
     // one debug install is confusing — so the home screen's brand tile opens it instead. Null in a
     // release build, where the constant folds away and the tile stays decorative.
@@ -88,8 +114,12 @@ fun AppNavHost(
         // feature owns that route, so adding a tool does not touch this file.
         toolsScreen(
             onOpenTool = { route -> navController.navigate(route) },
+            onOpenWidgetSettings = { navController.navigate(WidgetSettingsRoute) },
             onOpenComponentCatalog = openComponentCatalog,
         )
+        // Configures the home-screen widget, but registered by :feature:tools: it edits the tool
+        // catalog, and :feature:widget draws no screens at all.
+        widgetSettingsScreen(onNavigateBack = { navController.popBackStack() })
         // The scanner reports a payload the user wants to change; :app is the only place that
         // knows the editor exists, so neither feature learns about the other.
         qrScanScreen(

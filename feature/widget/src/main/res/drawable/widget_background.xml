@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The widget's rounded ground, for API 29-30 only.
+
+  Glance's `cornerRadius` modifier is backed by RemoteViews.setViewOutlinePreferredRadius, which is
+  API 31+. Below that it is a silent no-op: the widget draws square corners and nothing reports a
+  problem. A shape drawable is the only way to round a RemoteViews background there.
+
+  Solid white, because the caller tints it. The colour still comes from the app's palette through
+  the Glance colour bridge rather than being named here, which is what keeps one copy of it.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <solid android:color="#FFFFFFFF" />
+
+    <corners android:radius="@dimen/widget_corner_radius" />
+</shape>

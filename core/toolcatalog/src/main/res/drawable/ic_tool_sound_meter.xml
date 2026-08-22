@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  GraphicEq from the Material icon set, the same glyph `Icons.Filled.GraphicEq` draws on the tools
+  screen. Path data extracted verbatim from androidx.compose.material:material-icons-extended
+  1.7.8, so the two surfaces cannot drift apart by a redraw.
+
+  Untinted white fill: every consumer tints it — the widget through Glance's ColorFilter, so an
+  unavailable tile can be drawn in onSurfaceVariant without a second copy of the asset.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 7 18 h 2 L 9 6 L 7 6 v 12 Z M 11 22 h 2 L 13 2 h -2 v 20 Z M 3 14 h 2 v -4 L 3 10 v 4 Z M 15 18 h 2 L 17 6 h -2 v 12 Z M 19 10 v 4 h 2 v -4 h -2 Z" />
+</vector>
