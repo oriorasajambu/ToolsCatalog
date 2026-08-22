@@ -30,4 +30,5 @@ dependencies {
     compileOnly(libs.compose.gradlePlugin)
     compileOnly(libs.google.services.gradlePlugin)
     compileOnly(libs.firebase.crashlytics.gradlePlugin)
+    compileOnly(libs.detekt.gradlePlugin)
 }

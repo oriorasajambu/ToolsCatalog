@@ -161,6 +161,8 @@ fun OffsetGridText(
 
 /** The data rows: a position gutter and the styled characters. Selectable unless made tappable. */
 @Composable
+// A reusable design-system widget -- see the note on PickerField in FormFields.kt.
+@Suppress("LongParameterList")
 private fun GridRows(
     annotated: AnnotatedString,
     rows: List<Pair<Int, Int>>,

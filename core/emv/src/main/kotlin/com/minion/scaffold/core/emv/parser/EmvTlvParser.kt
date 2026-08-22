@@ -138,97 +138,144 @@ internal object EmvTlvParser {
         var lastGood: SegmentTrace? = null
 
         while (cursor < data.length) {
-            val headerStart = baseOffset + cursor
-
-            if (data.length - cursor < HEADER_LENGTH) {
-                return EmvParseResult.Failure(
-                    QrParseError.MalformedTlv(
-                        offset = headerStart,
-                        span = PayloadSpan(headerStart, baseOffset + data.length),
-                        defect = HeaderDefect.TRUNCATED,
-                        found = data.substring(cursor),
-                        lastGoodSegment = lastGood,
-                    ),
-                )
+            val header = when (val read = readHeader(data, cursor, baseOffset, lastGood)) {
+                is HeaderParse.Invalid -> return EmvParseResult.Failure(read.error)
+                is HeaderParse.Ok -> read
             }
 
-            val tag = data.substring(cursor, cursor + TAG_LENGTH)
-            val declaredLength = data.substring(cursor + TAG_LENGTH, cursor + HEADER_LENGTH)
-
-            // Checked separately, not as one condition. A tag of "11" followed by a length of "SA"
-            // is a bad *length*; blaming the whole header accuses two characters that are fine and
-            // sends the reader looking in the wrong place.
-            if (!tag.all(Char::isDigit)) {
-                return EmvParseResult.Failure(
-                    QrParseError.MalformedTlv(
-                        offset = headerStart,
-                        span = PayloadSpan(headerStart, headerStart + TAG_LENGTH),
-                        defect = HeaderDefect.NON_NUMERIC_TAG,
-                        found = tag,
-                        lastGoodSegment = lastGood,
-                    ),
-                )
-            }
-
-            if (!declaredLength.all(Char::isDigit)) {
-                return EmvParseResult.Failure(
-                    QrParseError.MalformedTlv(
-                        offset = headerStart,
-                        span = PayloadSpan(
-                            headerStart + TAG_LENGTH,
-                            headerStart + HEADER_LENGTH,
-                        ),
-                        defect = HeaderDefect.NON_NUMERIC_LENGTH,
-                        found = declaredLength,
-                        lastGoodSegment = lastGood,
-                    ),
-                )
-            }
-
-            // Decimal, not hexadecimal. A hex reading of "15" is 21, which puts the cursor six
-            // characters past where the next tag starts and turns the rest of the payload into
-            // convincing nonsense.
-            val length = declaredLength.toInt()
-            val valueStart = cursor + HEADER_LENGTH
-            val available = data.length - valueStart
-
-            if (length > available) {
-                return EmvParseResult.Failure(
-                    QrParseError.LengthOverrun(
-                        tag = tag,
-                        declaredLength = length,
-                        available = available,
-                        offset = headerStart,
-                        span = PayloadSpan(headerStart, baseOffset + data.length),
-                        lastGoodSegment = lastGood,
-                    ),
-                )
-            }
-
-            val rawValue = data.substring(valueStart, valueStart + length)
-            val nesting = if (allowNesting && EmvTagCatalog.isTemplate(tag)) {
-                readChildren(rawValue, baseOffset = baseOffset + valueStart)
+            val rawValue = data.substring(header.valueStart, header.valueStart + header.length)
+            val nesting = if (allowNesting && EmvTagCatalog.isTemplate(header.tag)) {
+                readChildren(rawValue, baseOffset = baseOffset + header.valueStart)
             } else {
                 ChildParse.NOT_A_TEMPLATE
             }
 
             segments += TlvNode(
-                tag = tag,
-                length = length,
+                tag = header.tag,
+                length = header.length,
                 rawValue = rawValue,
                 children = nesting.children,
                 nesting = nesting.nesting,
             )
 
             lastGood = SegmentTrace(
-                tag = tag,
-                declaredLength = length,
-                span = PayloadSpan(headerStart, baseOffset + valueStart + length),
+                tag = header.tag,
+                declaredLength = header.length,
+                span = PayloadSpan(
+                    baseOffset + cursor,
+                    baseOffset + header.valueStart + header.length,
+                ),
             )
-            cursor = valueStart + length
+            cursor = header.valueStart + header.length
         }
 
         return EmvParseResult.Success(segments)
+    }
+
+    /**
+     * Reads the four-character header at [cursor], and the length it declares.
+     *
+     * Every way a segment can fail to frame lives here — a header that does not fit, a non-numeric
+     * tag, a non-numeric length, and a length that runs past the end of [data]. Gathering them in
+     * one place is what lets [readSegments] read as the loop it is; each carries [lastGood] so the
+     * report can say where the payload was last making sense.
+     *
+     * @return [HeaderParse.Ok] with the framing, or [HeaderParse.Invalid] with the rejection.
+     */
+    private fun readHeader(
+        data: String,
+        cursor: Int,
+        baseOffset: Int,
+        lastGood: SegmentTrace?,
+    ): HeaderParse {
+        val headerStart = baseOffset + cursor
+
+        if (data.length - cursor < HEADER_LENGTH) {
+            return HeaderParse.Invalid(
+                QrParseError.MalformedTlv(
+                    offset = headerStart,
+                    span = PayloadSpan(headerStart, baseOffset + data.length),
+                    defect = HeaderDefect.TRUNCATED,
+                    found = data.substring(cursor),
+                    lastGoodSegment = lastGood,
+                ),
+            )
+        }
+
+        val tag = data.substring(cursor, cursor + TAG_LENGTH)
+        val declaredLength = data.substring(cursor + TAG_LENGTH, cursor + HEADER_LENGTH)
+
+        // Checked separately, not as one condition. A tag of "11" followed by a length of "SA"
+        // is a bad *length*; blaming the whole header accuses two characters that are fine and
+        // sends the reader looking in the wrong place.
+        if (!tag.all(Char::isDigit)) {
+            return HeaderParse.Invalid(
+                QrParseError.MalformedTlv(
+                    offset = headerStart,
+                    span = PayloadSpan(headerStart, headerStart + TAG_LENGTH),
+                    defect = HeaderDefect.NON_NUMERIC_TAG,
+                    found = tag,
+                    lastGoodSegment = lastGood,
+                ),
+            )
+        }
+
+        if (!declaredLength.all(Char::isDigit)) {
+            return HeaderParse.Invalid(
+                QrParseError.MalformedTlv(
+                    offset = headerStart,
+                    span = PayloadSpan(
+                        headerStart + TAG_LENGTH,
+                        headerStart + HEADER_LENGTH,
+                    ),
+                    defect = HeaderDefect.NON_NUMERIC_LENGTH,
+                    found = declaredLength,
+                    lastGoodSegment = lastGood,
+                ),
+            )
+        }
+
+        // Decimal, not hexadecimal. A hex reading of "15" is 21, which puts the cursor six
+        // characters past where the next tag starts and turns the rest of the payload into
+        // convincing nonsense.
+        val length = declaredLength.toInt()
+        val valueStart = cursor + HEADER_LENGTH
+        val available = data.length - valueStart
+
+        if (length > available) {
+            return HeaderParse.Invalid(
+                QrParseError.LengthOverrun(
+                    tag = tag,
+                    declaredLength = length,
+                    available = available,
+                    offset = headerStart,
+                    span = PayloadSpan(headerStart, baseOffset + data.length),
+                    lastGoodSegment = lastGood,
+                ),
+            )
+        }
+
+        return HeaderParse.Ok(tag = tag, length = length, valueStart = valueStart)
+    }
+
+    /** One header read: the framing it declares, or why it was refused. */
+    private sealed interface HeaderParse {
+
+        /**
+         * The header framed.
+         *
+         * @property tag        The two-character tag.
+         * @property length     The declared value length, in characters.
+         * @property valueStart Where the value starts, relative to the data being read.
+         */
+        data class Ok(val tag: String, val length: Int, val valueStart: Int) : HeaderParse
+
+        /**
+         * The header did not frame.
+         *
+         * @property error What was wrong, positioned in the whole payload.
+         */
+        data class Invalid(val error: QrParseError) : HeaderParse
     }
 
     /**

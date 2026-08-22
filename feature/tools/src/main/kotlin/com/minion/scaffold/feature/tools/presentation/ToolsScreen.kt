@@ -128,7 +128,6 @@ private fun ToolsContent(
 
             state.hero?.let { hero ->
                 HeroCard(
-                    tool = hero,
                     onClick = { onIntent(ToolsIntent.ToolSelected(hero)) },
                 )
             }
@@ -202,7 +201,6 @@ private fun HomeHeader(
  */
 @Composable
 private fun HeroCard(
-    tool: Tool,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

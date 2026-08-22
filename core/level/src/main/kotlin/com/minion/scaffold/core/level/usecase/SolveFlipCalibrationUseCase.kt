@@ -28,6 +28,12 @@ enum class CalibrationRejection {
     ImplausibleResult,
 }
 
+/**
+ * What came of a flip calibration attempt.
+ *
+ * Rejection travels here rather than in a failure channel: a botched flip is an ordinary thing for
+ * a person to do, and each [CalibrationRejection] maps to advice rather than an error.
+ */
 sealed interface CalibrationOutcome {
 
     /**

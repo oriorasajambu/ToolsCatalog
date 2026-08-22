@@ -40,6 +40,8 @@ import com.minion.scaffold.feature.qrscan.domain.export.PaymentSchemaSource
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// Two pieces of schema state and the four things the sheet offers. A sheet is all actions.
+@Suppress("LongParameterList")
 internal fun ShareFormatSheet(
     schemaSource: PaymentSchemaSource,
     schemaLabel: String,

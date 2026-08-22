@@ -34,6 +34,7 @@ data class TripState(
     val averageSpeedMetersPerSecond: Double?
         get() = if (durationSeconds > 0.0) distanceMeters / durationSeconds else null
 
+    /** Snapshots the running totals as the [TripStats] the screen renders. */
     fun toStats() = TripStats(
         distanceMeters = distanceMeters,
         durationSeconds = durationSeconds,
@@ -45,6 +46,20 @@ data class TripState(
     )
 }
 
+/**
+ * A trip's totals, in SI units, ready for the screen to convert and render.
+ *
+ * Metres and seconds throughout, converted at the edge — totals stored in whatever unit the user
+ * had selected would silently change meaning the moment they switched it.
+ *
+ * @property distanceMeters              Ground distance covered, integrated from speed.
+ * @property durationSeconds             Measured time, with unobserved gaps excluded.
+ * @property averageSpeedMetersPerSecond Distance over duration, or `null` before anything moved.
+ * @property maxSpeedMetersPerSecond     The fastest speed accepted, or `null` if none was.
+ * @property elevationGainMeters         Cumulative climb, ignoring descent.
+ * @property minAltitudeMeters           Lowest altitude seen, or `null` without an altitude fix.
+ * @property maxAltitudeMeters           Highest altitude seen, or `null` without an altitude fix.
+ */
 data class TripStats(
     val distanceMeters: Double,
     val durationSeconds: Double,

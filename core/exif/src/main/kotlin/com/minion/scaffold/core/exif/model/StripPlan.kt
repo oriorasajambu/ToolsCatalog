@@ -104,6 +104,12 @@ data class SegmentSummary(
  */
 data class TrailingData(val byteCount: Int, val kind: TrailingKind)
 
+/**
+ * What the bytes sitting after the image data appear to be.
+ *
+ * A guess by construction — trailing data carries no header announcing itself — so the two honest
+ * answers are "a motion photo" and "something, this many bytes of it".
+ */
 enum class TrailingKind {
 
     /** An ISO base-media `ftyp` box was found — a motion photo, almost certainly. */

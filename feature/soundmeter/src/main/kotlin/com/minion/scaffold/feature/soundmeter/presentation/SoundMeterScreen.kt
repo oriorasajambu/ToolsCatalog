@@ -211,6 +211,9 @@ private fun KeepScreenOn() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// The screen body: state, intents, and the callbacks the host supplies. onRequestPermission
+// needs a launcher, and the snackbar host is owned by the screen above.
+@Suppress("LongParameterList")
 private fun SoundMeterContent(
     state: State<SoundMeterState>,
     onIntent: (SoundMeterIntent) -> Unit,
@@ -281,19 +284,7 @@ private fun SoundMeterContent(
                 weighting = chrome.weighting,
             )
 
-            MeterControls(
-                weighting = chrome.weighting,
-                timeWeighting = chrome.timeWeighting,
-                measuring = chrome.measuring,
-                canMeasure = chrome.canMeasure,
-                hasSummary = chrome.hasSummary,
-                onWeightingChange = { onIntent(SoundMeterIntent.WeightingChanged(it)) },
-                onTimeWeightingChange = { onIntent(SoundMeterIntent.TimeWeightingChanged(it)) },
-                onStart = { onIntent(SoundMeterIntent.StartPressed) },
-                onStop = { onIntent(SoundMeterIntent.StopPressed) },
-                onReset = { onIntent(SoundMeterIntent.ResetPressed) },
-                onCopy = { onIntent(SoundMeterIntent.CopySummaryRequested) },
-            )
+            MeterControls(chrome = chrome, onIntent = onIntent)
         }
     }
 }

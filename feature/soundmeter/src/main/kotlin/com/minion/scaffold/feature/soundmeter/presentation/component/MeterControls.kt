@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -19,6 +18,8 @@ import androidx.compose.ui.res.stringResource
 import com.minion.scaffold.core.sound.model.TimeWeighting
 import com.minion.scaffold.core.sound.model.Weighting
 import com.minion.scaffold.feature.soundmeter.R
+import com.minion.scaffold.feature.soundmeter.presentation.MeterChrome
+import com.minion.scaffold.feature.soundmeter.presentation.SoundMeterIntent
 
 /**
  * The two measurement modes, and the session controls.
@@ -30,17 +31,8 @@ import com.minion.scaffold.feature.soundmeter.R
  */
 @Composable
 internal fun MeterControls(
-    weighting: Weighting,
-    timeWeighting: TimeWeighting,
-    measuring: Boolean,
-    canMeasure: Boolean,
-    hasSummary: Boolean,
-    onWeightingChange: (Weighting) -> Unit,
-    onTimeWeightingChange: (TimeWeighting) -> Unit,
-    onStart: () -> Unit,
-    onStop: () -> Unit,
-    onReset: () -> Unit,
-    onCopy: () -> Unit,
+    chrome: MeterChrome,
+    onIntent: (SoundMeterIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = dimensionResource(R.dimen.soundmeter_spacing)
@@ -56,8 +48,8 @@ internal fun MeterControls(
             SingleChoiceSegmentedButtonRow(modifier = Modifier.weight(WEIGHTING_WEIGHT)) {
                 Weighting.entries.forEachIndexed { index, entry ->
                     SegmentedButton(
-                        selected = entry == weighting,
-                        onClick = { onWeightingChange(entry) },
+                        selected = entry == chrome.weighting,
+                        onClick = { onIntent(SoundMeterIntent.WeightingChanged(entry)) },
                         shape = SegmentedButtonDefaults.itemShape(index, Weighting.entries.size),
                     ) {
                         Text(text = stringResource(entry.labelRes()))
@@ -68,8 +60,10 @@ internal fun MeterControls(
             SingleChoiceSegmentedButtonRow(modifier = Modifier.weight(TIME_WEIGHTING_WEIGHT)) {
                 TimeWeighting.entries.forEachIndexed { index, entry ->
                     SegmentedButton(
-                        selected = entry == timeWeighting,
-                        onClick = { onTimeWeightingChange(entry) },
+                        selected = entry == chrome.timeWeighting,
+                        onClick = {
+                            onIntent(SoundMeterIntent.TimeWeightingChanged(entry))
+                        },
                         shape = SegmentedButtonDefaults.itemShape(
                             index,
                             TimeWeighting.entries.size,
@@ -86,22 +80,34 @@ internal fun MeterControls(
             horizontalArrangement = Arrangement.spacedBy(spacing),
         ) {
             Button(
-                onClick = if (measuring) onStop else onStart,
-                enabled = canMeasure,
+                onClick = {
+                    onIntent(
+                        if (chrome.measuring) {
+                            SoundMeterIntent.StopPressed
+                        } else {
+                            SoundMeterIntent.StartPressed
+                        },
+                    )
+                },
+                enabled = chrome.canMeasure,
                 modifier = Modifier.weight(1f),
             ) {
                 Text(
                     text = stringResource(
-                        if (measuring) R.string.soundmeter_stop else R.string.soundmeter_start,
+                        if (chrome.measuring) {
+                            R.string.soundmeter_stop
+                        } else {
+                            R.string.soundmeter_start
+                        },
                     ),
                 )
             }
 
             OutlinedButton(
-                onClick = onReset,
+                onClick = { onIntent(SoundMeterIntent.ResetPressed) },
                 // Enabled only when there is something to clear, so the control cannot be a no-op
                 // that leaves the user wondering whether it worked.
-                enabled = hasSummary,
+                enabled = chrome.hasSummary,
                 modifier = Modifier.weight(1f),
             ) {
                 Text(text = stringResource(R.string.soundmeter_reset))
@@ -109,8 +115,8 @@ internal fun MeterControls(
         }
 
         OutlinedButton(
-            onClick = onCopy,
-            enabled = hasSummary,
+            onClick = { onIntent(SoundMeterIntent.CopySummaryRequested) },
+            enabled = chrome.hasSummary,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(text = stringResource(R.string.soundmeter_copy_summary))

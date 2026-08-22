@@ -2,7 +2,6 @@ package com.minion.scaffold.core.gnss.usecase
 
 import com.minion.scaffold.core.gnss.model.GnssFix
 import javax.inject.Inject
-import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
@@ -68,6 +67,13 @@ data class ResolvedSpeed(
  */
 class ResolveSpeedUseCase @Inject constructor() {
 
+    /**
+     * Folds one fix into the speed state.
+     *
+     * @param state The previous state, threaded by the caller so nothing here holds it.
+     * @param fix   The fix to fold in.
+     * @return The next state, and the speed to display alongside it.
+     */
     operator fun invoke(state: SpeedState, fix: GnssFix): Pair<SpeedState, ResolvedSpeed> {
         val measured = fix.speedMetersPerSecond
         val raw = when {

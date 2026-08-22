@@ -107,8 +107,7 @@ internal object JpegScanner {
 
             // Any number of fill bytes may precede a marker. Skipping to the last one means the
             // segment starts at exactly `FF <marker>`, so fill is simply never copied.
-            var markerAt = cursor
-            while (markerAt < bytes.size && bytes.u8(markerAt) == 0xFF) markerAt++
+            val markerAt = skipFill(bytes, cursor)
             if (markerAt >= bytes.size) return truncated(markerAt)
 
             val marker = bytes.u8(markerAt)
@@ -128,35 +127,104 @@ internal object JpegScanner {
                 return JpegScan.Success(segments, endOfImage = afterMarker)
             }
 
-            if (marker == JpegMarkers.TEM || marker in JpegMarkers.RESTART_RANGE) {
+            if (isStandalone(marker)) {
                 segments += JpegSegment(marker, start, afterMarker, -1, 0)
                 cursor = afterMarker
                 continue
             }
 
-            if (afterMarker + 1 >= bytes.size) return truncated(afterMarker)
-
-            // The declared length counts itself, so anything below 2 is nonsense rather than an
-            // empty segment — and a naive parser would advance by a negative amount and loop.
-            val declared = bytes.u16(afterMarker)
-            if (declared < 2) return malformed(afterMarker, StripFailure.Defect.BadLength)
-
-            val payloadStart = afterMarker + 2
-            val payloadLength = declared - 2
-            val payloadEnd = payloadStart + payloadLength
-            if (payloadEnd > bytes.size) return malformed(afterMarker, StripFailure.Defect.BadLength)
-
-            if (marker == JpegMarkers.SOS) {
-                val scanEnd = endOfEntropyData(bytes, payloadEnd)
-                if (scanEnd >= bytes.size) return missingEnd(bytes.size)
-
-                segments += JpegSegment(marker, start, scanEnd, payloadStart, payloadLength)
-                cursor = scanEnd
-            } else {
-                segments += JpegSegment(marker, start, payloadEnd, payloadStart, payloadLength)
-                cursor = payloadEnd
+            when (val read = readPayloadSegment(bytes, marker, start, afterMarker)) {
+                is SegmentRead.Failed -> return read.scan
+                is SegmentRead.Ok -> {
+                    segments += read.segment
+                    cursor = read.nextCursor
+                }
             }
         }
+    }
+
+    /**
+     * Whether [marker] is one that carries no payload at all.
+     *
+     * `TEM` and the eight restart markers are two bytes and nothing else — no length field follows,
+     * so reading one as though it had a payload would consume the bytes after it.
+     */
+    private fun isStandalone(marker: Int): Boolean =
+        marker == JpegMarkers.TEM || marker in JpegMarkers.RESTART_RANGE
+
+    /** Walks past any run of `0xFF` fill starting at [from], to the marker byte itself. */
+    private fun skipFill(bytes: ByteArray, from: Int): Int {
+        var index = from
+        while (index < bytes.size && bytes.u8(index) == 0xFF) index++
+        return index
+    }
+
+    /**
+     * Reads a length-bearing segment, and works out where the next one starts.
+     *
+     * Every way the framing can be wrong lives here — a length field that does not fit, a declared
+     * length below its own two bytes, and a payload running past the end of the file. Gathering
+     * them out of [scan] leaves the walk reading as the walk it is.
+     *
+     * `SOS` is the exception that shapes the return: its segment does not end where its payload
+     * does but after the entropy-coded data that follows, so the next cursor cannot be derived from
+     * the segment alone and is returned alongside it.
+     */
+    private fun readPayloadSegment(
+        bytes: ByteArray,
+        marker: Int,
+        start: Int,
+        afterMarker: Int,
+    ): SegmentRead {
+        if (afterMarker + 1 >= bytes.size) return SegmentRead.Failed(truncated(afterMarker))
+
+        // The declared length counts itself, so anything below 2 is nonsense rather than an
+        // empty segment — and a naive parser would advance by a negative amount and loop.
+        val declared = bytes.u16(afterMarker)
+        if (declared < 2) {
+            return SegmentRead.Failed(malformed(afterMarker, StripFailure.Defect.BadLength))
+        }
+
+        val payloadStart = afterMarker + 2
+        val payloadLength = declared - 2
+        val payloadEnd = payloadStart + payloadLength
+        if (payloadEnd > bytes.size) {
+            return SegmentRead.Failed(malformed(afterMarker, StripFailure.Defect.BadLength))
+        }
+
+        if (marker != JpegMarkers.SOS) {
+            return SegmentRead.Ok(
+                segment = JpegSegment(marker, start, payloadEnd, payloadStart, payloadLength),
+                nextCursor = payloadEnd,
+            )
+        }
+
+        val scanEnd = endOfEntropyData(bytes, payloadEnd)
+        if (scanEnd >= bytes.size) return SegmentRead.Failed(missingEnd(bytes.size))
+
+        return SegmentRead.Ok(
+            segment = JpegSegment(marker, start, scanEnd, payloadStart, payloadLength),
+            nextCursor = scanEnd,
+        )
+    }
+
+    /** One length-bearing segment read: the segment and where to continue, or why it failed. */
+    private sealed interface SegmentRead {
+
+        /**
+         * The segment framed.
+         *
+         * @property segment    The segment read.
+         * @property nextCursor Where the walk continues.
+         */
+        data class Ok(val segment: JpegSegment, val nextCursor: Int) : SegmentRead
+
+        /**
+         * The segment did not frame.
+         *
+         * @property scan The finished failure to return from [scan].
+         */
+        data class Failed(val scan: JpegScan) : SegmentRead
     }
 
     /**

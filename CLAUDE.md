@@ -29,10 +29,12 @@ needed to work productively day to day.
 ./gradlew build --no-configuration-cache  # REQUIRED after editing dev/prod/keystore.properties
 python scripts/scaffold_feature.py --name Home   # generate a new feature slice (see below)
 python scripts/generate_geoid.py                 # regenerate :core:gnss's EGM96 geoid (needs numpy + pillow)
+./gradlew detekt                       # static analysis only, all modules (also runs as part of check/build)
 ```
 
 There is no separate lint-only or ktlint task beyond what `./gradlew build` runs; Android Lint
-runs as part of `build`. `check` is wired to also compile `androidTest` sources on every module so
+runs as part of `build`. Static analysis beyond Lint is detekt (see *Static analysis* below), wired
+into `check` the same way. `check` is also wired to compile `androidTest` sources on every module so
 androidTest can't silently rot even though nothing normally builds it. The dependency is matched by
 name pattern (`compile*DebugAndroidTestKotlin`) rather than named outright — a module with product
 flavors gets one task per variant, so `:app` has `compileDevelopmentDebugAndroidTestKotlin` and
@@ -119,6 +121,92 @@ built-in Kotlin support (applying `org.jetbrains.kotlin.android` alongside it is
 use the daemon's default and emit class files the Android modules cannot read.
 
 Dependency versions live in `gradle/libs.versions.toml`, shared by the main build and `build-logic`.
+
+## Static analysis
+
+detekt is applied through the `minion.detekt` convention plugin, itself applied by the three base
+module conventions (`minion.android.application`, `minion.android.library`, `minion.jvm.library`)
+rather than requested per module — the same pattern `minion.android.library.compose` uses for
+Showkase. One config file, `config/detekt/detekt.yml`, governs every module; a rule that means
+something different in `:core:gnss` than in `:feature:qrscan` is a rule that should not exist yet.
+
+detekt reads `src/main` only, and skips `**/vendor/**`. Both exclusions are in
+`minion.detekt.gradle.kts` rather than the config file, because they are about which code is in
+scope at all rather than which rules apply to it. A test's backtick name is its documentation, so
+the doc guards fire on every `@Test` in the repo while saying nothing useful; and the PaddleOCR
+sources under `:feature:ocr` are vendored, where restyling to house conventions is what turns the
+next re-vendor into a merge conflict. Together they account for roughly four fifths of what detekt
+reported before they were added.
+
+`buildUponDefaultConfig` is `false`: detekt ships roughly 150 rules active out of the box, and
+turning all of them on at once against a codebase that has never run it would produce a wall of
+unreviewed findings rather than a usable first pass. Only the rules `detekt.yml` lists explicitly
+are active, across eight rule sets — `complexity`, `potential-bugs`, `exceptions`, `coroutines`,
+`empty-blocks`, `performance`, `comments`, `style` — and each one is there because it mechanically
+enforces a convention this file already states in prose: `ElseCaseInsteadOfExhaustiveWhen` for the
+MVI contract's exhaustive `when`s, `TooGenericExceptionCaught` and `SuspendFunSwallowedCancellation`
+for the `safeCall` `CancellationException`-first rule, `InjectDispatcher` for `:core:common`'s
+dispatcher qualifiers, `GlobalCoroutineUsage` against unstructured concurrency, `NotImplementedDeclaration`
+against a scaffolded feature's `TODO()` surviving to merge, and `EmptyCatchBlock` against silently
+swallowing what the `DomainError` pipeline exists to surface. The rest —
+`UnsafeCallOnNullableType`/`UnsafeCast`, `SleepInsteadOfDelay`/`RedundantSuspendModifier`, the dead-code
+group (`UnusedImports`/`UnusedParameter`/`UnusedPrivateProperty`/`UnusedPrivateMember`/`WildcardImport`),
+`VarCouldBeVal`, the complexity ceiling (`LongMethod`/`LongParameterList`/
+`CyclomaticComplexMethod`/`NestedBlockDepth`), the allocation-hygiene set (`SpreadOperator`/
+`ForEachOnRange`/`CouldBeSequence`), and the public-API doc guard (`UndocumentedPublicClass`/
+`UndocumentedPublicFunction`) — round out the same idea: general-purpose, low-noise rules rather
+than project-specific ones. Add to the set the same way: a rule earns its place by encoding
+something already true of the codebase or by being a cheap, high-confidence catch, not because it
+is a detekt default.
+
+**Two rules were tried and removed, which is the same bar working in the other direction.**
+`UseDataClass` produced six findings and no true positive (see the `detekt.yml` comment).
+`MagicNumber` produced 230, of which the palette in `Color.kt` (53, where the hex *is* the colour
+definition), spec-defined codes like the WMO table (~35, where the `when` arm already names the
+number), `:core:exif`'s byte masks and bit positions (47), and `@Preview` sample data (36) are all
+things that must not change — while `:core:emv`, `:core:gnss` and `:core:sound`, the modules it was
+turned on for, produced 18 between them. Removing a rule needs the same kind of evidence as adding
+one; both removals record theirs in `detekt.yml`.
+
+`check` depends on the `detekt` task the same way it depends on the androidTest-compile guard
+above — a finding fails the build rather than sitting in a report nobody opens.
+
+Several rules are scoped so they judge only what they can judge, each option earning its place the
+same way a rule does. `LongMethod` skips `@Composable`: a composable describes a UI tree, so its
+length tracks how much screen it covers rather than how much logic it holds. `LongParameterList`
+keeps `@Composable` — a composable taking a dozen *required* arguments is the signal its state
+wants to be one object — but stops counting defaulted parameters, which demand nothing of a caller,
+and `@Inject` constructors, where the count measures how many collaborators a ViewModel needs.
+`CyclomaticComplexMethod` gains `ignoreSingleWhenExpression`, because a method whose whole body is
+one `when` is a dispatch table and the MVI contract requires exactly that shape in every
+`onIntent`. `UndocumentedPublicClass` exempts companion objects, which are a keyword rather than
+API surface. `UseDataClass` is off outright: every finding it produced was a class that must not be
+one — four holding an array, where a generated `equals` compares references while reading like it
+compares content, and two `@Inject` use cases where `copy()` is meaningless.
+
+**A rule that is right almost everywhere is suppressed at the site, not weakened globally.**
+Roughly twenty declarations carry a `@Suppress` with a comment saying why — a Retrofit method
+whose `@Query` parameters bind one at a time, the biquad coefficients whose names its own KDoc
+documents, the reusable form widgets the Compose API guidelines want explicit, the screen bodies
+whose launcher-backed callbacks cannot be intents. Each reason is different, which is exactly what
+a local suppression records and a raised threshold erases.
+
+Pinned to the stable `io.gitlab.arturbosch.detekt` 1.23.8 line rather than the `dev.detekt` 2.x
+line, even though 1.23.8 is built against older Kotlin metadata than this project's Kotlin 2.4.0
+and there is a known issue reading Kotlin 2.3+ metadata (detekt/detekt#8865) — the 2.x line matches
+the Kotlin version but is pre-1.0, and every other dependency in this repo is pinned to a stable
+release. If `./gradlew detekt` fails on metadata rather than a real finding, that tradeoff is why.
+
+**Rule names drift between detekt versions — verify against the actual pinned tag, not detekt's
+own `main`-branch docs.** Found while writing this config: `main` (already tracking the 2.x line)
+spells three of these rules differently than 1.23.8 does — `EmptyKotlinFile` there is `EmptyKtFile`
+here, `DocumentationOverPrivateFunction` is `CommentOverPrivateFunction`, and
+`RedundantVisibilityModifier` is `RedundantVisibilityModifierRule`. There is also no
+`UnusedPrivateFunction` rule in 1.23.8 at all — `UnusedPrivateMember` is the one that catches an
+unused private function (it needs type resolution the way `UnusedPrivateProperty` doesn't), and
+detekt's own shipped defaults run both simultaneously rather than one instead of the other, which
+`detekt.yml` follows. `config.validation: true` turns any of these mistakes into a hard failure
+rather than a silently-ignored key, which is what caught them here.
 
 ## Build variants & environment
 
