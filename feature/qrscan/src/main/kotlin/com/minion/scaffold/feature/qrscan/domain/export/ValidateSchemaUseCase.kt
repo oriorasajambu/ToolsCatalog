@@ -72,13 +72,22 @@ internal class ValidateSchemaUseCase @Inject constructor() {
 
             is JsonArray -> element.forEach { collectUnknown(it, into) }
 
-            is JsonPrimitive -> if (element.isString) {
-                for (token in PlaceholderSyntax.tokensIn(element.content)) {
-                    val placeholder = PlaceholderSyntax.parse(token)
-                    if (placeholder == null || !PlaceholderVocabulary.recognises(placeholder)) {
-                        into += token
-                    }
-                }
+            is JsonPrimitive -> if (element.isString) collectUnknownIn(element.content, into)
+        }
+    }
+
+    /**
+     * Collects the unrecognised placeholder tokens in one string value.
+     *
+     * A token is unknown when it does not parse as a placeholder at all, or parses into one the
+     * vocabulary does not define — both are things the user typed that will not be substituted, and
+     * both have to be named rather than silently left in the output.
+     */
+    private fun collectUnknownIn(text: String, into: MutableList<String>) {
+        for (token in PlaceholderSyntax.tokensIn(text)) {
+            val placeholder = PlaceholderSyntax.parse(token)
+            if (placeholder == null || !PlaceholderVocabulary.recognises(placeholder)) {
+                into += token
             }
         }
     }

@@ -39,6 +39,7 @@ complexity:
     ignoreAnnotated: ['Inject']
   CyclomaticComplexMethod:
     active: true
+    ignoreSingleWhenExpression: true
   NestedBlockDepth:
     active: true
 
@@ -154,7 +155,15 @@ comments:
 # defaults run it alongside UnusedPrivateProperty rather than instead of it, so this does the same.
 # UnusedImports itself ships inactive in detekt's own defaults; turned on here deliberately.
 #
-# WildcardImport / VarCouldBeVal / UseDataClass: idiomatic-Kotlin nudges, cheap.
+# WildcardImport / VarCouldBeVal: idiomatic-Kotlin nudges, cheap.
+#
+# UseDataClass is off. Every one of its six findings was a class that must not be a data class, and
+# it produced no true positive at all. Four hold an array — `CapturedFrame`, `CaptureResult.Success`,
+# `StripOperation.Insert`, `AudioBlock` — where a generated `equals` compares references while
+# reading like it compares content; `Insert` writes `contentEquals` out by hand for exactly that
+# reason and is flagged anyway. The other two are `@Inject` use cases whose only state is the
+# repository they delegate to, where `copy()` on a service object is meaningless. The rule cannot
+# see the one thing that decides the question, which is whether the type has value semantics.
 style:
   active: true
   MagicNumber:
@@ -172,4 +181,4 @@ style:
   VarCouldBeVal:
     active: true
   UseDataClass:
-    active: true
+    active: false

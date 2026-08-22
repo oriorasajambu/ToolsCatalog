@@ -17,6 +17,7 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.WriterException
+import com.google.zxing.common.BitMatrix
 import com.minion.scaffold.core.designsystem.theme.AppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -61,6 +62,23 @@ fun QrCodeImage(
 }
 
 /**
+ * Flattens the matrix into a row-major pixel array.
+ *
+ * Separate from [encodeQrBitmap] so the encode reads as encode-then-write; the blit itself is two
+ * loops over a square and has nothing to say.
+ */
+private fun BitMatrix.toPixels(sizePx: Int): IntArray {
+    val pixels = IntArray(sizePx * sizePx)
+    for (y in 0 until sizePx) {
+        val rowOffset = y * sizePx
+        for (x in 0 until sizePx) {
+            pixels[rowOffset + x] = if (this[x, y]) MODULE_DARK else MODULE_LIGHT
+        }
+    }
+    return pixels
+}
+
+/**
  * Encodes [payload] as a square QR bitmap [sizePx] on a side, or null if it will not fit.
  *
  * Public alongside [QrCodeImage] because exporting a QR — sharing it, saving it to the gallery —
@@ -80,13 +98,7 @@ fun encodeQrBitmap(payload: String, sizePx: Int = DISPLAY_SIZE_PX): Bitmap? = tr
         mapOf(EncodeHintType.MARGIN to QUIET_ZONE_MODULES),
     )
 
-    val pixels = IntArray(sizePx * sizePx)
-    for (y in 0 until sizePx) {
-        val rowOffset = y * sizePx
-        for (x in 0 until sizePx) {
-            pixels[rowOffset + x] = if (matrix[x, y]) MODULE_DARK else MODULE_LIGHT
-        }
-    }
+    val pixels = matrix.toPixels(sizePx)
 
     createBitmap(sizePx, sizePx, Bitmap.Config.RGB_565).apply {
         setPixels(pixels, 0, sizePx, 0, 0, sizePx, sizePx)
