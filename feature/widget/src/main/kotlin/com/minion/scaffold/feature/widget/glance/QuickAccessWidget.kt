@@ -58,6 +58,16 @@ private val COMPACT_SIZE = DpSize(250.dp, 50.dp)
 private val REGULAR_SIZE = DpSize(250.dp, 70.dp)
 
 /**
+ * The narrowest a tile can be and still say something with its label.
+ *
+ * Height alone was the wrong test. Five tiles across four cells gives each about 50dp, where three
+ * of them truncated to the identical "Crea..." — a label that costs a line of height and
+ * distinguishes nothing. At four tiles the same strip has room for "Scan QR" in full, so the
+ * decision belongs to the width each tile actually gets rather than to the widget's height.
+ */
+private val MIN_LABEL_TILE_WIDTH = 60.dp
+
+/**
  * A strip of up to five tools, straight onto the home screen.
  *
  * Tiles are launchers and nothing more — no reading, no last-scanned code. Everything drawn is
@@ -115,11 +125,17 @@ internal class QuickAccessWidget : GlanceAppWidget() {
 private fun QuickAccessStrip(tools: List<PinnedTool>, intents: WidgetLaunchIntentFactory) {
     val context = LocalContext.current
 
+    // Both conditions, and the width one is per tile: the strip divides whatever width it has
+    // between however many tools are pinned, so the same widget shows labels at four and drops
+    // them at five.
+    val size = LocalSize.current
+    val showLabels = size.height >= REGULAR_SIZE.height &&
+        (size.width / tools.size.coerceAtLeast(1)) >= MIN_LABEL_TILE_WIDTH
+
     Row(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(GlanceTheme.colors.widgetBackground)
-            .widgetCornerRadius()
+            .widgetGround()
             .padding(R.dimen.widget_padding),
         verticalAlignment = Alignment.Vertical.CenterVertically,
         horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
@@ -142,6 +158,7 @@ private fun QuickAccessStrip(tools: List<PinnedTool>, intents: WidgetLaunchInten
                 modifier = GlanceModifier.defaultWeight(),
                 tool = tool,
                 label = context.getString(tool.descriptor.titleRes),
+                showLabel = showLabels,
                 // A withheld tool resolves to the tools home rather than to nothing: a greyed tile
                 // that does nothing at all reads as a broken widget.
                 intent = intents.intentFor(tool.descriptor.id.takeIf { tool.isAvailable }),
@@ -167,10 +184,10 @@ private fun ToolTile(
     tool: PinnedTool,
     label: String,
     intent: Intent,
+    showLabel: Boolean,
     modifier: GlanceModifier = GlanceModifier,
 ) {
     val context = LocalContext.current
-    val showLabel = LocalSize.current.height >= REGULAR_SIZE.height
 
     val colour: ColorProvider =
         if (tool.isAvailable) GlanceTheme.colors.onSurface else GlanceTheme.colors.onSurfaceVariant
@@ -232,15 +249,28 @@ private fun EmptyPrompt(intent: Intent) {
 }
 
 /**
- * The rounded corner a launcher expects of a widget background.
+ * The widget's ground: the app's background colour, with the rounded corner a launcher expects.
  *
- * From API 31 the platform publishes the radius it actually uses, so the widget matches whatever
- * launcher it is sitting in. Below that there is no such value and a fixed dimen is the only
- * option.
+ * **Not `GlanceTheme.colors.widgetBackground`.** Glance derives that token from `secondaryContainer`
+ * with a tone shift, which is a reasonable default for a scheme that has no opinion — but this app's
+ * `secondaryContainer` is the integrity-passed green, so the widget painted itself in the colour
+ * that means "this code checked out". `background` is the role the app actually draws its ground
+ * with, and it is what the bridge maps straight from the two schemes.
+ *
+ * **Two paths for the corner, because `cornerRadius` is API 31+.** It is backed by
+ * `RemoteViews.setViewOutlinePreferredRadius`, and below API 31 it does nothing at all — silently,
+ * which is how the widget shipped square corners through a whole emulator run. Above it the
+ * platform publishes the radius the launcher itself uses, which is worth matching; below it a
+ * tinted shape drawable is the only way to round a `RemoteViews` background.
  */
-private fun GlanceModifier.widgetCornerRadius(): GlanceModifier =
+@Composable
+private fun GlanceModifier.widgetGround(): GlanceModifier =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        cornerRadius(android.R.dimen.system_app_widget_background_radius)
+        background(GlanceTheme.colors.background)
+            .cornerRadius(android.R.dimen.system_app_widget_background_radius)
     } else {
-        cornerRadius(R.dimen.widget_corner_radius)
+        background(
+            imageProvider = ImageProvider(R.drawable.widget_background),
+            colorFilter = ColorFilter.tint(GlanceTheme.colors.background),
+        )
     }
