@@ -267,6 +267,13 @@ internal class Biquad(
  */
 class WeightingFilterFactory @Inject constructor() {
 
+    /**
+     * Builds a filter bound to one weighting and one sample rate.
+     *
+     * @param weighting  The frequency weighting to apply.
+     * @param sampleRate The input's sample rate, in hertz.
+     * @return A fresh filter, with a delay line of its own.
+     */
     fun create(weighting: Weighting, sampleRate: Int): WeightingFilter = WeightingFilter.build(
         weighting = weighting,
         sampleRate = sampleRate,

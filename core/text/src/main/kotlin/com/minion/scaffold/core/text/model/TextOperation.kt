@@ -29,4 +29,5 @@ enum class TextOperation(val category: TextOperationCategory) {
     KEBAB_CASE(TextOperationCategory.CASE),
 }
 
+/** The groups [TextOperation] entries fall into, which the picker renders as section headings. */
 enum class TextOperationCategory { ENCODING, WEB, HASH, CASE }

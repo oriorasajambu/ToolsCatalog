@@ -27,6 +27,12 @@ import javax.inject.Inject
  */
 class OrderBlocksUseCase @Inject constructor() {
 
+    /**
+     * Puts already-formed blocks into reading order.
+     *
+     * @param blocks The blocks to order.
+     * @return The same blocks, in reading order.
+     */
     operator fun invoke(blocks: List<RecognizedBlock>): List<RecognizedBlock> =
         readingOrder(blocks) { it.box }
 }

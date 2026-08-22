@@ -80,6 +80,14 @@ data class EmbeddedThumbnail(val byteCount: Int, val width: Int, val height: Int
  */
 enum class Exposure { Identifying, Sensitive, Descriptive }
 
+/**
+ * The kinds of metadata the tool reports on, each carrying how much it gives away.
+ *
+ * Categories rather than raw tag names: a photo can carry dozens of separate GPS tags, and listing
+ * them one by one buries the single fact that matters, which is that the location is in there.
+ *
+ * @property exposure How much this category reveals about the person rather than the camera.
+ */
 enum class MetadataCategory(val exposure: Exposure) {
 
     /**

@@ -29,6 +29,12 @@ sealed interface StripFailure {
      */
     data class Malformed(val offset: Int, val defect: Defect) : StripFailure
 
+    /**
+     * What was wrong with the file, as specifically as the parser is willing to say.
+     *
+     * Named cases rather than a message string, because the caller decides what to tell the user
+     * and a developer-facing sentence is not something a screen can show.
+     */
     enum class Defect {
 
         /** The file ends in the middle of a structure that promised more. */
