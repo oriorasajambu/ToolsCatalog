@@ -48,6 +48,47 @@ First-time setup: copy `keystore.properties.template` → `keystore.properties` 
 need real values; the repo builds without them (unsigned release, template `BASE_URL`).
 `git clone` needs **git-lfs** — see *Things that will bite you*.
 
+## Branch naming
+
+`<type>/<kebab-subject>`, where the type is one the commit messages already use — so there is one
+vocabulary rather than two, and `git log --grep` and `git branch` answer with the same words:
+
+```
+feat/quick-access-widget          fix/widget-pending-intent-identifier
+build/detekt-baseline             docs/claude-md-widget
+refactor/tool-catalog-extraction  chore/gitattributes-text-auto
+```
+
+`feat` `fix` `build` `docs` `refactor` `perf` `chore`, plus `claude` for the agent tooling's own
+generated names. **`feat/`, never `feature/`** — the repo has both in its history and the shorter
+one matches `feat:` in commits.
+
+**`build/` is the toolchain, not the product.** Anything that changes how the project is built or
+checked rather than what it does when run: `build-logic/`, `config/detekt/`, `gradle/libs.versions.toml`,
+`gradle.properties`, `.gitattributes`, an `abiFilters` change. A `build:` commit may still touch
+Kotlin — clearing a newly-enabled detekt rule edits source — and it is still `build:`, because the
+reason the source changed came from the toolchain. If the change alters behaviour a user could
+notice, it is `feat:`/`fix:` no matter which file it lives in.
+
+**Name the subject, not the act.** `feat/quick-access-widget`, not `feat/add-widget`: the type
+already says it is an addition, so repeating it spends the useful half of the name.
+
+**A name that wants "and" in it is telling you it is two branches.** The quick-access widget landed
+alongside an unrelated detekt pass as one 130-file pull request, which was harder to review than
+two would have been.
+
+Enforced by `.githooks/pre-push`, which is tracked rather than left in `.git/hooks` — git does not
+version that directory, so a hook only one machine has is a rule nobody else is held to. It needs
+one opt-in per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Until that is run the hook is inert, which is the deliberate trade for not rewriting a developer's
+git config behind their back. Protected names (`master`, `main`), tag pushes and branch deletions
+are all passed through, and `git push --no-verify` overrides it for a genuine one-off.
+
 ## Module graph
 
 ```
