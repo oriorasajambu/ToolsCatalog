@@ -20,7 +20,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import com.minion.scaffold.core.ocr.model.RecognizedBlock
 import com.minion.scaffold.core.ocr.model.RecognizedText
 import kotlin.math.min
 

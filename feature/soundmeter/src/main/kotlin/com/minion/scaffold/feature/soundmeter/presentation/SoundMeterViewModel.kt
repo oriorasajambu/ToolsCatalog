@@ -5,8 +5,6 @@ import com.minion.scaffold.core.sound.model.BlockLevel
 import com.minion.scaffold.core.sound.model.SessionState
 import com.minion.scaffold.core.sound.model.SessionStats
 import com.minion.scaffold.core.sound.model.SoundReference
-import com.minion.scaffold.core.sound.model.TimeWeighting
-import com.minion.scaffold.core.sound.model.Weighting
 import com.minion.scaffold.core.sound.usecase.AccumulateSessionUseCase
 import com.minion.scaffold.core.sound.usecase.ApplyTimeWeightingUseCase
 import com.minion.scaffold.core.sound.usecase.ComputeBlockLevelUseCase
