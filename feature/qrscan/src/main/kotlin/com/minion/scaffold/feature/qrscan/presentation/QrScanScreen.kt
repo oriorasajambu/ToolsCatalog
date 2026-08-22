@@ -108,6 +108,9 @@ import kotlinx.coroutines.launch
  * @param viewModel      The screen's ViewModel; defaults to a Hilt-provided instance.
  */
 @Composable
+// Branching over permission, camera and scan state to decide what the screen shows. The count
+// is the number of situations the user can be in, all of which belong in one place.
+@Suppress("CyclomaticComplexMethod")
 internal fun QrScanScreen(
     onNavigateBack: () -> Unit,
     onEditPayload: (AppRoute) -> Unit,
@@ -272,6 +275,9 @@ internal fun QrScanScreen(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// The screen body: branching over scan state, and taking the host's callbacks. The launcher-
+// backed ones cannot be intents, so the parameter list is the screen's real surface.
+@Suppress("CyclomaticComplexMethod", "LongParameterList")
 private fun QrScanContent(
     state: QrScanState,
     onIntent: (QrScanIntent) -> Unit,

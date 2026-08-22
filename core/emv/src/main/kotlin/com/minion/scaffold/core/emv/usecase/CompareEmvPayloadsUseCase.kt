@@ -87,6 +87,9 @@ class CompareEmvPayloadsUseCase @Inject constructor() {
      * A null [key] means "not eligible in this pass" — an unframed template has no identifier to
      * offer, and skipping it here leaves it to the passes that follow.
      */
+    // Threads the two parallel match arrays plus the pass's own predicate. Bundling the arrays
+    // would hide that both are mutated in step, which is the whole mechanism of the matcher.
+    @Suppress("LongParameterList")
     private fun matchOn(
         baseline: List<EmvSegment>,
         candidate: List<EmvSegment>,

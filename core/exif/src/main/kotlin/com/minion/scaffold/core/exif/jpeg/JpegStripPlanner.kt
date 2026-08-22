@@ -108,45 +108,13 @@ internal object JpegStripPlanner {
         val marker = segment.marker
         val size = segment.endExclusive - segment.start
 
-        // Structure and image data. Nothing here can carry metadata, and all of it is needed.
-        val structural = marker == JpegMarkers.SOI ||
-            marker == JpegMarkers.EOI ||
-            marker == JpegMarkers.SOS ||
-            marker == JpegMarkers.DQT ||
-            marker == JpegMarkers.DNL ||
-            marker == JpegMarkers.DRI ||
-            marker in JpegMarkers.RESTART_RANGE ||
-            (marker in JpegMarkers.FRAME_RANGE && marker != JpegMarkers.JPG_RESERVED)
-
-        if (structural) return Decision.Keep()
+        if (isStructural(marker)) return Decision.Keep()
 
         return when (marker) {
             JpegMarkers.APP0 -> classifyApp0(bytes, segment, size)
-            JpegMarkers.APP1 -> Decision.Drop(
-                SegmentSummary(
-                    kind = when {
-                        payloadStartsWith(bytes, segment, EXIF_IDENTIFIER) -> MetadataKind.Exif
-                        payloadStartsWith(bytes, segment, XMP_IDENTIFIER) -> MetadataKind.Xmp
-                        else -> MetadataKind.Unknown
-                    },
-                    name = "APP1",
-                    byteCount = size,
-                ),
-            )
-
+            JpegMarkers.APP1 -> classifyApp1(bytes, segment, size)
             JpegMarkers.APP2 -> classifyApp2(bytes, segment, size, keepIcc)
-
-            JpegMarkers.APP13 -> Decision.Drop(
-                SegmentSummary(
-                    kind = if (payloadStartsWith(bytes, segment, PHOTOSHOP_IDENTIFIER)) {
-                        MetadataKind.Iptc
-                    } else {
-                        MetadataKind.Unknown
-                    },
-                    name = "APP13",
-                    byteCount = size,
-                ),
-            )
+            JpegMarkers.APP13 -> classifyApp13(bytes, segment, size)
 
             JpegMarkers.COM -> Decision.Drop(
                 SegmentSummary(MetadataKind.Comment, "COM", size),
@@ -157,6 +125,50 @@ internal object JpegStripPlanner {
             )
         }
     }
+
+    /**
+     * Structure and image data: nothing here can carry metadata, and all of it is needed.
+     *
+     * A list rather than a range because the markers are not contiguous, and being wrong in the
+     * keep direction only bloats the output while being wrong the other way corrupts the image.
+     */
+    private fun isStructural(marker: Int): Boolean =
+        marker == JpegMarkers.SOI ||
+            marker == JpegMarkers.EOI ||
+            marker == JpegMarkers.SOS ||
+            marker == JpegMarkers.DQT ||
+            marker == JpegMarkers.DNL ||
+            marker == JpegMarkers.DRI ||
+            marker in JpegMarkers.RESTART_RANGE ||
+            (marker in JpegMarkers.FRAME_RANGE && marker != JpegMarkers.JPG_RESERVED)
+
+    /** `APP1` always goes; the identifier only decides what the user is told it was. */
+    private fun classifyApp1(bytes: ByteArray, segment: JpegSegment, size: Int): Decision =
+        Decision.Drop(
+            SegmentSummary(
+                kind = when {
+                    payloadStartsWith(bytes, segment, EXIF_IDENTIFIER) -> MetadataKind.Exif
+                    payloadStartsWith(bytes, segment, XMP_IDENTIFIER) -> MetadataKind.Xmp
+                    else -> MetadataKind.Unknown
+                },
+                name = "APP1",
+                byteCount = size,
+            ),
+        )
+
+    /** `APP13` always goes; a Photoshop identifier means the payload is IPTC. */
+    private fun classifyApp13(bytes: ByteArray, segment: JpegSegment, size: Int): Decision =
+        Decision.Drop(
+            SegmentSummary(
+                kind = if (payloadStartsWith(bytes, segment, PHOTOSHOP_IDENTIFIER)) {
+                    MetadataKind.Iptc
+                } else {
+                    MetadataKind.Unknown
+                },
+                name = "APP13",
+                byteCount = size,
+            ),
+        )
 
     /**
      * `APP0` is kept only when it is a plain JFIF header with no thumbnail of its own.

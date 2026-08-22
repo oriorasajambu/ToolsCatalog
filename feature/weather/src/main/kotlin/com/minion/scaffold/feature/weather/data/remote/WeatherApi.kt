@@ -13,6 +13,9 @@ import retrofit2.http.Query
 internal interface WeatherApi {
 
     @GET("v1/forecast")
+    // Retrofit binds one @Query per parameter. A request object would need @QueryMap, which gives
+    // up the types and the named field-list constants for nothing.
+    @Suppress("LongParameterList")
     suspend fun getForecast(
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double,

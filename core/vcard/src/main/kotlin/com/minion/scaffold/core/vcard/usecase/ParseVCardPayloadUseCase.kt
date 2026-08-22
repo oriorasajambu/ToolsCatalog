@@ -89,6 +89,10 @@ class ParseVCardPayloadUseCase @Inject constructor() {
          * @return `false` when the card must be refused outright, which only a wrong `VERSION`
          *         does.
          */
+        // A dispatch table: one branch per property this model has a field for, each a single
+        // assignment. The count measures how many properties vCard 3.0 defines, not how many paths
+        // there are through the function.
+        @Suppress("CyclomaticComplexMethod")
         fun absorb(name: String, value: String, line: String): Boolean {
             // The `else` branch is doing two jobs at once, and deliberately: a property this model
             // has no field for, and a *second* occurrence of one it does, are both things to carry

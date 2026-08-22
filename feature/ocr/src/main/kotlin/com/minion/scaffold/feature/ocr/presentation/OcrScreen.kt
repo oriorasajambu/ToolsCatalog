@@ -174,6 +174,9 @@ internal fun OcrScreen(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// The screen body. See the KDoc above: onRequestPermission and onPickImage are lambdas rather
+// than intents because they need an ActivityResultLauncher.
+@Suppress("LongParameterList")
 private fun OcrContent(
     state: OcrState,
     onIntent: (OcrIntent) -> Unit,

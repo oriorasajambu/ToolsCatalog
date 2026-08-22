@@ -205,6 +205,9 @@ fun PasswordField(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// A reusable design-system widget. The Compose API guidelines call for explicit parameters on
+// low-level components so callers pass only what they need, rather than build a state object.
+@Suppress("LongParameterList")
 fun <T> PickerField(
     label: String,
     selectedLabel: String?,

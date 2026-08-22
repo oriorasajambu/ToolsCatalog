@@ -211,6 +211,9 @@ private fun KeepScreenOn() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// The screen body: state, intents, and the callbacks the host supplies. onRequestPermission
+// needs a launcher, and the snackbar host is owned by the screen above.
+@Suppress("LongParameterList")
 private fun SoundMeterContent(
     state: State<SoundMeterState>,
     onIntent: (SoundMeterIntent) -> Unit,

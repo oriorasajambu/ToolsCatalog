@@ -162,6 +162,26 @@ is a detekt default.
 `check` depends on the `detekt` task the same way it depends on the androidTest-compile guard
 above — a finding fails the build rather than sitting in a report nobody opens.
 
+Several rules are scoped so they judge only what they can judge, each option earning its place the
+same way a rule does. `LongMethod` skips `@Composable`: a composable describes a UI tree, so its
+length tracks how much screen it covers rather than how much logic it holds. `LongParameterList`
+keeps `@Composable` — a composable taking a dozen *required* arguments is the signal its state
+wants to be one object — but stops counting defaulted parameters, which demand nothing of a caller,
+and `@Inject` constructors, where the count measures how many collaborators a ViewModel needs.
+`CyclomaticComplexMethod` gains `ignoreSingleWhenExpression`, because a method whose whole body is
+one `when` is a dispatch table and the MVI contract requires exactly that shape in every
+`onIntent`. `UndocumentedPublicClass` exempts companion objects, which are a keyword rather than
+API surface. `UseDataClass` is off outright: every finding it produced was a class that must not be
+one — four holding an array, where a generated `equals` compares references while reading like it
+compares content, and two `@Inject` use cases where `copy()` is meaningless.
+
+**A rule that is right almost everywhere is suppressed at the site, not weakened globally.**
+Roughly twenty declarations carry a `@Suppress` with a comment saying why — a Retrofit method
+whose `@Query` parameters bind one at a time, the biquad coefficients whose names its own KDoc
+documents, the reusable form widgets the Compose API guidelines want explicit, the screen bodies
+whose launcher-backed callbacks cannot be intents. Each reason is different, which is exactly what
+a local suppression records and a raised threshold erases.
+
 Pinned to the stable `io.gitlab.arturbosch.detekt` 1.23.8 line rather than the `dev.detekt` 2.x
 line, even though 1.23.8 is built against older Kotlin metadata than this project's Kotlin 2.4.0
 and there is a known issue reading Kotlin 2.3+ metadata (detekt/detekt#8865) — the 2.x line matches

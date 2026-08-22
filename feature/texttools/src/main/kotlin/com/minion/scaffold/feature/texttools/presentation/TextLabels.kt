@@ -16,6 +16,9 @@ import com.minion.scaffold.feature.texttools.R
  * @param resources The resources to resolve the label string from.
  * @return The operation's localized label.
  */
+// One arm per TextOperation and nothing else. Outside ignoreSingleWhenExpression only because
+// the when is an argument to getString rather than the whole body.
+@Suppress("CyclomaticComplexMethod")
 internal fun TextOperation.label(resources: Resources): String = resources.getString(
     when (this) {
         TextOperation.BASE64_ENCODE -> R.string.texttools_op_base64_encode

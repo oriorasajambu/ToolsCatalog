@@ -152,6 +152,9 @@ internal fun QrInquiryReportView(
 }
 
 @Composable
+// The payload with its tag spans, the highlight colours, and which span is focused. The colours
+// are computed once by the caller for the whole report, so they arrive rather than being derived.
+@Suppress("LongParameterList")
 private fun PayloadCard(
     payload: String,
     tags: List<PayloadTag>,
