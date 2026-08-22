@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  HideImage from the Material icon set, the same glyph `Icons.Filled.HideImage` draws on the tools
+  screen. Path data extracted verbatim from androidx.compose.material:material-icons-extended
+  1.7.8, so the two surfaces cannot drift apart by a redraw.
+
+  Untinted white fill: every consumer tints it — the widget through Glance's ColorFilter, so an
+  unavailable tile can be drawn in onSurfaceVariant without a second copy of the asset.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 21 5 c 0 -1.1 -0.9 -2 -2 -2 H 5.83 L 21 18.17 V 5 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 2.81 2.81 L 1.39 4.22 L 3 5.83 V 19 c 0 1.1 0.9 2 2 2 h 13.17 l 1.61 1.61 l 1.41 -1.41 L 2.81 2.81 Z M 6 17 l 3 -4 l 2.25 3 l 0.82 -1.1 l 2.1 2.1 H 6 Z" />
+</vector>

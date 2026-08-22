@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  QrCodeScanner from the Material icon set, the same glyph `Icons.Filled.QrCodeScanner` draws on the tools
+  screen. Path data extracted verbatim from androidx.compose.material:material-icons-extended
+  1.7.8, so the two surfaces cannot drift apart by a redraw.
+
+  Untinted white fill: every consumer tints it — the widget through Glance's ColorFilter, so an
+  unavailable tile can be drawn in onSurfaceVariant without a second copy of the asset.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 9.5 6.5 v 3 h -3 v -3 H 9.5 M 11 5 H 5 v 6 h 6 V 5 L 11 5 Z M 9.5 14.5 v 3 h -3 v -3 H 9.5 M 11 13 H 5 v 6 h 6 V 13 L 11 13 Z M 17.5 6.5 v 3 h -3 v -3 H 17.5 M 19 5 h -6 v 6 h 6 V 5 L 19 5 Z M 13 13 h 1.5 v 1.5 H 13 V 13 Z M 14.5 14.5 H 16 V 16 h -1.5 V 14.5 Z M 16 13 h 1.5 v 1.5 H 16 V 13 Z M 13 16 h 1.5 v 1.5 H 13 V 16 Z M 14.5 17.5 H 16 V 19 h -1.5 V 17.5 Z M 16 16 h 1.5 v 1.5 H 16 V 16 Z M 17.5 14.5 H 19 V 16 h -1.5 V 14.5 Z M 17.5 17.5 H 19 V 19 h -1.5 V 17.5 Z M 22 7 h -2 V 4 h -3 V 2 h 5 V 7 Z M 22 22 v -5 h -2 v 3 h -3 v 2 H 22 Z M 2 22 h 5 v -2 H 4 v -3 H 2 V 22 Z M 2 2 v 5 h 2 V 4 h 3 V 2 H 2 Z" />
+</vector>

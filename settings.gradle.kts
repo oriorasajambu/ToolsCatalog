@@ -98,6 +98,10 @@ include(":core:ui")
 // The camera viewfinder, shared by the scan and OCR tools so there is exactly one CameraX setup.
 include(":core:camera")
 
+// The tools this app offers, as a table. Shared by the home screen and the home-screen widget,
+// which is what keeps it out of either one.
+include(":core:toolcatalog")
+
 // Data
 include(":core:network")
 include(":core:data")

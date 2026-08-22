@@ -1,5 +1,7 @@
 package com.minion.scaffold.feature.tools.presentation
 
+import com.minion.scaffold.core.toolcatalog.ToolCatalog
+import com.minion.scaffold.core.toolcatalog.ToolDescriptor
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -323,7 +325,7 @@ private fun Section(
 /** A full-width bordered card: icon tile, title, one-line description, caret. */
 @Composable
 private fun ToolRow(
-    tool: Tool,
+    tool: ToolDescriptor,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -375,8 +377,8 @@ private fun ToolRow(
 /** The two-column grid of compact utility cards. */
 @Composable
 private fun UtilityGrid(
-    tools: List<Tool>,
-    onSelect: (Tool) -> Unit,
+    tools: List<ToolDescriptor>,
+    onSelect: (ToolDescriptor) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val gap = dimensionResource(R.dimen.tools_row_gap)
@@ -400,7 +402,7 @@ private fun UtilityGrid(
 
 @Composable
 private fun UtilityCard(
-    tool: Tool,
+    tool: ToolDescriptor,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

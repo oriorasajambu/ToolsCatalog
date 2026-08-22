@@ -11,3 +11,9 @@ plugins {
 android {
     namespace = "com.minion.scaffold.feature.tools"
 }
+
+dependencies {
+    // The catalog moved out so the home-screen widget could read it too. `api`, not
+    // `implementation`: ToolDescriptor appears in ToolsState's and ToolsIntent's public signatures.
+    api(project(":core:toolcatalog"))
+}

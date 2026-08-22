@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  TextFields from the Material icon set, the same glyph `Icons.Filled.TextFields` draws on the tools
+  screen. Path data extracted verbatim from androidx.compose.material:material-icons-extended
+  1.7.8, so the two surfaces cannot drift apart by a redraw.
+
+  Untinted white fill: every consumer tints it — the widget through Glance's ColorFilter, so an
+  unavailable tile can be drawn in onSurfaceVariant without a second copy of the asset.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 2.5 4 v 3 h 5 v 12 h 3 V 7 h 5 V 4 H 2.5 Z M 21.5 9 h -9 v 3 h 3 v 7 h 3 v -7 h 3 V 9 Z" />
+</vector>

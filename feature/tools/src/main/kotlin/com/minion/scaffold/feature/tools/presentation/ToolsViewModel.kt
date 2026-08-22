@@ -1,5 +1,7 @@
 package com.minion.scaffold.feature.tools.presentation
 
+import com.minion.scaffold.core.toolcatalog.ToolCatalog
+import com.minion.scaffold.core.toolcatalog.ToolDescriptor
 import androidx.lifecycle.viewModelScope
 import com.minion.scaffold.core.domain.featureflag.FeatureFlagRepository
 import com.minion.scaffold.core.domain.featureflag.FeatureFlags
@@ -55,5 +57,5 @@ internal class ToolsViewModel @Inject constructor(
  * @param flags The configuration snapshot to filter against.
  * @return The subset the user may be offered.
  */
-private fun List<Tool>.enabledBy(flags: FeatureFlags): List<Tool> =
+private fun List<ToolDescriptor>.enabledBy(flags: FeatureFlags): List<ToolDescriptor> =
     filter { flags.isEnabled(it.id) }

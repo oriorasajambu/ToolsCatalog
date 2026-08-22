@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  EditNote from the Material icon set, the same glyph `Icons.Filled.EditNote` draws on the tools
+  screen. Path data extracted verbatim from androidx.compose.material:material-icons-extended
+  1.7.8, so the two surfaces cannot drift apart by a redraw.
+
+  Untinted white fill: every consumer tints it — the widget through Glance's ColorFilter, so an
+  unavailable tile can be drawn in onSurfaceVariant without a second copy of the asset.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 3 10 h 11 v 2 H 3 V 10 Z M 3 8 h 11 V 6 H 3 V 8 Z M 3 16 h 7 v -2 H 3 V 16 Z M 18.01 12.87 l 0.71 -0.71 c 0.39 -0.39 1.02 -0.39 1.41 0 l 0.71 0.71 c 0.39 0.39 0.39 1.02 0 1.41 l -0.71 0.71 L 18.01 12.87 Z M 17.3 13.58 l -5.3 5.3 V 21 h 2.12 l 5.3 -5.3 L 17.3 13.58 Z" />
+</vector>
