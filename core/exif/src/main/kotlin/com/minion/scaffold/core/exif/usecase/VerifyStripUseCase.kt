@@ -60,6 +60,12 @@ class VerifyStripUseCase @Inject constructor(
     }
 }
 
+/**
+ * What a second pass over the written file found.
+ *
+ * Verification re-parses the output rather than trusting the plan that produced it, which is the
+ * only way the tool can claim the strip worked instead of merely reporting that it ran.
+ */
 sealed interface VerificationResult {
 
     /** Nothing identifying remains. [retained] names what was kept on purpose. */

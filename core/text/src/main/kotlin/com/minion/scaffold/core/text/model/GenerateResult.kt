@@ -34,6 +34,12 @@ sealed interface GenerateResult {
     data class Invalid(val reason: PasswordProblem) : GenerateResult
 }
 
+/**
+ * Why a password spec could not be honoured.
+ *
+ * Both cases are the caller asking for something impossible rather than the generator failing, so
+ * they arrive as [GenerateResult.Invalid] in the success channel.
+ */
 enum class PasswordProblem {
 
     /** No character class was selected, so there is nothing to draw from. */

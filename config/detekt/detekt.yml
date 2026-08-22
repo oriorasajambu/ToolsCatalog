@@ -113,10 +113,16 @@ performance:
 # built up module by module (see the `docs(...)` commit history) against regression. Low noise
 # given how little is actually public — everything in a feature module is `internal` except its
 # navigation entry point, so this only ever touches genuine public API surface.
+#
+# `searchInInnerObject: false` exempts companion objects, which accounted for 23 of the rule's 32
+# findings. The keyword is not API surface: the enclosing class is documented and so are the
+# constants inside, and the only thing a KDoc block on `companion object` itself could say is that
+# it is one. The nested types and functions the rule flagged for real were documented instead.
 comments:
   active: true
   UndocumentedPublicClass:
     active: true
+    searchInInnerObject: false
   UndocumentedPublicFunction:
     active: true
 

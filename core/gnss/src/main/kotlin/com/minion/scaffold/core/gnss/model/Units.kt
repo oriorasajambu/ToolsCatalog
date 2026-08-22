@@ -20,6 +20,12 @@ enum class SpeedUnit(val metersPerSecondToUnit: Double) {
     Knots(3600.0 / 1852.0),
     ;
 
+    /**
+     * Converts a speed from SI into this unit.
+     *
+     * @param metersPerSecond The speed to convert.
+     * @return The same speed expressed in this unit.
+     */
     fun fromMetersPerSecond(metersPerSecond: Double): Double =
         metersPerSecond * metersPerSecondToUnit
 }
@@ -55,6 +61,11 @@ enum class DistanceUnit {
     }
 }
 
+/**
+ * How a position is written out for display.
+ *
+ * Both name the same point; which one is wanted depends entirely on where it is going next.
+ */
 enum class CoordinateFormat {
     /** `3.595200°, 98.672200°` — what pastes into anything else. */
     Decimal,
@@ -73,6 +84,14 @@ enum class CoordinateFormat {
  */
 object CoordinateFormatter {
 
+    /**
+     * Renders a position in the requested notation.
+     *
+     * @param latitude  Signed degrees, positive north.
+     * @param longitude Signed degrees, positive east.
+     * @param format    Which notation to produce.
+     * @return The formatted position, ready to show or copy.
+     */
     fun format(latitude: Double, longitude: Double, format: CoordinateFormat): String =
         when (format) {
             CoordinateFormat.Decimal ->

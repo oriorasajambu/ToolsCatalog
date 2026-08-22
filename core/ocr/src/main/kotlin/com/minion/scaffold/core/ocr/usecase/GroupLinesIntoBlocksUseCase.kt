@@ -28,6 +28,12 @@ import javax.inject.Inject
  */
 class GroupLinesIntoBlocksUseCase @Inject constructor() {
 
+    /**
+     * Orders recognised lines, then groups them into blocks.
+     *
+     * @param lines The recognised lines, in any order.
+     * @return The blocks in reading order; empty when [lines] is empty.
+     */
     operator fun invoke(lines: List<RecognizedLine>): List<RecognizedBlock> {
         if (lines.isEmpty()) return emptyList()
 
