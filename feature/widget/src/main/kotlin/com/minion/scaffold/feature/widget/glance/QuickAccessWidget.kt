@@ -147,8 +147,10 @@ private fun QuickAccessStrip(tools: List<PinnedTool>, intents: WidgetLaunchInten
         horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
     ) {
         if (tools.isEmpty()) {
-            // Until the configuration screen exists (SPEC.md §13 step 6) this opens the tools
-            // home, which is where the user can already reach everything.
+            // Opens the tools home rather than the configuration screen. The screen exists now,
+            // but reaching it means a second kind of launch intent -- the factory speaks in tool
+            // ids, and a route is not one -- so this is left pointing somewhere useful rather than
+            // half-built. The tools home carries the widgets button, so it is one tap further.
             EmptyPrompt(intent = intents.intentFor(null))
             return@Row
         }

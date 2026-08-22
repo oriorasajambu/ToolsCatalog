@@ -55,7 +55,8 @@ import com.minion.scaffold.core.navigation.WifiCreateRoute
  * [widgetIconRes] is the same glyph as a vector drawable, because Glance renders a `RemoteViews`
  * tree and cannot take an `ImageVector`. The drawables are generated from the same Material
  * source as the `Icons.Filled.*` values, and each one records that in its own comment. Nothing
- * enforces that the pair stays in step, which is the cost of the arrangement — see SPEC.md §14.
+ * enforces that the pair stays in step, which is the cost of the arrangement: change one and the
+ * two surfaces drift without anything failing.
  *
  * @property id             A stable identifier for the tool.
  * @property titleRes       The string resource for the tool's title.

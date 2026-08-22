@@ -12,7 +12,8 @@
   breakpoint is one more thing to lay out and verify.
 
   `updatePeriodMillis="0"` because nothing here is time-varying. Every redraw is triggered
-  explicitly - see SPEC.md section 7.
+  explicitly: a config save, a feature-flag change, a locale change, a package replacement, a
+  boot, and a light/dark switch. See WidgetUpdateReceiver and WidgetSynchroniser.
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/widget_description"

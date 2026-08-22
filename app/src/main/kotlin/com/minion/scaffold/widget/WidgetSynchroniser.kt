@@ -65,11 +65,10 @@ class WidgetSynchroniser @Inject constructor(
     /**
      * Redraws after a configuration change.
      *
-     * The emulator run that verified step 4 found this: below API 31 Glance resolves colours into
-     * the `RemoteViews` when it renders, so a widget already on the home screen keeps its old
-     * palette through a light/dark switch — the app recomposes, the widget does not. SPEC.md §7
-     * left theme changes out on the assumption the platform repaints; it does not, at least not
-     * here.
+     * Found on an API 30 emulator: below API 31 Glance resolves colours into the `RemoteViews`
+     * when it renders, so a widget already on the home screen keeps its old palette through a
+     * light/dark switch — the app recomposes, the widget does not. The platform was assumed to
+     * repaint it; on that device it did not.
      *
      * Not a manifest receiver, because `ACTION_CONFIGURATION_CHANGED` cannot be declared in one —
      * the system only delivers it to registered receivers. The application is the longest-lived
