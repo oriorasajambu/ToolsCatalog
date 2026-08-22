@@ -6,7 +6,7 @@ import com.minion.scaffold.core.domain.featureflag.FeatureFlagRepository
 import com.minion.scaffold.core.toolcatalog.ToolCatalog
 import com.minion.scaffold.feature.widget.WidgetUpdater
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -18,10 +18,15 @@ import javax.inject.Singleton
  *
  * Two jobs, both application-scoped rather than screen-scoped:
  *
- *  - **Grey and ungrey tiles as the console flips a flag.** A new `FeatureFlags` snapshot changes
- *    what a tile should look like, and nothing else would notice.
+ *  - **Redraw whenever what the widget should show changes.** That is either half of the pair it
+ *    renders from: a new `FeatureFlags` snapshot greys or ungreys a tile, and a new pinned list
+ *    means the user just changed the arrangement on the configuration screen.
  *  - **Write back a pruned list.** The widget reconciles on every render but never writes — that
  *    is the single-writer rule. The write has to happen somewhere, and this is the app side.
+ *
+ * Collecting the pinned list here rather than calling `updateAll` from the configuration screen's
+ * ViewModel is what keeps `:feature:tools` from needing to know a widget exists at all. It also
+ * means any future writer gets the redraw for free instead of having to remember it.
  *
  * **Deliberately not in `ToolsViewModel`.** It already collects the same flow, and putting this
  * there would make the widget's correctness depend on whether the user happened to visit the home
@@ -40,20 +45,20 @@ class WidgetSynchroniser @Inject constructor(
      * @param scope An application-lifetime scope. The collection is meant to outlive every screen.
      */
     fun start(scope: CoroutineScope) {
-        featureFlags.flags()
-            .onEach { flags ->
-                val stored = pinnedTools.currentPinnedIds()
+        combine(pinnedTools.pinnedIds, featureFlags.flags(), ::Pair)
+            .onEach { (stored, flags) ->
                 val reconciled = reconcilePinnedTools(stored, ToolCatalog.entries, flags)
 
                 // Only when the reconcile actually changed something. Writing an identical list
-                // would re-emit the store's flow and redraw for nothing, on every flag snapshot.
+                // re-emits the store's flow, which would arrive back here and write again — the
+                // check is what makes that converge instead of looping.
                 if (reconciled.retainedIds != stored) {
                     pinnedTools.setPinned(reconciled.retainedIds)
+                    return@onEach
                 }
 
                 widgetUpdater.updateAll()
             }
-            .distinctUntilChanged()
             .launchIn(scope)
     }
 
