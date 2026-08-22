@@ -127,21 +127,6 @@ android {
                 // produced.
                 mappingFileUploadEnabled = false
             }
-
-            // TEMPORARY — emulator only, remove when the widget work is verified.
-            //
-            // defaultConfig ships arm64-v8a alone, which is deliberate and must stay that way for
-            // anything released. The consequence is the one CLAUDE.md records: an x86 emulator
-            // cannot install the result, so the home-screen widget cannot be looked at on one.
-            //
-            // abiFilters is a union across defaultConfig, flavour and build type, so naming the
-            // emulator ABIs here widens debug builds only and leaves both release variants
-            // untouched. Both are listed because a 32-bit x86 system image cannot load an x86_64
-            // library; ONNX Runtime and ML Kit publish natives for each, so nothing silently loses
-            // its engine.
-            ndk {
-                abiFilters += setOf("x86", "x86_64")
-            }
         }
 
         release {
