@@ -5,7 +5,9 @@ import android.content.ComponentName
 import android.content.Context
 import com.minion.scaffold.core.data.widget.PinnedToolsRepository
 import com.minion.scaffold.core.data.widget.WidgetPinRequester
+import com.minion.scaffold.feature.widget.WidgetUpdater
 import com.minion.scaffold.feature.widget.data.local.WidgetPreferencesDataStore
+import com.minion.scaffold.feature.widget.glance.GlanceWidgetUpdater
 import com.minion.scaffold.feature.widget.glance.QuickAccessWidgetReceiver
 import dagger.Binds
 import dagger.Module
@@ -31,6 +33,13 @@ internal abstract class WidgetModule {
     @Binds
     @Singleton
     abstract fun bindPinnedToolsRepository(impl: WidgetPreferencesDataStore): PinnedToolsRepository
+
+    /**
+     * @param impl The Glance-backed implementation.
+     * @return The [WidgetUpdater] binding `:app` asks for a redraw through.
+     */
+    @Binds
+    abstract fun bindWidgetUpdater(impl: GlanceWidgetUpdater): WidgetUpdater
 
     /**
      * Pin-to-home lives here rather than in `:app`, unlike the launch-intent factory.

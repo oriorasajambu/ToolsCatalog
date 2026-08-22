@@ -5,6 +5,9 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Required to receive BOOT_COMPLETED. Grants nothing else. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application>
 
         <!--
@@ -28,6 +31,23 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/quick_access_widget_info" />
+        </receiver>
+
+        <!--
+          The three system events that leave a drawn widget wrong and that nothing else notices.
+          Exported: LOCALE_CHANGED, MY_PACKAGE_REPLACED and BOOT_COMPLETED are all delivered by the
+          system, and a manifest receiver has to be visible to receive them. It reads nothing from
+          the intent beyond its action.
+        -->
+        <receiver
+            android:name=".glance.WidgetUpdateReceiver"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
         </receiver>
 
     </application>
