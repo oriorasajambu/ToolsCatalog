@@ -16,12 +16,27 @@ config:
 # LongMethod / LongParameterList / CyclomaticComplexMethod / NestedBlockDepth: a ceiling on the
 # natural complexity magnets in this codebase — ViewModels, use cases, and parsers (EMV framing,
 # OCR reading-order reconstruction). Left at their own default thresholds for a first pass.
+#
+# LongMethod does not apply to `@Composable`. A composable is a declarative description of a UI
+# tree, so its length tracks how much screen it describes rather than how much logic it holds —
+# the same layout as XML would run longer still and nothing would flag it. 35 of the rule's 37
+# findings were composables; the two that were not are parser code and were shortened instead.
+#
+# LongParameterList keeps `@Composable` deliberately: a composable taking a dozen *required*
+# arguments is the signal that its state wants to be one object, and that is worth hearing. What
+# it does not count is parameters with defaults (`ignoreDefaultParameters`) — the rule is about
+# what a function demands of its callers, and a defaulted parameter demands nothing — nor
+# `@Inject` constructors, where the count is a measure of how many collaborators a ViewModel
+# legitimately needs and Hilt supplies every one of them.
 complexity:
   active: true
   LongMethod:
     active: true
+    ignoreAnnotated: ['Composable']
   LongParameterList:
     active: true
+    ignoreDefaultParameters: true
+    ignoreAnnotated: ['Inject']
   CyclomaticComplexMethod:
     active: true
   NestedBlockDepth:
