@@ -26,6 +26,32 @@ class ParseVCardPayloadUseCase @Inject constructor() {
      *         missing its mandatory `FN`.
      */
     operator fun invoke(payload: String): ContactCard? {
+        val body = bodyLines(payload) ?: return null
+
+        val fields = CardFields()
+        for (line in body) {
+            val property = line.asProperty()
+            if (property == null) {
+                fields.passthrough += VCardProperty(line)
+                continue
+            }
+
+            val (name, value) = property
+            if (!fields.absorb(name, value, line)) return null
+        }
+
+        // `FN` is mandatory in 3.0, so a card without one is not a card this tool can represent.
+        if (fields.formattedName.isEmpty()) return null
+
+        return fields.toContactCard()
+    }
+
+    /**
+     * The envelope check: [payload] reduced to the lines between `BEGIN` and `END`.
+     *
+     * @return The property lines, or `null` when this is not a vCard at all.
+     */
+    private fun bodyLines(payload: String): List<String>? {
         val lines = VCardValueCodec.unfold(payload.trim())
             .split(VCardFormat.LINE_BREAK, "\n")
             .map(String::trim)
@@ -35,6 +61,16 @@ class ParseVCardPayloadUseCase @Inject constructor() {
         if (!lines.first().equals(VCardFormat.BEGIN, ignoreCase = true)) return null
         if (!lines.last().equals(VCardFormat.END, ignoreCase = true)) return null
 
+        return lines.subList(1, lines.size - 1)
+    }
+
+    /**
+     * The card being filled in as the payload is read.
+     *
+     * A holder rather than eight locals threaded through a helper: first-occurrence-wins is a rule
+     * about the whole set, and it only reads as one rule with the whole set in one place.
+     */
+    private class CardFields {
         var formattedName = ""
         var givenName = ""
         var familyName = ""
@@ -45,22 +81,22 @@ class ParseVCardPayloadUseCase @Inject constructor() {
         var nameSeen = false
         val passthrough = mutableListOf<VCardProperty>()
 
-        for (line in lines.subList(1, lines.size - 1)) {
-            val property = line.asProperty()
-            if (property == null) {
-                passthrough += VCardProperty(line)
-                continue
-            }
-
-            val (name, value) = property
-
+        /**
+         * Folds one property into the card.
+         *
+         * @param line The property's original line, carried through untouched when it is not one
+         *             this model has a field for.
+         * @return `false` when the card must be refused outright, which only a wrong `VERSION`
+         *         does.
+         */
+        fun absorb(name: String, value: String, line: String): Boolean {
             // The `else` branch is doing two jobs at once, and deliberately: a property this model
             // has no field for, and a *second* occurrence of one it does, are both things to carry
             // through untouched rather than drop. A card with two phone numbers keeps both — the
             // first in the field, the other verbatim.
             when {
                 name == VCardFormat.PROPERTY_VERSION ->
-                    if (value.trim() != VCardFormat.VERSION) return null
+                    if (value.trim() != VCardFormat.VERSION) return false
 
                 name == VCardFormat.PROPERTY_FORMATTED_NAME && formattedName.isEmpty() ->
                     formattedName = VCardValueCodec.decode(value)
@@ -89,12 +125,12 @@ class ParseVCardPayloadUseCase @Inject constructor() {
 
                 else -> passthrough += VCardProperty(line)
             }
+
+            return true
         }
 
-        // `FN` is mandatory in 3.0, so a card without one is not a card this tool can represent.
-        if (formattedName.isEmpty()) return null
-
-        return ContactCard(
+        /** The finished card. */
+        fun toContactCard() = ContactCard(
             formattedName = formattedName,
             givenName = givenName,
             familyName = familyName,
@@ -124,12 +160,17 @@ class ParseVCardPayloadUseCase @Inject constructor() {
         return name to substring(separatorIndex + 1)
     }
 
-    /** Missing components are empty rather than an error — a short `N` is common and harmless. */
-    private fun List<String>.componentAt(index: Int): String =
-        getOrNull(index)?.let(VCardValueCodec::decode).orEmpty()
-
     private companion object {
         /** `BEGIN`, something, `END`. */
         const val MINIMUM_LINES = 3
     }
 }
+
+/**
+ * Missing components are empty rather than an error — a short `N` is common and harmless.
+ *
+ * File-level rather than a member so `CardFields` can reach it; a nested class cannot call an
+ * extension declared on its outer one.
+ */
+private fun List<String>.componentAt(index: Int): String =
+    getOrNull(index)?.let(VCardValueCodec::decode).orEmpty()
