@@ -122,6 +122,7 @@ include(":feature:level")
 include(":feature:soundmeter")
 include(":feature:exifstrip")
 include(":feature:speedometer")
+include(":feature:checksum")
 
 // Not a screen: the home-screen App Widget. A module rather than part of :app because it
 // carries a manifest component, a provider XML, a DataStore and its own tests, and ":app --

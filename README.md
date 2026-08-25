@@ -79,8 +79,9 @@ do not want, and run `scripts/scaffold_feature.py` to generate the next vertical
 ├── :core:exif           Pure Kotlin. JPEG/PNG/WebP container surgery — returns byte-range strip
 │                        plans and never touches a file itself.
 │
-└── :feature:*           tools, qrscan, qrcreate, texttools, weather, ocr, level, soundmeter,
-                         speedometer, exifstrip — one module per screen area — plus widget, which
+└── :feature:*           tools, qrscan, qrcreate, texttools, checksum, weather, ocr, level,
+                         soundmeter, speedometer, exifstrip — one module per screen area — plus
+                         widget, which
                          draws no screen at all: it owns a manifest receiver, a provider XML and a
                          DataStore, and `:app` is supposed to hold nothing but wiring. (The domain
                          lives in the pure-Kotlin :core:* modules above; add more with

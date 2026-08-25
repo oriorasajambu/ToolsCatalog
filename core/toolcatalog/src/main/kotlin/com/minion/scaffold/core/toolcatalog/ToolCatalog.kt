@@ -16,10 +16,12 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.minion.scaffold.core.navigation.AppRoute
+import com.minion.scaffold.core.navigation.ChecksumRoute
 import com.minion.scaffold.core.navigation.ExifStripRoute
 import com.minion.scaffold.core.navigation.GenerateRoute
 import com.minion.scaffold.core.navigation.LevelRoute
@@ -181,6 +183,15 @@ object ToolCatalog {
             icon = Icons.Filled.Casino,
             widgetIconRes = R.drawable.ic_tool_generate,
             route = GenerateRoute,
+            category = ToolCategory.Utility,
+        ),
+        ToolDescriptor(
+            id = "checksum",
+            titleRes = R.string.tools_checksum_title,
+            descriptionRes = R.string.tools_checksum_description,
+            icon = Icons.Filled.Verified,
+            widgetIconRes = R.drawable.ic_tool_checksum,
+            route = ChecksumRoute,
             category = ToolCategory.Utility,
         ),
         ToolDescriptor(

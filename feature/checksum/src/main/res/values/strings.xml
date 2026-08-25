@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="checksum_title">Checksum</string>
+    <string name="checksum_navigate_back">Back</string>
+    <string name="checksum_clipboard_label">Checksum digest</string>
+    <string name="checksum_digest_copied">Digest copied to clipboard</string>
+    <string name="checksum_copy">Copy</string>
+
+    <string name="checksum_section_input">Input</string>
+    <string name="checksum_algorithm">Algorithm</string>
+    <string name="checksum_input">Text</string>
+
+    <string name="checksum_section_digest">Digest</string>
+    <string name="checksum_digest_empty">The digest appears here as you type.</string>
+
+    <string name="checksum_section_verify">Verify</string>
+    <string name="checksum_expected">Expected digest</string>
+    <string name="checksum_expected_hint">Paste the digest you were given. Case and spacing are ignored.</string>
+    <string name="checksum_verdict_match">Match — the digests are identical.</string>
+    <string name="checksum_verdict_mismatch">No match — the digests differ.</string>
+
+    <!-- Algorithms. The same three names :feature:texttools has for the same operations: four words
+         duplicated rather than a shared strings module every feature would have to depend on. -->
+    <string name="checksum_algorithm_md5">MD5</string>
+    <string name="checksum_algorithm_sha1">SHA-1</string>
+    <string name="checksum_algorithm_sha256">SHA-256</string>
+</resources>

@@ -23,6 +23,7 @@ import com.minion.scaffold.feature.qrcreate.presentation.qrCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.url.urlCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.vcard.vCardCreateScreen
 import com.minion.scaffold.feature.qrcreate.presentation.wifi.wifiCreateScreen
+import com.minion.scaffold.feature.checksum.presentation.checksumScreen
 import com.minion.scaffold.feature.exifstrip.presentation.exifStripScreen
 import com.minion.scaffold.feature.speedometer.presentation.speedometerScreen
 import com.minion.scaffold.feature.speedometer.presentation.speedometerSettingsScreen
@@ -156,6 +157,9 @@ fun AppNavHost(
             onNavigateBack = { navController.popBackStack() },
         )
         generateScreen(
+            onNavigateBack = { navController.popBackStack() },
+        )
+        checksumScreen(
             onNavigateBack = { navController.popBackStack() },
         )
         levelScreen(

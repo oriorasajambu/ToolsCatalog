@@ -183,6 +183,7 @@ dependencies {
     implementation(project(":feature:soundmeter"))
     implementation(project(":feature:exifstrip"))
     implementation(project(":feature:speedometer"))
+    implementation(project(":feature:checksum"))
 
     // Not a screen. :app depends on it for two reasons: its receiver has to reach the manifest,
     // and WidgetLaunchIntentFactory has to be bound to something that can name MainActivity.

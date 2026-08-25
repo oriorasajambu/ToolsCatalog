@@ -30,6 +30,8 @@
     <string name="tools_text_description">Base64, hash, JSON, case — encode and reformat text</string>
     <string name="tools_generate_title">Generate</string>
     <string name="tools_generate_description">Make a UUID, a password, or random hex</string>
+    <string name="tools_checksum_title">Checksum</string>
+    <string name="tools_checksum_description">Hash text, and check it against a digest you were given</string>
     <string name="tools_weather_title">Weather</string>
     <string name="tools_weather_description">Current conditions and a forecast for your location</string>
     <string name="tools_level_title">Level</string>

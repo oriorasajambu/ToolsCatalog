@@ -331,3 +331,12 @@ data object WeatherSettingsRoute : AppRoute
  */
 @Serializable
 data object WidgetSettingsRoute : AppRoute
+
+/**
+ * The checksum verifier: hash some text, and compare the digest against one you were given.
+ *
+ * A `data object` — the screen starts blank and there is nothing to hand it. A pre-filled variant
+ * would be the moment to add a `text` argument, capped the way [TextToolsRoute] caps its own.
+ */
+@Serializable
+data object ChecksumRoute : AppRoute

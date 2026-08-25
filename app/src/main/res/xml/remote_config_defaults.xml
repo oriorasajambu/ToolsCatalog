@@ -69,6 +69,12 @@
         <value>true</value>
     </entry>
 
+    <!-- Checksum verifier -->
+    <entry>
+        <key>feature_checksum_enabled</key>
+        <value>true</value>
+    </entry>
+
     <!-- Weather lookup -->
     <entry>
         <key>feature_weather_enabled</key>

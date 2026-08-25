@@ -8,10 +8,11 @@ An opinionated Android scaffold: Kotlin, Jetpack Compose, MVI, Clean Architectur
 Gradle multi-module graph whose boundaries are enforced by the build rather than by code review.
 The repo currently carries a worked example app, **ToolBox** (`app_name` in strings.xml) — a
 mostly-offline utility app whose tools cover scanning/comparing/exporting EMV codes, building EMV,
-Wi-Fi, link and vCard QR codes, text and developer transforms, a random string generator, a weather
-lookup, on-device OCR, a bubble level, a sound-level meter, a GPS speedometer and an EXIF stripper. A home-screen App
-Widget holds up to five of those tools and launches straight into them.
-Package root is `com.minion.scaffold`. 33 Gradle modules.
+Wi-Fi, link and vCard QR codes, text and developer transforms, a checksum verifier, a random string
+generator, a weather lookup, on-device OCR, a bubble level, a sound-level meter, a GPS speedometer
+and an EXIF stripper. A home-screen App Widget holds up to five of those tools and launches straight
+into them.
+Package root is `com.minion.scaffold`. 34 Gradle modules.
 
 The full architectural rationale (why each rule exists, not just what it is) lives in
 [README.md](README.md) — read it before making structural changes; this file summarizes what's
@@ -117,10 +118,11 @@ Protected names (`master`, `main`), tag pushes and branch deletions all pass thr
 ├── :core:sound          Pure Kotlin. A/C/Z weighting filters, time weighting, the Leq session accumulator.
 ├── :core:gnss           Pure Kotlin. EGM96 geoid → height above sea level, speed/zero-speed rules, trip accumulators.
 ├── :core:exif           Pure Kotlin. JPEG/PNG/WebP container surgery — returns byte-range strip plans, never touches a file.
-├── :core:toolcatalog    The tool table: ToolDescriptor, ToolCategory, ToolCatalog, and the 14 tool
+├── :core:toolcatalog    The tool table: ToolDescriptor, ToolCategory, ToolCatalog, and the 15 tool
 │                       icons. Android, not JVM — an entry carries an ImageVector and two @StringRes.
-└── :feature:*           tools, qrscan, qrcreate, texttools, weather, ocr, level, soundmeter, exifstrip,
-                         speedometer, widget — one per screen area, except `widget`, which draws none.
+└── :feature:*           tools, qrscan, qrcreate, texttools, checksum, weather, ocr, level, soundmeter,
+                         exifstrip, speedometer, widget — one per screen area, except `widget`, which
+                         draws none.
 ```
 
 Dependency rules (enforced by convention plugins, not review):
@@ -418,7 +420,7 @@ Adding a tool means an entry in `ToolCatalog` — now in `:core:toolcatalog`, ca
 rather than an id so no `when` has to learn about it — **and** an entry in
 `app/src/main/res/xml/remote_config_defaults.xml`. An entry also needs a `widgetIconRes`: the tools
 screen draws the `ImageVector`, but Glance renders a `RemoteViews` tree and can only take a
-drawable, so every tool carries the same glyph twice. The 14 drawables were generated from the path
+drawable, so every tool carries the same glyph twice. The 15 drawables were generated from the path
 data in `material-icons-extended`, the same source `Icons.Filled.*` is built from, and each records
 that in its own comment — redraw one by hand and the two surfaces drift.
 

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The one spacing this screen has. The verdict row's gap is derived from it (spacing / 2) so
+         the whole screen re-spaces from a single number. -->
+    <dimen name="checksum_spacing">16dp</dimen>
+    <!-- Tall enough that a pasted paragraph is visible without scrolling the field itself. -->
+    <dimen name="checksum_input_min_height">120dp</dimen>
+</resources>
