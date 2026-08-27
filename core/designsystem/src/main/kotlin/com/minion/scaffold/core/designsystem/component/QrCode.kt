@@ -89,20 +89,44 @@ private fun BitMatrix.toPixels(sizePx: Int): IntArray {
  * @param sizePx  The side length of the square output bitmap, in pixels.
  * @return The encoded bitmap, or `null` when the payload is empty or too large for any QR version.
  */
-fun encodeQrBitmap(payload: String, sizePx: Int = DISPLAY_SIZE_PX): Bitmap? = try {
-    val matrix = MultiFormatWriter().encode(
+fun encodeQrBitmap(payload: String, sizePx: Int = DISPLAY_SIZE_PX): Bitmap? {
+    val matrix = encodeQrMatrix(payload, sizePx) ?: return null
+    val pixels = matrix.toPixels(sizePx)
+
+    return createBitmap(sizePx, sizePx, Bitmap.Config.RGB_565).apply {
+        setPixels(pixels, 0, sizePx, 0, 0, sizePx, sizePx)
+    }
+}
+
+/**
+ * [payload] as a QR module matrix, or `null` when it will not fit in a code.
+ *
+ * Split out from [encodeQrBitmap] because everything that can be *wrong* about an encoding is
+ * decided here, and none of it involves a `Bitmap` — which is what lets a test encode a payload and
+ * read it straight back on the JVM. See `QrCodeEncodingTest`.
+ */
+internal fun encodeQrMatrix(payload: String, sizePx: Int): BitMatrix? = try {
+    MultiFormatWriter().encode(
         payload,
         BarcodeFormat.QR_CODE,
         sizePx,
         sizePx,
-        mapOf(EncodeHintType.MARGIN to QUIET_ZONE_MODULES),
+        mapOf(
+            EncodeHintType.MARGIN to QUIET_ZONE_MODULES,
+            // Without this zxing encodes as ISO-8859-1, and its encoder replaces every character
+            // that charset cannot hold with a literal '?'. A merchant name in Arabic, Thai or
+            // Cyrillic is then destroyed *in the code itself*: it scans back as "????? ???????",
+            // with a checksum that fails because tag 63 still carries the original payload's
+            // value. Nothing downstream can recover it — the bytes really are question marks, and
+            // the code is a faithful rendering of them.
+            //
+            // Declaring UTF-8 makes zxing emit an ECI segment naming the character set, so the
+            // code describes its own encoding rather than leaving every reader to guess. That
+            // segment is only added for a payload that actually needs byte mode; a pure-ASCII one
+            // still encodes as numeric or alphanumeric and comes out byte-for-byte as before.
+            EncodeHintType.CHARACTER_SET to Charsets.UTF_8.name(),
+        ),
     )
-
-    val pixels = matrix.toPixels(sizePx)
-
-    createBitmap(sizePx, sizePx, Bitmap.Config.RGB_565).apply {
-        setPixels(pixels, 0, sizePx, 0, 0, sizePx, sizePx)
-    }
 } catch (_: WriterException) {
     // The payload exceeds what a QR code can hold at any version.
     null

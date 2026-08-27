@@ -588,5 +588,23 @@ Everything is under `com.minion.scaffold`. To rebrand:
 - **`abiFilters` in `:app` is app-wide.** It is set to `arm64-v8a` for ONNX Runtime's sake, which
   means an x86 emulator cannot install the app at all — including for features that have nothing to
   do with OCR.
+- **Encoding a QR without naming a character set destroys non-ASCII text, in the code itself.**
+  `MultiFormatWriter.encode` falls back to ISO-8859-1 when given no `EncodeHintType.CHARACTER_SET`,
+  and zxing's encoder writes a literal `?` for every character that charset cannot hold. A merchant
+  name in Arabic, Thai or Cyrillic is then destroyed at generation time: the code scans perfectly
+  and reads back `????? ???????`, with a checksum that fails because tag 63 still carries the value
+  computed from the text the code no longer contains. Every scanner in the chain is innocent, which
+  is what makes this expensive to find — it presents as a decoding bug and is entirely an encoding
+  one. Two things to recognise it by. **A question mark is an encoding artefact, never a decoding
+  one:** reading bytes with the wrong charset yields `U+FFFD`, while `?` is what a `CharsetEncoder`
+  substitutes for a character it cannot map, so its presence means something *wrote* the text badly
+  rather than read it badly. And **a checksum that describes text the payload no longer holds means
+  the damage happened after the checksum was computed** — which puts the encoder in the frame and
+  rules the reader out. `encodeQrMatrix` declares UTF-8, which makes zxing emit an ECI segment
+  naming the character set so the code describes its own encoding instead of leaving every reader
+  to guess. The segment is added only for a payload that actually needs byte mode, so an ASCII
+  payload encodes exactly as it did before. `QrCodeEncodingTest` reads a generated code back with
+  **no** charset hint — asserting the encoder was called with the hint would prove nothing about
+  what came out.
 - Default Gradle dependencies to `implementation`; reach for `api` only when a type appears in the
   module's own public signatures.
