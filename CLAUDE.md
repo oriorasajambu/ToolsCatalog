@@ -498,6 +498,11 @@ modules), because that is the code with a checkable ground truth. Feature module
 ViewModels and their feature-local use cases. Fakes for a feature's own repository live in that
 feature's `src/test` (e.g. `FakePaymentSchemaRepository`), not in `:core:testing`.
 
+`:core:designsystem` is the one UI module with unit tests, and only where a widget's output can be
+read back rather than looked at: `QrCodeEncodingTest` encodes a payload and decodes it again, which
+is the only assertion that catches a generator quietly rewriting the text it was given. Everything
+else there is a `@Preview`.
+
 ## Renaming this scaffold for a new project
 
 Everything is under `com.minion.scaffold`; see [README.md § 7](README.md) for the full checklist
@@ -608,6 +613,19 @@ for one that is never written.
   correctly, so "the widget did not follow the theme" is a *redraw* problem, not a colour-bridge
   one. `ACTION_CONFIGURATION_CHANGED` cannot be a manifest receiver, which is why `AppApplication`
   hears it and asks `WidgetSynchroniser` for a redraw.
+- **A QR encoded without naming a charset destroys non-ASCII text in the generated code.**
+  `MultiFormatWriter.encode` defaults to ISO-8859-1 without an `EncodeHintType.CHARACTER_SET`, and
+  zxing's encoder writes a literal `?` for every character that charset cannot hold. An Arabic or
+  Thai merchant name is then destroyed at generation time: the code scans perfectly and reads back
+  `????? ???????` with a failing checksum, because tag 63 still carries the value computed from the
+  text the code no longer contains. It presents as a scanner bug and is entirely an encoder one.
+  Two tells: **a `?` is an encoding artefact, never a decoding one** (a bad decode gives `U+FFFD`;
+  `?` is what a `CharsetEncoder` substitutes), and **a checksum describing text the payload no
+  longer holds means the damage came after the checksum was computed**, which rules the reader out.
+  `encodeQrMatrix` declares UTF-8, so zxing emits an ECI segment naming the character set — added
+  only for payloads that need byte mode, leaving ASCII ones byte-identical. `QrCodeEncodingTest`
+  reads a generated code back with **no** charset hint; asserting the hint was passed would prove
+  nothing about what came out.
 - Text that can overflow uses `Modifier.basicMarquee()` with `maxLines = 1` and **no**
   `TextOverflow.Ellipsis`. Marquee measures its content with an infinite width constraint, so the
   ellipsis can never trigger and the two are not complementary — leaving it in is dead config.
